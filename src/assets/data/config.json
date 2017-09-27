@@ -1,0 +1,18 @@
+{
+  "hideFutureSprints": false,
+  "sprintsPerPhase": 3,
+  "hoursPerPoint": 1,
+  "estimate": {
+    "dev": 0.66,
+    "qa": 0.34
+  },
+  "risk": {
+    "blocker": 2,
+    "delay": 1,
+    "early": -1,
+    "debt": 0.25,
+    "resourceDeficitHourBlocks": 25
+  },
+  "baseUrl": "http://localhost/viz/src/assets/data/sample-full.json",
+  "jiraUrl": "https://daymon.atlassian.net/rest/api/2/search?jql=project%20%3D%20NES%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0"
+}

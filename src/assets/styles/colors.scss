@@ -1,0 +1,54 @@
+/* Color Palette */
+$blue-lt: #d9ead2;
+$blue-md: #9ec4ea;
+$blue-dk: #6da7de;
+$green-lt: #cee2f4;
+$green-md: #b5d8a6;
+$green-dk: #92c57a;
+$gold-lt: #fff3ca;
+$gold-md: #ffe694;
+$gold-dk: #ffda5c;
+$orange-lt: #fde5cc;
+$orange-md: #facc99;
+$orange-dk: #f8b365;
+$red-lt: #f5cccb;
+$red-md: #ec9998;
+$red-dk: #e26563;
+$yellow-pale: #ffffcc;
+$yellow-md: #fde9af;
+
+/* Greyscale Palette */
+$black: #000000;
+$grey-90: #111111;
+$grey-80: #222222;
+$grey-70: #333333;
+$grey-60: #444444;
+$grey-50: #555555;
+$grey-40: #666666;
+$grey-30: #777777;
+$grey-20: #888888;
+$grey-15: #999999;
+$grey-10: #cccccc;
+$grey-07: #dedede;
+$grey-05: #efefef;
+$white: #ffffff;
+
+/* Scale */
+$blocker: #a81a00;
+$highest: #ce0201;
+$high: #eb9898;
+$medium: #d9ead2;
+$low: #b5d8a6;
+$lowest: #b5d8a6;
+
+/* Binary */
+$good: #367714;
+$bad: #a81a00;
+
+/* Status */
+$inprogress: $orange-md;
+$todo: $red-md;
+$done: $green-md;
+$inreview: $gold-md;
+$readyfortest: $blue-md;
+$merged: $blue-md;

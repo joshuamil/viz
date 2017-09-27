@@ -1,0 +1,319 @@
+/* Table Styles */
+table {
+  border-collapse: collapse;
+  border: 1px solid $grey-15;
+  margin: 0;
+  padding: 0;
+  width: 120%;
+  
+  th, td {
+    border: 1px solid $grey-10;
+    margin: 0;
+    padding: .5em;
+    position: relative;
+    text-align: center;
+    
+    &.left {
+      text-align: left;
+    }
+    
+    &.nowrap {
+      white-space: nowrap;
+    }
+    
+    &.wide {
+      width: 20%;
+    }
+
+    &.current {
+      border-right: 2px solid $grey-15;
+    }
+    
+    &.phase {
+      border-bottom: 1px solid $grey-10;
+    }
+    
+    /* Phases */
+    &.phase1 {
+      background-color: $green-lt;
+    }
+    &.phase2 {
+      background-color: $blue-lt;
+    }
+    &.phase3 {
+      background-color: $gold-lt;
+    }
+    &.phase4 {
+      background-color: $orange-lt;
+    }
+    &.phase5 {
+      background-color: $red-lt;
+    }
+    
+  }
+  
+  tbody {
+    
+    tr {
+      &:hover {
+        background-color: $yellow-pale;
+        border: 2px solid $grey-15;
+        cursor: pointer;
+      }
+      
+      &.blocker {
+        background-color: $red-lt;
+        
+        &:hover {
+          background-color: $high;
+        }
+        
+      }
+      
+      
+      td {
+        
+        /* Status */
+        &.status {
+          white-space: nowrap;
+        }
+        &.in-progress {
+          background-color: $inprogress;
+        }
+        &.to-do {
+          background-color: $todo;
+        }
+        &.done {
+          background-color: $done;
+        }
+        &.in-review {
+          background-color: $inreview;
+        }
+        &.ready-for-test {
+          background-color: $readyfortest;
+        }
+        
+        /* Priorities */
+        &.priority {
+          font-size: 1.25em;
+          font-weight: bold;
+          padding: 0 0 2px 0;
+        }
+        
+        &.blocker {
+          color: $blocker;
+          &::before {
+            content: "\20E0";
+          }
+        }
+        
+        &.highest {
+          color: $highest;
+          &::before {
+            content: "\21C8";
+          }
+        }
+        
+        &.high {
+          color: $high;
+          &::before {
+            content: "\2191";
+          }
+        }
+        
+        &.medium {
+          color: $medium;
+          &::before {
+            content: "-";
+          }
+        }
+        
+        &.low {
+          color: $low;
+          &::before {
+            content: "\2193";
+          }
+        }
+        
+        &.lowest {
+          color: $lowest;
+          &::before {
+            content: "\21CA";
+          }
+        }
+        
+        /* Miscellaneous */
+        &.grey-10 {
+          background-color: $grey-05;
+          white-space: nowrap;
+        }
+        
+        &.grey-20 {
+          background-color: $grey-07;
+          white-space: nowrap;
+        }
+        
+        &.risk {
+          background-color: $yellow-md;
+          white-space: nowrap;
+        }
+        
+        &.active,
+        &.pushed {
+          color: $grey-30;
+        }
+        
+        &.pushed::after {
+          background-color: rgba(0, 0, 0, .05);
+          content: " ";
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 100%;
+        }
+        
+        &.active::after {
+          background-color: rgba(0, 0, 0, .15);
+          content: " ";
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 100%;
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+  /* Header Styles */
+  thead {
+    
+    th {
+      background-color: $grey-05;
+      border-bottom: 3px solid $grey-15;
+      vertical-align: bottom;
+      
+      /* Cell-level Styles */
+      &.sprint {
+        border-bottom: 1px solid $grey-10;
+        font-size: .9em;
+      }
+      &.dates {
+        background-color: $grey-07;
+        font-size: .9em;
+      }
+      
+    }
+  }
+  
+  /* Footer Styles */
+  tfoot {
+    
+    tr {
+      
+      td {
+        border-color: $grey-15;
+        border-top: 2px solid $grey-15;
+        font-size: 1.2em;
+        font-weight: bold;
+        padding: 1em .5em;
+        
+        /* Sub-Totals */
+        &.subtotal {
+          background-color: $grey-05;
+        }
+
+        &.subtotal.phase1 {
+          background-color: $blue-md;
+        }
+
+        &.subtotal.phase2 {
+          background-color: $green-md;
+        }
+
+        &.subtotal.phase3 {
+          background-color: $gold-md;
+        }
+
+        &.subtotal.phase4 {
+          background-color: $orange-md;
+        }
+
+        &.subtotal.phase5 {
+          background-color: $red-md;
+        }
+        
+        /* Totals */
+        &.total {
+          background-color: $grey-07;
+          
+          &.phase1 {
+            background-color: $blue-dk;
+          }
+        
+          &.phase2 {
+            background-color: $green-dk;
+          }
+
+          &.phase3 {
+            background-color: $gold-dk;
+          }
+
+          &.phase4 {
+            background-color: $orange-dk;
+          }
+
+          &.phase5 {
+            background-color: $red-dk;
+          }
+          
+        }
+
+        &.label {
+          border-bottom: 0;
+          border-top: 0;
+          font-weight: bold;
+          text-align: right;
+        }
+
+        &.plain {
+          border: 0;
+        }
+
+        &.empty {
+          border-left-color: $grey-10;
+          border-right-color: $grey-10;
+        }
+
+        &.warning {
+          background-color: $red-lt;
+        }
+
+        &.white {
+          background-color: $white;
+        }
+
+        &.bad {
+          background-color: $bad;
+          color: $white;
+        }
+
+        &.good {
+          background-color: $good;
+          color: $white;
+        }
+        
+      }
+      
+    }
+
+    
+  }
+  
+}

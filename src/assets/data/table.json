@@ -1,0 +1,60 @@
+[
+  {
+    "label": "Priority",
+    "field": "priority",
+    "class": "priority @value",
+    "hidden": true,
+    "title": true
+  },
+  {
+    "label": "Epic",
+    "field": "epic",
+    "class": "nowrap"
+  },
+  {
+    "label": "Description",
+    "field": "description",
+    "class": "left wide"
+  },
+  {
+    "label": "Identifier",
+    "field": "key",
+    "class": "nowrap",
+    "link": "https://daymon.atlassian.net/browse/@value"
+  },
+  {
+    "label": "Estimate",
+    "field": "estimate",
+    "class": ""
+  },
+  {
+    "label": "Sprint",
+    "field": "sprint.current",
+    "class": ""
+  },
+  {
+    "label": "Status",
+    "field": "status",
+    "class": "status @value"
+  },
+  {
+    "label": "Risk",
+    "field": "risk",
+    "class": "risk"
+  },
+  {
+    "label": "Debt",
+    "field": "debt",
+    "class": "debt grey-10"
+  },
+  {
+    "label": "Pushed",
+    "field": "pushed",
+    "class": "pushed grey-10"
+  },
+  {
+    "label": "Assignee",
+    "field": "assignee",
+    "class": "left"
+  }
+]
