@@ -3,12 +3,13 @@ section {
   display: none;
   height: 100%;
   overflow: auto;
+  padding: .25%;
   position: fixed;
   top: 5vh;
-  width: 100%;
-    
+  width: 99.5%;
+
   &.active {
     display: block;
   }
-  
+
 }

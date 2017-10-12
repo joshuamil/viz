@@ -5,7 +5,7 @@
     "type": "doughnut",
     "datasets": [{
       "label": "Stories",
-      "source": "aggregates.subtotals",
+      "source": "subs",
       "value": "spilled",
       "text": "Sprint ${sprint.sprint}"
     }]
@@ -16,16 +16,16 @@
     "type": "bar",
     "stacked": true,
     "datasets": [{
-      "label": "Tasks",
+      "label": "Scheduled",
       "stack": "Stack 0",
-      "source": "aggregates.subtotals",
+      "source": "subs",
       "value": "tasks",
       "text": "Sprint ${sprint.sprint}",
       "colors": "#9ec4ea"
     },{
       "label": "Spilled",
       "stack": "Stack 0",
-      "source": "aggregates.subtotals",
+      "source": "subs",
       "value": "spilled",
       "text": "Sprint ${sprint.sprint}",
       "colors": "#ec9998"
@@ -39,17 +39,60 @@
     "datasets": [{
       "label": "Estimated",
       "stack": "Stack 0",
-      "source": "aggregates.subtotals",
+      "source": "subs",
       "value": "estimate",
       "text": "Sprint ${sprint.sprint}",
       "colors": "#9ec4ea"
     },{
       "label": "Remaining",
       "stack": "Stack 0",
-      "source": "aggregates.subtotals",
+      "source": "subs",
       "value": "remaining",
       "text": "Sprint ${sprint.sprint}",
       "colors": "#ec9998"
+    }]
+  },
+  {
+    "name": "estimate2",
+    "title": "Estimated Velocity by Sprint",
+    "type": "bar",
+    "stacked": true,
+    "datasets": [{
+      "label": "Estimated",
+      "stack": "Stack 0",
+      "source": "subs",
+      "value": "estimate",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#9ec4ea"
+    },{
+      "label": "Remaining",
+      "stack": "Stack 0",
+      "source": "subs",
+      "value": "remaining",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#ec9998"
+    }]
+  },
+  {
+    "name": "committed-vs-available",
+    "title": "Committed Hours vs. Available Hours",
+    "type": "horizontalBar",
+    "stacked": true,
+    "class": "doublewide",
+    "datasets": [{
+      "label": "Available",
+      "stack": "Stack 0",
+      "source": "team",
+      "value": "available",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#ec9998"
+    },{
+      "label": "Committed",
+      "stack": "Stack 0",
+      "source": "team",
+      "value": "estimate",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#9ec4ea"
     }]
   }
 ]

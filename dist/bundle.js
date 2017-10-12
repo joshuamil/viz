@@ -22112,7 +22112,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 /* 129 */
 /***/ (function(module, exports) {
 
-module.exports = [{"label":"Sprint 18","field":"sprint18","startDate":"08/14/2017","endDate":"08/28/2017","phase":"1","class":"past"},{"label":"Sprint 19","field":"sprint19","startDate":"08/29/2017","endDate":"09/11/2017","phase":"1","class":"past"},{"label":"Sprint 20","field":"sprint20","startDate":"09/12/2017","endDate":"09/25/2017","phase":"1","class":"past`"},{"label":"Sprint 21","field":"sprint21","startDate":"09/26/2017","endDate":"10/09/2017","phase":"2","class":"past"},{"label":"Sprint 22","field":"sprint22","startDate":"10/10/2017","endDate":"10/23/2017","phase":"2","class":"current"},{"label":"Sprint 23","field":"sprint23","startDate":"10/24/2017","endDate":"11/06/2017","phase":"2","class":"future"},{"label":"Sprint 24","field":"sprint24","startDate":"11/07/2017","endDate":"11/20/2017","phase":"3","class":"future"},{"label":"Sprint 25","field":"sprint25","startDate":"11/21/2017","endDate":"12/04/2017","phase":"3","class":"future"},{"label":"Sprint 26","field":"sprint26","startDate":"12/05/2017","endDate":"12/18/2017","phase":"3","class":"future"},{"label":"Sprint 27","field":"sprint27","startDate":"12/19/2017","endDate":"01/01/2018","phase":"4","class":"future"},{"label":"Sprint 28","field":"sprint28","startDate":"01/02/2018","endDate":"01/15/2018","phase":"4","class":"future"},{"label":"Sprint 29","field":"sprint29","startDate":"01/16/2018","endDate":"01/29/2018","phase":"4","class":"future"},{"label":"Sprint 30","field":"sprint30","startDate":"01/30/2018","endDate":"02/12/2018","phase":"5","class":"future"},{"label":"Sprint 31","field":"sprint31","startDate":"02/13/2018","endDate":"02/26/2018","phase":"5","class":"future"},{"label":"Sprint 32","field":"sprint32","startDate":"02/27/2018","endDate":"03/12/2018","phase":"5","class":"future"}]
+module.exports = [{"label":"Sprint 18","field":"sprint18","startDate":"08/14/2017","endDate":"08/28/2017","phase":"1","class":"past"},{"label":"Sprint 19","field":"sprint19","startDate":"08/29/2017","endDate":"09/11/2017","phase":"1","class":"past"},{"label":"Sprint 20","field":"sprint20","startDate":"09/12/2017","endDate":"09/25/2017","phase":"1","class":"past"},{"label":"Sprint 21","field":"sprint21","startDate":"09/26/2017","endDate":"10/09/2017","phase":"2","class":"past"},{"label":"Sprint 22","field":"sprint22","startDate":"10/10/2017","endDate":"10/23/2017","phase":"2","class":"current"},{"label":"Sprint 23","field":"sprint23","startDate":"10/24/2017","endDate":"11/06/2017","phase":"2","class":"future"},{"label":"Sprint 24","field":"sprint24","startDate":"11/07/2017","endDate":"11/20/2017","phase":"3","class":"future"},{"label":"Sprint 25","field":"sprint25","startDate":"11/21/2017","endDate":"12/04/2017","phase":"3","class":"future"},{"label":"Sprint 26","field":"sprint26","startDate":"12/05/2017","endDate":"12/18/2017","phase":"3","class":"future"},{"label":"Sprint 27","field":"sprint27","startDate":"12/19/2017","endDate":"01/01/2018","phase":"4","class":"future"},{"label":"Sprint 28","field":"sprint28","startDate":"01/02/2018","endDate":"01/15/2018","phase":"4","class":"future"},{"label":"Sprint 29","field":"sprint29","startDate":"01/16/2018","endDate":"01/29/2018","phase":"4","class":"future"},{"label":"Sprint 30","field":"sprint30","startDate":"01/30/2018","endDate":"02/12/2018","phase":"5","class":"future"},{"label":"Sprint 31","field":"sprint31","startDate":"02/13/2018","endDate":"02/26/2018","phase":"5","class":"future"},{"label":"Sprint 32","field":"sprint32","startDate":"02/27/2018","endDate":"03/12/2018","phase":"5","class":"future"}]
 
 /***/ }),
 /* 130 */
@@ -46278,7 +46278,8 @@ module.exports = {
           blockers: 0,
           pushed: 0,
           lost: 0,
-          incidents: 0
+          incidents: 0,
+          status: {}
         },
         project: {
           tasks: 0,
@@ -46287,8 +46288,10 @@ module.exports = {
           blockers: 0,
           pushed: 0,
           lost: 0,
-          incidents: 0
-        }
+          incidents: 0,
+          status: {}
+        },
+        team: {}
       },
       subtotals: []
     };
@@ -46310,15 +46313,51 @@ module.exports = {
         hours: {
           dev: 0,
           qa: 0
-        }
+        },
+        status: {}
       };
     });
 
+    var assignee = '';
     data.forEach(function (row) {
+
+      // Build Assignee Data
+      assignee = row.assignee.replace(/[^\w]/g, '_');
+      status = row.status.replace(/[^\w]/g, '_');
+
+      if (!aggregates.totals.project.status.hasOwnProperty(status)) {
+        aggregates.totals.project.status[status] = 0;
+      }
+      aggregates.totals.project.status[status]++;
+
+      if (!aggregates.totals.team.hasOwnProperty(assignee)) {
+        // Create new assignee entry
+        aggregates.totals.team[assignee] = {
+          tasks: 0,
+          completed: 0,
+          estimate: 0,
+          remaining: 0,
+          timespent: 0,
+          spilled: 0,
+          available: 50,
+          status: {}
+        };
+      }
+
+      aggregates.totals.team[assignee].tasks++;
+      aggregates.totals.team[assignee].timespent += row.timespent;
+      aggregates.totals.team[assignee].remaining += row.remaining;
+      aggregates.totals.team[assignee].estimate += parseInt(row.estimate, 10) || 0;
+
+      // Get Completed #
+      if (row.status && row.status === 'Done') {
+        aggregates.totals.team[assignee].completed++;
+      }
 
       // Get Pushed #
       if (row.pushed && row.pushed > 0) {
         aggregates.totals.project.pushed++;
+        aggregates.totals.team[assignee].spilled++;
       }
 
       // Get risk
@@ -46343,22 +46382,37 @@ module.exports = {
           if (row.priority === "Blocker") {
             aggregates.totals.sprint.blockers++;
           }
+
+          // Status
+          if (!aggregates.totals.sprint.status.hasOwnProperty(status)) {
+            aggregates.totals.sprint.status[status] = 0;
+          }
+          aggregates.totals.sprint.status[status]++;
         }
 
         // Get Sprint totals
         if (row.sprint && row.sprint.current) {
           if (aggregates.subtotals.hasOwnProperty('sprint' + row.sprint.current)) {
             aggregates.subtotals['sprint' + row.sprint.current].tasks++;
-            aggregates.subtotals['sprint' + row.sprint.current].estimate += !isNaN(row.estimate) ? row.estimate : 0;
+            aggregates.subtotals['sprint' + row.sprint.current].estimate += !isNaN(row.estimate) ? parseInt(row.estimate, 10) : 0;
             aggregates.subtotals['sprint' + row.sprint.current].remaining += row.remaining;
             aggregates.subtotals['sprint' + row.sprint.current].hours.dev = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimate.dev);
             aggregates.subtotals['sprint' + row.sprint.current].hours.qa = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimate.qa);
+
+            if (!aggregates.subtotals['sprint' + row.sprint.current].status.hasOwnProperty(status)) {
+              aggregates.subtotals['sprint' + row.sprint.current].status[status] = 0;
+            }
+            aggregates.subtotals['sprint' + row.sprint.current].status[status]++;
           }
         }
 
         // Get Sprint-totals
         sprints.forEach(function (sprint) {
           if (row.hasOwnProperty(sprint.field) && row[sprint.field] === '-') {
+
+            if (!aggregates.subtotals['sprint' + row.sprint.current].status.hasOwnProperty(status)) {
+              aggregates.subtotals[sprint.field].status[status] = 0;
+            }
 
             aggregates.subtotals[sprint.field].tasks++;
             aggregates.subtotals[sprint.field].spilled++;
@@ -46405,6 +46459,7 @@ module.exports = {
   },
   getCurrentMood: function getCurrentMood(aggregates) {
     var rating = 0;
+    var mood = ':|';
 
     /*
     aggregages.risk
@@ -46453,14 +46508,18 @@ module.exports = {
 
     // Moods
     if (rating <= 5) {
-      aggregates.mood = ":)";
+      mood = ":)";
     } else if (rating > 5 && rating <= 10) {
-      aggregates.mood = ":|";
+      mood = ":|";
     } else if (rating > 15 && rating <= 20) {
-      aggregates.mood = ":/";
+      mood = ":/";
     } else if (rating > 25) {
-      aggregates.mood = ":(";
+      mood = ":(";
+    } else {
+      mood = ":|";
     }
+
+    return mood;
   }
 };
 
@@ -46560,7 +46619,7 @@ module.exports = {
 
     var trClass = task.priority.toLowerCase().indexOf('block') > -1 ? 'blocker' : '';
 
-    var tr = markobj('<tr id="' + task.key + '" \n      data-sprint="' + task.sprint.current + '" \n      data-assignee="' + task.assignee + '"\n      class="' + trClass + '"></tr>');
+    var tr = markobj('<tr id="' + task.key + '"\n      data-sprint="' + task.sprint.current + '"\n      data-assignee="' + task.assignee + '"\n      class="' + trClass + '"></tr>');
 
     tbody.appendChild(tr);
 
@@ -46590,6 +46649,7 @@ module.exports = {
         if (item.phase && item.class.indexOf('phase') === -1) {
           item.class += ' phase' + item.phase;
         }
+
         td.setAttribute('class', item.class);
       }
 
@@ -46612,6 +46672,7 @@ module.exports = {
 
           if (value === "-") {
             td.setAttribute('class', item.class + ' pushed');
+            td.setAttribute('title', 'Pushed');
           } else if (value === "unassigned") {
             td.setAttribute('class', item.class + ' dimmed');
           }
@@ -46828,7 +46889,7 @@ var charts = __webpack_require__(298);
 module.exports = {
 
   /**
-   * Return an array of colors matching the correct length 
+   * Return an array of colors matching the correct length
    *
    */
   getColors: function getColors(length) {
@@ -46846,8 +46907,9 @@ module.exports = {
 
     var datasets = [];
     var data = [];
-    var subs = aggregates.subtotals;
     var context = config.name;
+
+    var sources = [{ name: 'subs', source: aggregates.subtotals }, { name: 'team', source: aggregates.totals.team }];
 
     var currentSprint = parseInt(aggregates.sprint, 10);
 
@@ -46856,25 +46918,40 @@ module.exports = {
     var labels = [];
     var colors = void 0;
     var sprint = void 0;
+    var source = void 0;
 
     // Create a container to hold the chart
-    this.createChartContainer(context);
+    this.createChartContainer(context, config.class);
 
     // Create data arrays
     config.datasets.forEach(function (ds) {
       series = [];
       labels = [];
-      for (var key in subs) {
-        sprint = subs[key];
-        if (sprint && sprint.hasOwnProperty(ds.value)) {
-          if (parseInt(sprint.sprint, 10) <= currentSprint) {
-            series.push(sprint[ds.value]);
-            labels.push('Sprint ' + sprint.sprint);
+
+      source = sources.filter(function (itm) {
+        return itm.name === ds.source;
+      });
+
+      if (source[0].source) {
+        for (var key in source[0].source) {
+          sprint = source[0].source[key];
+          if (sprint && sprint.hasOwnProperty(ds.value)) {
+            if (ds.source === 'subs') {
+              if (parseInt(sprint.sprint, 10) <= currentSprint) {
+                series.push(sprint[ds.value]);
+                labels.push('Sprint ' + sprint.sprint);
+              }
+            } else {
+              series.push(sprint[ds.value]);
+              labels.push(key.replace(/\_/g, ' '));
+            }
           }
         }
       }
       data.push(series);
     });
+
+    // console.log(data);
 
     // Create chart datasets
     config.datasets.forEach(function (ds, idx) {
@@ -46935,13 +47012,13 @@ module.exports = {
    *
    *
    */
-  createChartContainer: function createChartContainer(chart) {
+  createChartContainer: function createChartContainer(chart, cls) {
     var canvas = document.createElement('canvas');
     canvas.setAttribute('id', chart);
     canvas.setAttribute('width', '400');
     canvas.setAttribute('height', '400');
     var div = document.createElement('div');
-    div.setAttribute('class', 'chart-box');
+    div.setAttribute('class', 'chart-box ' + cls);
     div.appendChild(canvas);
     var target = document.querySelector('#charts');
     target.appendChild(div);
@@ -46965,7 +47042,7 @@ module.exports = {
 /* 298 */
 /***/ (function(module, exports) {
 
-module.exports = [{"name":"spilled","title":"Spilled Stories by Sprint","type":"doughnut","datasets":[{"label":"Stories","source":"aggregates.subtotals","value":"spilled","text":"Sprint ${sprint.sprint}"}]},{"name":"tasks","title":"Tasks by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Tasks","stack":"Stack 0","source":"aggregates.subtotals","value":"tasks","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Spilled","stack":"Stack 0","source":"aggregates.subtotals","value":"spilled","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"aggregates.subtotals","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"aggregates.subtotals","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]}]
+module.exports = [{"name":"spilled","title":"Spilled Stories by Sprint","type":"doughnut","datasets":[{"label":"Stories","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}"}]},{"name":"tasks","title":"Tasks by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Scheduled","stack":"Stack 0","source":"subs","value":"tasks","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Spilled","stack":"Stack 0","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate2","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"committed-vs-available","title":"Committed Hours vs. Available Hours","type":"horizontalBar","stacked":true,"class":"doublewide","datasets":[{"label":"Available","stack":"Stack 0","source":"team","value":"available","text":"Sprint ${sprint.sprint}","colors":"#ec9998"},{"label":"Committed","stack":"Stack 0","source":"team","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"}]}]
 
 /***/ }),
 /* 299 */
@@ -47015,14 +47092,14 @@ module.exports = {
     var lastDate = moment().format();
     sprints.forEach(function (sprint) {
       if (sprint.class.indexOf('current') > -1) {
-        aggregates.daysInSprint = moment(sprint.endDate).diff(moment(), 'days');
+        aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
       }
       if (parseInt(sprint.phase, 10) === currentPhase) {
         lastDate = sprint.endDate;
       }
     });
 
-    aggregates.daysInPhase = moment(lastDate).diff(moment(), 'days');
+    aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
 
     return aggregates;
   },

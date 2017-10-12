@@ -3,7 +3,7 @@ nav {
   background-color: $grey-70;
   color: $white;
   height: 4vh;
-  padding: 1vh 1em 0;
+  padding: 1vh 1em 1px;
   position: fixed;
   top: 0;
   width: 100%;
@@ -25,22 +25,22 @@ nav {
       list-style: none;
       margin: 0 .25em 0 0;
       padding: 0;
-      
+
       a {
         border: 1px solid $grey-15;
         color: $white;
         padding: .5em 1em;
-        
+
         &.active,
         &:hover {
           background-color: $grey-15;
           color: #333;
           text-decoration: none;
         }
-        
+
       }
-      
+
     }
   }
-  
+
 }

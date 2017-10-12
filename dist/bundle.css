@@ -20,9 +20,10 @@ section {
   display: none;
   height: 100%;
   overflow: auto;
+  padding: .25%;
   position: fixed;
   top: 5vh;
-  width: 100%; }
+  width: 99.5%; }
   section.active {
     display: block; }
 
@@ -31,7 +32,7 @@ nav {
   background-color: #333333;
   color: #ffffff;
   height: 4vh;
-  padding: 1vh 1em 0;
+  padding: 1vh 1em 1px;
   position: fixed;
   top: 0;
   width: 100%;
@@ -364,9 +365,16 @@ section > div.wrapper {
 section {
   clear: both; }
   section .chart-box {
+    background-color: #222222;
     margin: .5%;
-    padding: 0;
+    padding: .5%;
     float: left;
-    width: 24%; }
+    width: 23%; }
+    section .chart-box.doublewide {
+      width: 48%; }
+    section .chart-box.threewide {
+      width: 73%; }
+    section .chart-box.fourwide {
+      width: 73%; }
 
 /*# sourceMappingURL=bundle.css.map*/

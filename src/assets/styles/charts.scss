@@ -1,16 +1,29 @@
 section {
   clear: both;
-  
+
   .chart-box {
+    background-color: $grey-80;
     margin: .5%;
-    padding: 0;
+    padding: .5%;
     float: left;
-    width: 24%;
-    
+    width: 23%;
+
+    &.doublewide {
+      width: 48%;
+    }
+
+    &.threewide {
+      width: 73%;
+    }
+
+    &.fourwide {
+      width: 73%;
+    }
+
     canvas {
     }
   }
-  
-  
-  
+
+
+
 }
