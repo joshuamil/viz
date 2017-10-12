@@ -43,7 +43,7 @@ module.exports = {
       row.priority = task.fields.priority.name;
       row.description = task.fields.summary;
       row.status = task.fields.status.name;
-      row.assignee = (!task.fields.assignee) ? '' : task.fields.assignee.displayName;
+      row.assignee = (!task.fields.assignee) ? 'unassigned' : task.fields.assignee.displayName;
       
       row.numtasks = 1;
       row.debt = '';
@@ -139,7 +139,7 @@ module.exports = {
     let conf = [];
     config.forEach( (item) => {
       conf.push(item);
-      if (item.label.indexOf('Sprint') === 0) {
+      if (item.label.indexOf('Status') === 0) {
         sprints.forEach( (sprint) => {
           conf.push(sprint);
         });

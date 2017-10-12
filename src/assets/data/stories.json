@@ -1,0 +1,33 @@
+[
+  {
+    "key": "",
+    "epic": "",
+    "description": "",
+    "notes": "",
+    "priority": "",
+    "estimate": "",
+    "timespent": [
+      {
+        "date": "",
+        "duration": "",
+        "user": ""
+      }
+    ],
+    "sprint": {
+      "current": 0,
+      "history": [0]
+    },
+    "status": "",
+    "risk": "",
+    "debt": "",
+    "pushed": 0,
+    "assignee": "",
+    "comments": [
+      {
+        "comment": "",
+        "date": "",
+        "author": ""
+      }
+    ]
+  }
+]

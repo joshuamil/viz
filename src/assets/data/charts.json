@@ -1,0 +1,55 @@
+[
+  {
+    "name": "spilled",
+    "title": "Spilled Stories by Sprint",
+    "type": "doughnut",
+    "datasets": [{
+      "label": "Stories",
+      "source": "aggregates.subtotals",
+      "value": "spilled",
+      "text": "Sprint ${sprint.sprint}"
+    }]
+  },
+  {
+    "name": "tasks",
+    "title": "Tasks by Sprint",
+    "type": "bar",
+    "stacked": true,
+    "datasets": [{
+      "label": "Tasks",
+      "stack": "Stack 0",
+      "source": "aggregates.subtotals",
+      "value": "tasks",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#9ec4ea"
+    },{
+      "label": "Spilled",
+      "stack": "Stack 0",
+      "source": "aggregates.subtotals",
+      "value": "spilled",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#ec9998"
+    }]
+  },
+  {
+    "name": "estimate",
+    "title": "Estimated Velocity by Sprint",
+    "type": "bar",
+    "stacked": true,
+    "datasets": [{
+      "label": "Estimated",
+      "stack": "Stack 0",
+      "source": "aggregates.subtotals",
+      "value": "estimate",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#9ec4ea"
+    },{
+      "label": "Remaining",
+      "stack": "Stack 0",
+      "source": "aggregates.subtotals",
+      "value": "remaining",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#ec9998"
+    }]
+  }
+]

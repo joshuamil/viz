@@ -4,57 +4,62 @@
     "field": "priority",
     "class": "priority @value",
     "hidden": true,
-    "title": true
+    "title": true,
+    "editable": false
   },
   {
     "label": "Epic",
     "field": "epic",
-    "class": "nowrap"
-  },
-  {
-    "label": "Description",
-    "field": "description",
-    "class": "left wide"
+    "class": "nowrap",
+    "editable": false
   },
   {
     "label": "Identifier",
     "field": "key",
     "class": "nowrap",
-    "link": "https://daymon.atlassian.net/browse/@value"
+    "link": "https://daymon.atlassian.net/browse/@value",
+    "editable": false
   },
   {
-    "label": "Estimate",
-    "field": "estimate",
-    "class": ""
-  },
-  {
-    "label": "Sprint",
-    "field": "sprint.current",
-    "class": ""
-  },
-  {
-    "label": "Status",
-    "field": "status",
-    "class": "status @value"
-  },
-  {
-    "label": "Risk",
-    "field": "risk",
-    "class": "risk"
-  },
-  {
-    "label": "Debt",
-    "field": "debt",
-    "class": "debt grey-10"
-  },
-  {
-    "label": "Pushed",
-    "field": "pushed",
-    "class": "pushed grey-10"
+    "label": "Description",
+    "field": "description",
+    "class": "left wide",
+    "editable": false
   },
   {
     "label": "Assignee",
     "field": "assignee",
-    "class": "left"
+    "class": "left",
+    "editable": false
+  },
+  {
+    "label": "Risk",
+    "field": "risk",
+    "class": "risk",
+    "editable": true
+  },
+  {
+    "label": "Debt",
+    "field": "debt",
+    "class": "debt",
+    "editable": true
+  },
+  {
+    "label": "Estimate",
+    "field": "estimate",
+    "class": "",
+    "editable": false
+  },
+  {
+    "label": "Sprint",
+    "field": "sprint.current",
+    "class": "",
+    "editable": false
+  },
+  {
+    "label": "Status",
+    "field": "status",
+    "class": "status @value",
+    "editable": false
   }
 ]

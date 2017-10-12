@@ -19,7 +19,7 @@ module.exports = {
     const sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
     
     headers.forEach( (el) => {
-      if (el.innerText === "Sprint") {
+      if (el.innerText === "Status") {
         newRow1.appendChild(el);
         sprints.forEach( (sprint) => {
           
@@ -77,18 +77,16 @@ module.exports = {
   renderTable(task, sprints, config, aggregates) {
     
     const tbody = document.querySelector('#release-plan tbody');
-    let tr, td;
+    let td;
     let column = '';
     let value = '';
     
-    tr = document.createElement('tr');
-    tr.setAttribute('id',task.key);
-    tr.setAttribute('data-sprint', task.sprint.current);
-    tr.setAttribute('data-assignee', task.assignee);
+    let trClass = (task.priority.toLowerCase().indexOf('block') > -1) ? 'blocker' : '';
     
-    if (task.priority.toLowerCase().indexOf('block') > -1) {
-      tr.setAttribute('class','blocker');
-    }
+    let tr = markobj(`<tr id="${task.key}" 
+      data-sprint="${task.sprint.current}" 
+      data-assignee="${task.assignee}"
+      class="${trClass}"></tr>`);
     
     tbody.appendChild(tr);
     
@@ -97,6 +95,7 @@ module.exports = {
       column = item.label;
       value = task[item.field];
       
+      // Parse the value if the field is a multi-node path
       if (item.field.indexOf('.') > -1) {
         value = utils.parseValue(item.field,task);
       }
@@ -109,9 +108,10 @@ module.exports = {
         value = '';
       }
       
+      // Set class of the element
       if (item.class.indexOf('@value') > -1) {      
         let cls = value.toLowerCase().replace(/(\s){1,}/ig,'-');
-        td.setAttribute('class',`${cls} ${item.class}`);
+        td.setAttribute('class', cls);
       } else {
         if (item.phase && item.class.indexOf('phase') === -1) {
           item.class += ` phase${item.phase}`;
@@ -119,6 +119,7 @@ module.exports = {
         td.setAttribute('class', item.class);
       }
       
+      // Find the value
       if (typeof value !== "object") {
         
         if (item.title) {
@@ -139,6 +140,8 @@ module.exports = {
           
           if (value === "-") {
             td.setAttribute('class', `${item.class} pushed`);
+          } else if (value === "unassigned") {
+            td.setAttribute('class', `${item.class} dimmed`);
           }
           
           if (task.sprint && task.sprint.current && value !== '-' && column.indexOf('Sprint ') > -1) {
@@ -161,7 +164,7 @@ module.exports = {
     let sprints1,sprints2,sprints3,sprints4,sprints5,sprints6,sprints7,sprints8,blanks;
     const table = document.querySelector('table');
     
-    blanks = '<tr><td colspan="6" class="empty label"></td>';
+    blanks = '<tr><td colspan="10" class="empty label"></td>';
     
     // Loop through the aggregate values
     for (let key in aggregates.subtotals) {
@@ -190,16 +193,16 @@ module.exports = {
     
     // Build out the footer
     let footerRows = markobj(`<tfoot>
-      <tr><td colspan="6" class="label">Total story points per Sprint</td>${sprints1}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="6" class="label">Total Dev Hours per Sprint</td>${sprints2}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="6" class="label">Total QA Hours per Sprint</td>${sprints3}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="6" class="label">Stories Spilled across Sprints</td>${sprints4}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Total story points per Sprint</td>${sprints1}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Total Dev Hours per Sprint</td>${sprints2}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Total QA Hours per Sprint</td>${sprints3}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Stories Spilled across Sprints</td>${sprints4}<td colspan="5" class="plain"></td></tr>
       ${blanks}
-      <tr><td colspan="6" class="label">Total Stories by Sprint</td>${sprints5}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="6" class="label">Target Completion Percentage</td>${sprints6}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Total Stories by Sprint</td>${sprints5}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Target Completion Percentage</td>${sprints6}<td colspan="5" class="plain"></td></tr>
       ${blanks}
-      <tr><td colspan="6" class="label">Sprint Stories Completed</td>${sprints7}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="6" class="label">Sprint Completion Percentage</td>${sprints8}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Sprint Stories Completed</td>${sprints7}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="10" class="label">Sprint Completion Percentage</td>${sprints8}<td colspan="5" class="plain"></td></tr>
     </tfoot>`);
     
     // Append the footer to the table

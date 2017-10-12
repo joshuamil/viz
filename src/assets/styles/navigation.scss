@@ -2,8 +2,11 @@
 nav {
   background-color: $grey-70;
   color: $white;
-  padding: 1em 1em 1.25em 1em;
+  height: 4vh;
+  padding: 1vh 1em 0;
   position: fixed;
+  top: 0;
+  width: 100%;
   z-index: 99;
 
   h1 {

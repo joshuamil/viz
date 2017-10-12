@@ -1,13 +1,13 @@
 /* Table Styles */
 table {
   border-collapse: collapse;
-  border: 1px solid $grey-15;
+  border: 0;
   margin: 0;
   padding: 0;
-  width: 120%;
+  width: 100%;
   
   th, td {
-    border: 1px solid $grey-10;
+    color: $white;
     margin: 0;
     padding: .5em;
     position: relative;
@@ -24,30 +24,35 @@ table {
     &.wide {
       width: 20%;
     }
-
-    &.current {
-      border-right: 2px solid $grey-15;
-    }
-    
-    &.phase {
-      border-bottom: 1px solid $grey-10;
-    }
     
     /* Phases */
+    &.phase {
+      border-bottom: 1px solid $grey-10;
+      color: $grey-70;
+    }
     &.phase1 {
-      background-color: $green-lt;
+      background-color: $blue-lt;
+      border-right-color: $blue-lt;
     }
     &.phase2 {
-      background-color: $blue-lt;
+      background-color: $green-lt;
+      border-right-color: $green-lt;
     }
     &.phase3 {
       background-color: $gold-lt;
+      border-right-color: $gold-lt;
     }
     &.phase4 {
       background-color: $orange-lt;
+      border-right-color: $orange-lt;
     }
     &.phase5 {
       background-color: $red-lt;
+      border-right-color: $red-lt;
+    }
+
+    &.current {
+      border-right: 2px solid $grey-70;
     }
     
   }
@@ -55,42 +60,106 @@ table {
   tbody {
     
     tr {
-      &:hover {
-        background-color: $yellow-pale;
-        border: 2px solid $grey-15;
-        cursor: pointer;
-      }
       
       &.blocker {
-        background-color: $red-lt;
-        
         &:hover {
-          background-color: $high;
+          background-color: $red-md;
+        }
+        td {
+          color: $red-md;
+          &.risk {
+            color: $red-dk;
+          }
+        }
+      }
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, .9);
+        cursor: pointer;
+        
+        td {
+          color: $grey-70;
+          
+          a {
+            color: $red-dk;
+          }
+        
+          &.phase1 {
+            background-color: $blue-md;
+          }
+          &.phase2 {
+            background-color: $green-md;
+          }
+          &.phase3 {
+            background-color: $gold-md;
+          }
+          &.phase4 {
+            background-color: $orange-md;
+          }
+          &.phase5 {
+            background-color: $red-md;
+          }
+          &.grey-10 {
+            background-color: $grey-10;
+          }
+          &.grey-20 {
+            background-color: $grey-15;
+          }
+          &.risk {
+            //background-color: $gold-dk;
+          }
+          &.merged {
+            background-color: $blue-dk;
+          }
+          &.in-progress {
+            background-color: $orange-dk;
+          }
+          &.to-do {
+            background-color: $red-dk;
+          }
+          &.done {
+            background-color: $green-dk;
+          }
+          &.in-review {
+            background-color: $gold-dk;
+          }
+          &.ready-for-test {
+            background-color: $blue-dk;
+          }
         }
         
       }
       
-      
       td {
+        border-right: 1px solid $grey-60;
         
         /* Status */
         &.status {
           white-space: nowrap;
         }
+        &.merged {
+          background-color: $merged;
+          color: $grey-70;
+        }
         &.in-progress {
           background-color: $inprogress;
+          color: $grey-70;
         }
         &.to-do {
           background-color: $todo;
+          color: $grey-70;
         }
         &.done {
           background-color: $done;
+          color: $grey-70;
         }
         &.in-review {
           background-color: $inreview;
+          color: $grey-70;
         }
         &.ready-for-test {
           background-color: $readyfortest;
+          color: $grey-70;
         }
         
         /* Priorities */
@@ -153,14 +222,19 @@ table {
           white-space: nowrap;
         }
         
+        &.dimmed {
+          color: $grey-30;
+          font-style: italic;
+        }
+        
         &.risk {
-          background-color: $yellow-md;
+          //background-color: $yellow-md;
           white-space: nowrap;
         }
         
         &.active,
         &.pushed {
-          color: $grey-30;
+          color: $grey-70;
         }
         
         &.pushed::after {
@@ -185,6 +259,10 @@ table {
           width: 100%;
         }
         
+        a {
+          color: $gold-md;
+        }
+        
       }
       
     }
@@ -195,8 +273,10 @@ table {
   thead {
     
     th {
-      background-color: $grey-05;
-      border-bottom: 3px solid $grey-15;
+      background-color: $grey-70;
+      color: $grey-05;
+      border-bottom: 3px solid $grey-50;
+      font-weight: normal;
       vertical-align: bottom;
       
       /* Cell-level Styles */
@@ -206,6 +286,7 @@ table {
       }
       &.dates {
         background-color: $grey-07;
+        color: $grey-70;
         font-size: .9em;
       }
       
@@ -218,8 +299,9 @@ table {
     tr {
       
       td {
-        border-color: $grey-15;
-        border-top: 2px solid $grey-15;
+        border-color: $grey-70;
+        border-top: 2px solid $grey-70;
+        color: $grey-70;
         font-size: 1.2em;
         font-weight: bold;
         padding: 1em .5em;
@@ -276,8 +358,8 @@ table {
         }
 
         &.label {
-          border-bottom: 0;
-          border-top: 0;
+          border: 0;
+          color: $white;
           font-weight: bold;
           text-align: right;
         }
@@ -287,8 +369,9 @@ table {
         }
 
         &.empty {
-          border-left-color: $grey-10;
-          border-right-color: $grey-10;
+          background-color: $grey-70;
+          border-left-color: $grey-70;
+          border-right-color: $grey-70;
         }
 
         &.warning {
@@ -296,16 +379,16 @@ table {
         }
 
         &.white {
-          background-color: $white;
+          background-color: rgba(255, 255, 255, .9);
         }
 
         &.bad {
-          background-color: $bad;
+          background-color: $red-dk;
           color: $white;
         }
 
         &.good {
-          background-color: $good;
+          background-color: $green-md;
           color: $white;
         }
         
