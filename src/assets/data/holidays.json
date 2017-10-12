@@ -1,0 +1,44 @@
+[
+  {
+    "name": "PTO",
+    "date": "2017-11-12",
+    "hours": 5,
+    "teams": [],
+    "members": ["Alekh"]
+  },
+  {
+    "name": "Thanksgiving Day",
+    "date": "2017-11-23",
+    "hours": 8,
+    "teams": ["Design", "Eagle", "Misc", "QA"],
+    "members": []
+  },
+  {
+    "name": "Christmas Eve",
+    "date": "2017-12-24",
+    "hours": 8,
+    "teams": ["Design", "Eagle", "Misc", "Offshore", "QA"],
+    "members": []
+  },
+  {
+    "name": "Christmas Day",
+    "date": "2017-12-25",
+    "hours": 8,
+    "teams": ["Design", "Eagle", "Misc", "Offshore", "QA"],
+    "members": []
+  },
+  {
+    "name": "New Year's Eve",
+    "date": "2017-12-31",
+    "hours": 8,
+    "teams": ["Design", "Eagle", "Misc", "Offshore", "QA"],
+    "members": []
+  },
+  {
+    "name": "New Year's Day",
+    "date": "2018-01-01",
+    "hours": 8,
+    "teams": ["Design", "Eagle", "Misc", "Offshore", "QA"],
+    "members": []
+  }
+]

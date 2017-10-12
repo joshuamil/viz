@@ -1,0 +1,48 @@
+section {
+
+  table {
+    tbody {
+      tr {
+
+        &.spacer {
+          &:hover {
+            background-color: $grey-70;
+            cursor: default;
+          }
+        }
+
+        &.subtotal {
+          &:hover {
+            td {
+              &.label {
+                color: $white;
+              }
+            }
+          }
+          td {
+            background-color: rgba(255, 255, 255, .2);
+            height: 3em;
+            &.label {
+              background-color: $grey-70;
+              text-align: right;
+            }
+          }
+        }
+
+        td {
+          &.pto {
+            color: $gold-dk;
+          }
+          &.total {
+            background-color: rgba(255, 255, 255, .4);
+          }
+          &.subtotal {
+            background-color: rgba(255, 255, 255, .2);
+          }
+        }
+
+      }
+    }
+  }
+
+}

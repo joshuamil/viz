@@ -377,4 +377,27 @@ section {
     section .chart-box.fourwide {
       width: 73%; }
 
+section table tbody tr.spacer:hover {
+  background-color: #333333;
+  cursor: default; }
+
+section table tbody tr.subtotal:hover td.label {
+  color: #ffffff; }
+
+section table tbody tr.subtotal td {
+  background-color: rgba(255, 255, 255, 0.2);
+  height: 3em; }
+  section table tbody tr.subtotal td.label {
+    background-color: #333333;
+    text-align: right; }
+
+section table tbody tr td.pto {
+  color: #ffda5c; }
+
+section table tbody tr td.total {
+  background-color: rgba(255, 255, 255, 0.4); }
+
+section table tbody tr td.subtotal {
+  background-color: rgba(255, 255, 255, 0.2); }
+
 /*# sourceMappingURL=bundle.css.map*/

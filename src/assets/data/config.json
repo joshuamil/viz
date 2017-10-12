@@ -3,8 +3,8 @@
   "sprintsPerPhase": 3,
   "hoursPerPoint": 1,
   "estimate": {
-    "dev": 0.66,
-    "qa": 0.34
+    "dev": 0.999,
+    "qa": 0.001
   },
   "risk": {
     "blocker": 2,

@@ -1,4 +1,4 @@
-let utils = require('./utils.js');
+let parse = require('./parse.js');
 let markobj = require('markobj');
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
         sprints.forEach( (sprint) => {
 
           // Populate Phase labels
-          if (!utils.arrayContains(phases, sprint.phase)) {
+          if (!parse.arrayContains(phases, sprint.phase)) {
 
             current = '';
             if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
@@ -52,7 +52,7 @@ module.exports = {
           th3.appendChild(document.createTextNode(dates));
 
           // Append rows to the header
-          if (!utils.arrayContains(phases, sprint.phase)) {
+          if (!parse.arrayContains(phases, sprint.phase)) {
             newRow1.appendChild(th1);
             phases.push(sprint.phase);
           }
@@ -97,7 +97,7 @@ module.exports = {
 
       // Parse the value if the field is a multi-node path
       if (item.field.indexOf('.') > -1) {
-        value = utils.parseValue(item.field,task);
+        value = parse.parseValue(item.field,task);
       }
 
       // Create a new cell
@@ -132,7 +132,7 @@ module.exports = {
           td.setAttribute('data-value', value);
 
         } else if (item.link && item.link !== '') {
-          let a = utils.parseLink(value, item.link);
+          let a = parse.parseLink(value, item.link);
           td.appendChild(a);
 
         } else if (value && value !== '') {

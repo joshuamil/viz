@@ -1,7 +1,7 @@
-let utils = require('./utils.js');
+let parse = require('./parse.js');
 
 module.exports = {
-  
+
   displayCurrent(sprint) {
     this.displayNone();
     const future = document.querySelectorAll('.future');
@@ -13,7 +13,7 @@ module.exports = {
       el.style.display = 'table-row';
     });
   },
-  
+
   displayMe() {
     const me = 'Joshua Miller';
     const theirs = document.querySelectorAll('table tbody tr');
@@ -25,7 +25,7 @@ module.exports = {
       el.style.display = 'table-row';
     });
   },
-  
+
   displayAll() {
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (el) => {
@@ -36,14 +36,14 @@ module.exports = {
       el.style.display = 'table-cell';
     });
   },
-  
+
   displayNone() {
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (el) => {
       el.style.display = 'none';
     });
   },
-  
+
   tabs(target) {
     const sections = document.querySelectorAll('section');
     sections.forEach( (sec) => {
@@ -53,22 +53,22 @@ module.exports = {
       }
     });
   },
-  
+
   setMenuStatus(element, nav) {
     nav.forEach( (el) => {
       el.classList.remove('active');
     });
     element.classList.add('active');
   },
-  
+
   /* Assign Click Actions to Buttons */
   navigation(sprint) {
-    
+
     const nav = document.querySelectorAll('nav ul li a');
     nav.forEach( (button) => {
       button.addEventListener('click', (event) => {
         const element = event.target;
-        const id = element.getAttribute('href').replace('#',''); 
+        const id = element.getAttribute('href').replace('#','');
         if (id === 'current') {
           this.displayCurrent(sprint);
         } else if (id === 'me') {
@@ -81,7 +81,7 @@ module.exports = {
         this.setMenuStatus(element, nav);
       });
     });
-    
+
   },
-  
+
 };
