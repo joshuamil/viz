@@ -2,29 +2,29 @@
 table {
   border-collapse: collapse;
   border: 0;
-  margin: 0;
+  margin: 0 0 7vh 0;
   padding: 0;
   width: 100%;
-  
+
   th, td {
     color: $white;
     margin: 0;
     padding: .5em;
     position: relative;
     text-align: center;
-    
+
     &.left {
       text-align: left;
     }
-    
+
     &.nowrap {
       white-space: nowrap;
     }
-    
+
     &.wide {
       width: 20%;
     }
-    
+
     /* Phases */
     &.phase {
       border-bottom: 1px solid $grey-10;
@@ -54,17 +54,14 @@ table {
     &.current {
       border-right: 2px solid $grey-70;
     }
-    
+
   }
-  
+
   tbody {
-    
+
     tr {
-      
+
       &.blocker {
-        &:hover {
-          background-color: $red-md;
-        }
         td {
           color: $red-md;
           &.risk {
@@ -72,18 +69,17 @@ table {
           }
         }
       }
-      
+
       &:hover {
-        background-color: rgba(255, 255, 255, .9);
+        background-color: rgba(0, 0, 0, .2);
         cursor: pointer;
-        
+
         td {
-          color: $grey-70;
-          
+
           a {
             color: $red-dk;
           }
-        
+
           &.phase1 {
             background-color: $blue-md;
           }
@@ -127,12 +123,12 @@ table {
             background-color: $blue-dk;
           }
         }
-        
+
       }
-      
+
       td {
         border-right: 1px solid $grey-60;
-        
+
         /* Status */
         &.status {
           white-space: nowrap;
@@ -161,82 +157,82 @@ table {
           background-color: $readyfortest;
           color: $grey-70;
         }
-        
+
         /* Priorities */
         &.priority {
           font-size: 1.25em;
           font-weight: bold;
           padding: 0 0 2px 0;
         }
-        
+
         &.blocker {
           color: $blocker;
           &::before {
             content: "\20E0";
           }
         }
-        
+
         &.highest {
           color: $highest;
           &::before {
             content: "\21C8";
           }
         }
-        
+
         &.high {
           color: $high;
           &::before {
             content: "\2191";
           }
         }
-        
+
         &.medium {
           color: $medium;
           &::before {
             content: "-";
           }
         }
-        
+
         &.low {
           color: $low;
           &::before {
             content: "\2193";
           }
         }
-        
+
         &.lowest {
           color: $lowest;
           &::before {
             content: "\21CA";
           }
         }
-        
+
         /* Miscellaneous */
         &.grey-10 {
           background-color: $grey-05;
           white-space: nowrap;
         }
-        
+
         &.grey-20 {
           background-color: $grey-07;
           white-space: nowrap;
         }
-        
+
         &.dimmed {
           color: $grey-30;
           font-style: italic;
         }
-        
+
         &.risk {
           //background-color: $yellow-md;
           white-space: nowrap;
         }
-        
+
         &.active,
         &.pushed {
           color: $grey-70;
         }
-        
+
         &.pushed::after {
           background-color: rgba(0, 0, 0, .05);
           content: " ";
@@ -247,7 +243,7 @@ table {
           height: 100%;
           width: 100%;
         }
-        
+
         &.active::after {
           background-color: rgba(0, 0, 0, .15);
           content: " ";
@@ -258,27 +254,27 @@ table {
           height: 100%;
           width: 100%;
         }
-        
+
         a {
           color: $gold-md;
         }
-        
+
       }
-      
+
     }
-    
+
   }
-  
+
   /* Header Styles */
   thead {
-    
+
     th {
       background-color: $grey-70;
       color: $grey-05;
       border-bottom: 3px solid $grey-50;
       font-weight: normal;
       vertical-align: bottom;
-      
+
       /* Cell-level Styles */
       &.sprint {
         border-bottom: 1px solid $grey-10;
@@ -289,15 +285,15 @@ table {
         color: $grey-70;
         font-size: .9em;
       }
-      
+
     }
   }
-  
+
   /* Footer Styles */
   tfoot {
-    
+
     tr {
-      
+
       td {
         border-color: $grey-70;
         border-top: 2px solid $grey-70;
@@ -305,7 +301,7 @@ table {
         font-size: 1.2em;
         font-weight: bold;
         padding: 1em .5em;
-        
+
         /* Sub-Totals */
         &.subtotal {
           background-color: $grey-05;
@@ -330,15 +326,15 @@ table {
         &.subtotal.phase5 {
           background-color: $red-md;
         }
-        
+
         /* Totals */
         &.total {
           background-color: $grey-07;
-          
+
           &.phase1 {
             background-color: $blue-dk;
           }
-        
+
           &.phase2 {
             background-color: $green-dk;
           }
@@ -354,7 +350,7 @@ table {
           &.phase5 {
             background-color: $red-dk;
           }
-          
+
         }
 
         &.label {
@@ -391,12 +387,12 @@ table {
           background-color: $green-md;
           color: $white;
         }
-        
+
       }
-      
+
     }
 
-    
+
   }
-  
+
 }

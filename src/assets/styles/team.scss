@@ -5,6 +5,8 @@ section {
       tr {
 
         &.spacer {
+          background-color: $grey-70;
+          border-bottom: 1px solid $grey-70;
           &:hover {
             background-color: $grey-70;
             cursor: default;
@@ -21,7 +23,8 @@ section {
           }
           td {
             background-color: rgba(255, 255, 255, .2);
-            height: 3em;
+            font-size: 1.1em;
+            height: 2.2em;
             &.label {
               background-color: $grey-70;
               text-align: right;
@@ -30,6 +33,15 @@ section {
         }
 
         td {
+          &.title {
+            background-color: $grey-70;
+            border-bottom: 2px solid $grey-50;
+            font-size: 1.5em;
+            text-align: left;
+          }
+          &.full {
+            color: $green-dk;
+          }
           &.pto {
             color: $gold-dk;
           }

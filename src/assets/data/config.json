@@ -1,7 +1,7 @@
 {
   "hideFutureSprints": false,
   "sprintsPerPhase": 3,
-  "hoursPerPoint": 1,
+  "hoursPerPoint": 3,
   "estimate": {
     "dev": 0.999,
     "qa": 0.001

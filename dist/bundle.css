@@ -19,6 +19,7 @@ section {
   background-color: #333333;
   display: none;
   height: 100%;
+  margin-bottom: 5vh;
   overflow: auto;
   padding: .25%;
   position: fixed;
@@ -63,7 +64,7 @@ nav {
 table {
   border-collapse: collapse;
   border: 0;
-  margin: 0;
+  margin: 0 0 7vh 0;
   padding: 0;
   width: 100%;
   /* Header Styles */
@@ -101,45 +102,41 @@ table {
       border-right-color: #f5cccb; }
     table th.current, table td.current {
       border-right: 2px solid #333333; }
-  table tbody tr.blocker:hover {
-    background-color: #ec9998; }
   table tbody tr.blocker td {
     color: #ec9998; }
     table tbody tr.blocker td.risk {
       color: #e26563; }
   table tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(0, 0, 0, 0.2);
     cursor: pointer; }
-    table tbody tr:hover td {
-      color: #333333; }
-      table tbody tr:hover td a {
-        color: #e26563; }
-      table tbody tr:hover td.phase1 {
-        background-color: #9ec4ea; }
-      table tbody tr:hover td.phase2 {
-        background-color: #b5d8a6; }
-      table tbody tr:hover td.phase3 {
-        background-color: #ffe694; }
-      table tbody tr:hover td.phase4 {
-        background-color: #facc99; }
-      table tbody tr:hover td.phase5 {
-        background-color: #ec9998; }
-      table tbody tr:hover td.grey-10 {
-        background-color: #cccccc; }
-      table tbody tr:hover td.grey-20 {
-        background-color: #999999; }
-      table tbody tr:hover td.merged {
-        background-color: #6da7de; }
-      table tbody tr:hover td.in-progress {
-        background-color: #f8b365; }
-      table tbody tr:hover td.to-do {
-        background-color: #e26563; }
-      table tbody tr:hover td.done {
-        background-color: #92c57a; }
-      table tbody tr:hover td.in-review {
-        background-color: #ffda5c; }
-      table tbody tr:hover td.ready-for-test {
-        background-color: #6da7de; }
+    table tbody tr:hover td a {
+      color: #e26563; }
+    table tbody tr:hover td.phase1 {
+      background-color: #9ec4ea; }
+    table tbody tr:hover td.phase2 {
+      background-color: #b5d8a6; }
+    table tbody tr:hover td.phase3 {
+      background-color: #ffe694; }
+    table tbody tr:hover td.phase4 {
+      background-color: #facc99; }
+    table tbody tr:hover td.phase5 {
+      background-color: #ec9998; }
+    table tbody tr:hover td.grey-10 {
+      background-color: #cccccc; }
+    table tbody tr:hover td.grey-20 {
+      background-color: #999999; }
+    table tbody tr:hover td.merged {
+      background-color: #6da7de; }
+    table tbody tr:hover td.in-progress {
+      background-color: #f8b365; }
+    table tbody tr:hover td.to-do {
+      background-color: #e26563; }
+    table tbody tr:hover td.done {
+      background-color: #92c57a; }
+    table tbody tr:hover td.in-review {
+      background-color: #ffda5c; }
+    table tbody tr:hover td.ready-for-test {
+      background-color: #6da7de; }
   table tbody tr td {
     border-right: 1px solid #444444;
     /* Status */
@@ -377,19 +374,32 @@ section {
     section .chart-box.fourwide {
       width: 73%; }
 
-section table tbody tr.spacer:hover {
+section table tbody tr.spacer {
   background-color: #333333;
-  cursor: default; }
+  border-bottom: 1px solid #333333; }
+  section table tbody tr.spacer:hover {
+    background-color: #333333;
+    cursor: default; }
 
 section table tbody tr.subtotal:hover td.label {
   color: #ffffff; }
 
 section table tbody tr.subtotal td {
   background-color: rgba(255, 255, 255, 0.2);
-  height: 3em; }
+  font-size: 1.1em;
+  height: 2.2em; }
   section table tbody tr.subtotal td.label {
     background-color: #333333;
     text-align: right; }
+
+section table tbody tr td.title {
+  background-color: #333333;
+  border-bottom: 2px solid #555555;
+  font-size: 1.5em;
+  text-align: left; }
+
+section table tbody tr td.full {
+  color: #92c57a; }
 
 section table tbody tr td.pto {
   color: #ffda5c; }

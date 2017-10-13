@@ -1,7 +1,9 @@
 const markobj = require('markobj');
 const arraySort = require('array-sort');
 const moment = require('moment');
+const numeral = require('numeral');
 
+let config = require('../data/config.json');
 let team = require('../data/team.json');
 let sprints = require('../data/sprints.json');
 let holidays = require('../data/holidays.json');
@@ -124,6 +126,7 @@ module.exports = {
     let cls = '';
     let currentTeam = '';
     let sprintHours
+    let sprintCount = 0;
     let totalMemberHours = 0;
     let sprintData = '';
 
@@ -137,26 +140,28 @@ module.exports = {
     let tr;
     data.members.forEach( (member, idx) => {
 
+      // Construct Sprint Rows
+      sprintCount = 0;
+      totalMemberHours = 0;
+      sprintData = '';
+      for (let key in member.sprints) {
+        cls = (member.sprints[key] < member.hours) ? 'pto' : 'full';
+        totalMemberHours += member.sprints[key];
+        sprintData += `<td class="${cls}">${member.sprints[key]}</td>`;
+        sprintCount++;
+      }
+
       // Add Subtotal Rows as Appropriate
       if (currentTeam !== member.team) {
         if (currentTeam !== '') {
           this.renderSubTotalRow(data, currentTeam);
         }
         currentTeam = member.team;
-      }
-
-      // Construct Sprint Rows
-      totalMemberHours = 0;
-      sprintData = '';
-      for (let key in member.sprints) {
-        cls = (member.sprints[key] < member.hours) ? 'pto' : '';
-        totalMemberHours += member.sprints[key];
-        sprintData += `<td class="${cls}">${member.sprints[key]}</td>`;
+        this.renderTeamNameRow(currentTeam, body, sprintCount);
       }
 
       // Construct each row of the table
       tr = markobj(`<tr id="${member.jiraName}">
-        <td>${member.team}</td>
         <td>${member.name}</td>
         <td>${member.role}</td>
         <td>${member.allocation}</td>
@@ -174,6 +179,13 @@ module.exports = {
       }
 
     });
+  },
+
+
+  renderTeamNameRow(name, target, columns) {
+    const sprintHeaders = markobj(`<tr><td colspan="${(5+columns)}"
+      class="title">${name} Team</td></tr>`);
+    target.appendChild(sprintHeaders);
   },
 
 
@@ -205,21 +217,35 @@ module.exports = {
     let tr;
     let sprintCount = 0;
     let teamTotal = 0;
+    let pointCount = 0;
     let sprintSubTotal = '';
+    let pointSubTotal = '';
+
+
+
     for (let key in sprints) {
+      pointCount = numeral((sprints[key] / config.hoursPerPoint)).format('0.0');
       sprintSubTotal += `<td>${sprints[key]}</td>`;
+      pointSubTotal += `<td>${pointCount}</td>`;
       teamTotal += sprints[key];
       sprintCount++;
     }
 
     tr = markobj(`<tr class="subtotal">
-      <td colspan="5" class="label">Available Team Hours per Sprint</td>
+      <td colspan="4" class="label">Available Team Hours per Sprint</td>
       ${sprintSubTotal}
       <td class="total">${teamTotal}</td>
     </tr>`);
     body.appendChild(tr);
 
-    tr = markobj(`<tr class="spacer"><td colspan="${(6+sprintCount)}">&nbsp;</td></tr>`);
+    tr = markobj(`<tr class="subtotal">
+      <td colspan="4" class="label">Estimated Point Velocity</td>
+      ${pointSubTotal}
+      <td class="total">${teamTotal}</td>
+    </tr>`);
+    body.appendChild(tr);
+
+    tr = markobj(`<tr class="spacer"><td colspan="${(5+sprintCount)}">&nbsp;</td></tr>`);
     body.appendChild(tr);
   }
 
