@@ -1,7 +1,14 @@
-let parse = require('./parse.js');
+'use strict';
+
 let markobj = require('markobj');
 
-module.exports = {
+import Parse from './Parse.js';
+
+export default class Plan {
+
+  constructor() {
+    this.parse = new Parse();
+  }
 
   // Inject Sprints / Phases into Table
   renderHeader(sprints, config, aggregates) {
@@ -24,7 +31,7 @@ module.exports = {
         sprints.forEach( (sprint) => {
 
           // Populate Phase labels
-          if (!parse.arrayContains(phases, sprint.phase)) {
+          if (!this.parse.arrayContains(phases, sprint.phase)) {
 
             current = '';
             if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
@@ -52,7 +59,7 @@ module.exports = {
           th3.appendChild(document.createTextNode(dates));
 
           // Append rows to the header
-          if (!parse.arrayContains(phases, sprint.phase)) {
+          if (!this.parse.arrayContains(phases, sprint.phase)) {
             newRow1.appendChild(th1);
             phases.push(sprint.phase);
           }
@@ -70,7 +77,7 @@ module.exports = {
     header.appendChild(newRow2);
     header.appendChild(newRow3);
 
-  },
+  }
 
 
   // Renders rows into the table
@@ -97,7 +104,7 @@ module.exports = {
 
       // Parse the value if the field is a multi-node path
       if (item.field.indexOf('.') > -1) {
-        value = parse.parseValue(item.field,task);
+        value = this.parse.parseValue(item.field,task);
       }
 
       // Create a new cell
@@ -132,7 +139,7 @@ module.exports = {
           td.setAttribute('data-value', value);
 
         } else if (item.link && item.link !== '') {
-          let a = parse.parseLink(value, item.link);
+          let a = this.parse.parseLink(value, item.link);
           td.appendChild(a);
 
         } else if (value && value !== '') {
@@ -157,7 +164,7 @@ module.exports = {
       tr.appendChild(td);
     });
 
-  },
+  }
 
 
   // Renders totals into the grid
@@ -210,6 +217,6 @@ module.exports = {
     // Append the footer to the table
     table.appendChild(footerRows);
 
-  },
+  }
 
-};
+}

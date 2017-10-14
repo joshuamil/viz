@@ -1,21 +1,28 @@
-let parse = require('./parse.js');
-let agg = require('./aggregates.js');
-let plan = require('./plan.js');
-let actions = require('./actions.js');
-let charts = require('./charts.js');
-let dashboard = require('./dashboard.js');
-let team = require('./team.js');
-
 let config = require('../data/config.json');
 let table = require('../data/plan.json');
 let sprints = require('../data/sprints.json');
 
 let styles = require('../styles/base.scss');
 
+import Parse from './Parse.js';
+import Aggregates from './aggregates.js';
+import Plan from './Plan.js';
 import Chart from 'chart.js';
+import Team from './team.js';
+import Reports from './reports.js';
+import Dashboard from './dashboard.js';
+import Actions from './actions.js';
 
 // Fetches content
 const init = () => {
+
+  const parse = new Parse();
+  const aggregate = new Aggregates();
+  const plan = new Plan();
+  const team = new Team();
+  const reports = new Reports();
+  const dashboard = new Dashboard();
+  const actions = new Actions();
 
   const resources = [
     config.baseUrl
@@ -36,7 +43,7 @@ const init = () => {
 
       // Parse Story Data
       let data = parse.parseData(stories);
-      let aggregates = agg.parseAggregates(data, sprints, config);
+      let aggregates = aggregate.parseAggregates(data, sprints, config);
 
       // Render Header Row
       plan.renderHeader(sprints, config, aggregates);
@@ -56,7 +63,7 @@ const init = () => {
       dashboard.setValues(aggregates);
 
       // Render Charts
-      charts.renderCharts(aggregates);
+      reports.renderCharts(aggregates);
 
       // Render Teams
       team.renderTeams();

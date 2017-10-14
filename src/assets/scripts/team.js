@@ -1,3 +1,5 @@
+'use strict';
+
 const markobj = require('markobj');
 const arraySort = require('array-sort');
 const moment = require('moment');
@@ -8,7 +10,10 @@ let team = require('../data/team.json');
 let sprints = require('../data/sprints.json');
 let holidays = require('../data/holidays.json');
 
-module.exports = {
+export default class Team {
+
+  constructor() {
+  }
 
   /**
    * Subtract holidays from regular schedule
@@ -26,7 +31,7 @@ module.exports = {
       }
     });
     return hours;
-  },
+  }
 
   /**
    * Parse team member data
@@ -112,7 +117,7 @@ module.exports = {
 
     return data;
 
-  },
+  }
 
   /**
    * Draw the team member table
@@ -179,14 +184,14 @@ module.exports = {
       }
 
     });
-  },
+  }
 
 
   renderTeamNameRow(name, target, columns) {
     const sprintHeaders = markobj(`<tr><td colspan="${(5+columns)}"
       class="title">${name} Team</td></tr>`);
     target.appendChild(sprintHeaders);
-  },
+  }
 
 
   /**
@@ -202,7 +207,7 @@ module.exports = {
     });
     sprintHeaders = markobj(`<th>Totals</th>`);
     header.appendChild(sprintHeaders);
-  },
+  }
 
 
   /**
@@ -249,4 +254,4 @@ module.exports = {
     body.appendChild(tr);
   }
 
-};
+}

@@ -1,9 +1,16 @@
+'use strict';
+
 let tiles = require('../data/dashboard.json');
 let sprints = require('../data/sprints.json');
+
 const numeral = require('numeral');
 const moment = require('moment');
 
-module.exports = {
+
+export default class Dashboard {
+
+  constructor() {
+  }
 
   /**
    * Extract data from the aggregates element based on path
@@ -27,7 +34,7 @@ module.exports = {
       }
     });
     return obj;
-  },
+  }
 
 
   /**
@@ -50,7 +57,7 @@ module.exports = {
     aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
 
     return aggregates;
-  },
+  }
 
 
   /**
@@ -82,7 +89,7 @@ module.exports = {
 
     return status;
 
-  },
+  }
 
 
   /**
@@ -121,4 +128,4 @@ module.exports = {
 
   }
 
-};
+}

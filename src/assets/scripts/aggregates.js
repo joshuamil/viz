@@ -1,4 +1,6 @@
-module.exports = {
+'use strict';
+
+export default class Aggregates {
 
   parseAggregates(data, sprints, config) {
 
@@ -185,7 +187,7 @@ module.exports = {
 
     return aggregates;
 
-  },
+  }
 
   getCurrentSprint(data) {
     let sprint = 0;
@@ -195,7 +197,7 @@ module.exports = {
       }
     });
     return parseInt(sprint, 10);
-  },
+  }
 
   getCurrentPhase(data) {
     let phase = 0;
@@ -205,7 +207,7 @@ module.exports = {
       }
     });
     return parseInt(phase, 10);
-  },
+  }
 
   getCurrentMood(aggregates) {
     let rating = 0;
@@ -271,6 +273,6 @@ module.exports = {
 
     return mood;
 
-  },
+  }
 
-};
+}

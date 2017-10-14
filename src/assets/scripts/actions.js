@@ -1,6 +1,11 @@
+'use strict';
+
 let parse = require('./parse.js');
 
-module.exports = {
+export default class Actions {
+
+  constructor() {
+  }
 
   displayCurrent(sprint) {
     this.displayNone();
@@ -12,7 +17,7 @@ module.exports = {
     mine.forEach( (el) => {
       el.style.display = 'table-row';
     });
-  },
+  }
 
   displayMe() {
     const me = 'Joshua Miller';
@@ -24,7 +29,7 @@ module.exports = {
     mine.forEach( (el) => {
       el.style.display = 'table-row';
     });
-  },
+  }
 
   displayAll() {
     const rows = document.querySelectorAll('table tbody tr');
@@ -35,14 +40,14 @@ module.exports = {
     future.forEach( (el) => {
       el.style.display = 'table-cell';
     });
-  },
+  }
 
   displayNone() {
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (el) => {
       el.style.display = 'none';
     });
-  },
+  }
 
   tabs(target) {
     const sections = document.querySelectorAll('section');
@@ -52,14 +57,14 @@ module.exports = {
         sec.classList.add('active');
       }
     });
-  },
+  }
 
   setMenuStatus(element, nav) {
     nav.forEach( (el) => {
       el.classList.remove('active');
     });
     element.classList.add('active');
-  },
+  }
 
   /* Assign Click Actions to Buttons */
   navigation(sprint) {
@@ -82,6 +87,6 @@ module.exports = {
       });
     });
 
-  },
+  }
 
-};
+}

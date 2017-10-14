@@ -1,7 +1,10 @@
 let charts = require('../data/charts.json');
 import Chart from 'chart.js';
 
-module.exports = {
+export default class Reports {
+
+  constructor() {
+  }
 
   /**
    * Return an array of colors matching the correct length
@@ -27,7 +30,7 @@ module.exports = {
       '#facc99'
     ];
     return colors.slice(0,length);
-  },
+  }
 
 
   /**
@@ -139,7 +142,7 @@ module.exports = {
       let ctx = document.querySelector(`#${context}`);
       let thisChart = new Chart(ctx, options);
     }
-  },
+  }
 
 
   /**
@@ -156,7 +159,7 @@ module.exports = {
           div.appendChild(canvas);
     const target = document.querySelector('#charts');
           target.appendChild(div);
-  },
+  }
 
 
   /**
@@ -169,4 +172,4 @@ module.exports = {
     });
   }
 
-};
+}
