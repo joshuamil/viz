@@ -1,12 +1,21 @@
 'use strict';
 
-let parse = require('./parse.js');
+let Parse = require('./Parse.js');
 
+/**
+ * Actions
+ * User interaction event handlers such as button clicks, hover actions, etc.
+ *
+ */
 export default class Actions {
 
   constructor() {
   }
 
+  /**
+   * DisplayCurrent
+   * @param sprint Numeric sprint value (e.g.: 1, 2, 3)
+   */
   displayCurrent(sprint) {
     this.displayNone();
     const future = document.querySelectorAll('.future');
@@ -19,6 +28,11 @@ export default class Actions {
     });
   }
 
+  /**
+   * DisplayMe
+   * Limits results to those assigned to the current User
+   * TODO: Remove hard-coded username and read from logged-in properties
+   */
   displayMe() {
     const me = 'Joshua Miller';
     const theirs = document.querySelectorAll('table tbody tr');
@@ -31,6 +45,10 @@ export default class Actions {
     });
   }
 
+  /**
+   * DisplayAll
+   * Display all records in the recordset
+   */
   displayAll() {
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (el) => {
@@ -42,6 +60,10 @@ export default class Actions {
     });
   }
 
+  /**
+   * DisplayNone
+   * Hide all records
+   */
   displayNone() {
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (el) => {
@@ -49,6 +71,11 @@ export default class Actions {
     });
   }
 
+  /**
+   * Tabs
+   * Limits results to those assigned to the current User
+   * @param target String value to assign to the current active tab
+   */
   tabs(target) {
     const sections = document.querySelectorAll('section');
     sections.forEach( (sec) => {
@@ -59,6 +86,12 @@ export default class Actions {
     });
   }
 
+  /**
+   * SetMenuStatus
+   * Sets one of the navigation menu items to the active state
+   * @param element target element to which status is applied
+   * @param nav Object containing a navigation element
+   */
   setMenuStatus(element, nav) {
     nav.forEach( (el) => {
       el.classList.remove('active');
@@ -66,7 +99,11 @@ export default class Actions {
     element.classList.add('active');
   }
 
-  /* Assign Click Actions to Buttons */
+  /**
+   * Navigation
+   * Assign click actions to navigation buttons
+   * @param sprint Numeric sprint value (e.g.: 1, 2, 3)
+   */
   navigation(sprint) {
 
     const nav = document.querySelectorAll('nav ul li a');

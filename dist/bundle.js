@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 247);
+/******/ 	return __webpack_require__(__webpack_require__.s = 248);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1893,7 +1893,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         if (!locales[name] && typeof module !== 'undefined' && module && module.exports) {
             try {
                 oldLocale = globalLocale._abbr;
-                __webpack_require__(302)("./" + name);
+                __webpack_require__(305)("./" + name);
                 // because defineLocale currently also sets the global locale, we
                 // want to undo that for lazy loaded locales
                 getSetGlobalLocale(oldLocale);
@@ -4425,7 +4425,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     return hooks;
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)(module)))
 
 /***/ }),
 /* 1 */
@@ -6257,7 +6257,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         if (!locales[name] && typeof module !== 'undefined' && module && module.exports) {
             try {
                 oldLocale = globalLocale._abbr;
-                __webpack_require__(277)("./" + name);
+                __webpack_require__(278)("./" + name);
                 // because defineLocale currently also sets the global locale, we
                 // want to undo that for lazy loaded locales
                 getSetGlobalLocale(oldLocale);
@@ -8789,7 +8789,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     return hooks;
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)(module)))
 
 /***/ }),
 /* 2 */
@@ -8799,9 +8799,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 module.exports = __webpack_require__(7);
-module.exports.easing = __webpack_require__(249);
-module.exports.canvas = __webpack_require__(250);
-module.exports.options = __webpack_require__(251);
+module.exports.easing = __webpack_require__(250);
+module.exports.canvas = __webpack_require__(251);
+module.exports.options = __webpack_require__(252);
 
 /***/ }),
 /* 3 */
@@ -8830,7 +8830,7 @@ module.exports = {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var color = __webpack_require__(10);
+var color = __webpack_require__(11);
 var helpers = __webpack_require__(2);
 
 function interpolate(start, view, model, ease) {
@@ -8952,10 +8952,10 @@ module.exports = Element;
 
 
 module.exports = {};
-module.exports.Arc = __webpack_require__(257);
-module.exports.Line = __webpack_require__(258);
-module.exports.Point = __webpack_require__(259);
-module.exports.Rectangle = __webpack_require__(260);
+module.exports.Arc = __webpack_require__(258);
+module.exports.Line = __webpack_require__(259);
+module.exports.Point = __webpack_require__(260);
+module.exports.Rectangle = __webpack_require__(261);
 
 /***/ }),
 /* 6 */
@@ -9473,12 +9473,244 @@ helpers.getValueAtIndexOrDefault = helpers.valueAtIndexOrDefault;
 
 /***/ }),
 /* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Parse = function () {
+  function Parse() {
+    _classCallCheck(this, Parse);
+  }
+
+  // Find a value in an array
+
+
+  _createClass(Parse, [{
+    key: 'arrayContains',
+    value: function arrayContains(array, value) {
+      for (var i = 0; i < array.length; i++) {
+        if (array[i] === value) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Parse links in configured columns
+
+  }, {
+    key: 'parseLink',
+    value: function parseLink(value, link) {
+      var result = link.replace('@value', value);
+      var a = document.createElement('a');
+      a.setAttribute('href', result);
+      a.setAttribute('target', '_blank');
+      a.appendChild(document.createTextNode(value));
+      return a;
+    }
+
+    // Parse a multi-part value
+
+  }, {
+    key: 'parseValue',
+    value: function parseValue(value, data) {
+      var parts = value.split('.');
+      var result = data;
+      parts.forEach(function (part) {
+        if (result && result.hasOwnProperty(part)) {
+          result = result[part];
+        }
+      });
+      return result;
+    }
+
+    // Parse Jira data into data element
+
+  }, {
+    key: 'parseData',
+    value: function parseData(input) {
+      var _this = this;
+
+      var data = [];
+      var row = {};
+      input.issues.forEach(function (task) {
+
+        row = {};
+        row.key = task.key;
+        row.priority = task.fields.priority.name;
+        row.description = task.fields.summary;
+        row.status = task.fields.status.name;
+        row.assignee = !task.fields.assignee ? 'unassigned' : task.fields.assignee.displayName;
+
+        row.numtasks = 1;
+        row.debt = '';
+
+        // Calculate risk
+        row.risk = 0;
+        if (row.priority.toLowerCase().indexOf('block') > -1) {
+          row.risk = 2;
+        }
+
+        // Calculate numeric priority
+        row.rank = 6;
+        if (row.priority.toLowerCase().indexOf('block') > -1) {
+          row.rank = 0;
+        } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
+          row.rank = 1;
+        } else if (row.priority.toLowerCase().indexOf('high') > -1) {
+          row.rank = 2;
+        } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
+          row.rank = 3;
+        } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
+          row.rank = 5;
+        } else if (row.priority.toLowerCase().indexOf('low') > -1) {
+          row.rank = 4;
+        }
+
+        // Calculate the estimate field
+        row.estimate = task.fields.aggregatetimeoriginalestimate;
+        row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
+        row.remaining = row.estimate - row.timespent;
+        if (!isNaN(row.estimate)) {
+          row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
+        }
+
+        // Calculate remaining & percentage
+        if (!isNaN(row.remaining)) {
+          row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
+        }
+
+        // Get epic information
+        row.epic = task.fields.customfield_10003;
+        row.epic = _this.getEpic(row.epic, input);
+
+        // Get sprint information
+        row.sprint = task.fields.customfield_10007;
+        if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
+          row.sprint = _this.parseSprint(row.sprint);
+        }
+
+        // Populate empty sprint values
+        if (!row.sprint) {
+          row.sprint = { current: 999, history: [] };
+        }
+
+        // Capture Sprint data
+        row.pushed = 0;
+        if (row.sprint && row.sprint.history) {
+          row.sprint.history.forEach(function (sp, index) {
+            if (row.sprint.current === sp) {
+              row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
+              if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
+                row['sprint' + sp] = '0';
+              }
+            } else {
+              row['sprint' + sp] = "-";
+              row.pushed++;
+            }
+          });
+        }
+
+        // Add to collection
+        data.push(row);
+      });
+
+      // Sort based on Sprint then Priority / Rank
+      data.sort(function (a, b) {
+        if (a.sprint) {
+          return a.sprint.current - b.sprint.current || a.rank - b.rank;
+        }
+      });
+
+      console.log('----- Data Object -----');
+      console.log(data);
+
+      return data;
+    }
+
+    // Append Sprints to Configuration
+
+  }, {
+    key: 'appendSprints',
+    value: function appendSprints(config, sprints) {
+      var conf = [];
+      config.forEach(function (item) {
+        conf.push(item);
+        if (item.label.indexOf('Status') === 0) {
+          sprints.forEach(function (sprint) {
+            conf.push(sprint);
+          });
+        }
+      });
+      config = conf;
+      return config;
+    }
+
+    // Parses Sprint value from string
+
+  }, {
+    key: 'parseSprint',
+    value: function parseSprint(input) {
+      var sprint = '';
+      var result = {};
+      result.raw = input;
+      result.current = input[input.length - 1];
+      result.history = [];
+
+      // Capture the current Sprint
+      sprint = result.current.match(/(name=[^,]*,)/);
+      if (sprint !== null && Array.isArray(sprint)) {
+        result.current = sprint[sprint.length - 1].replace(/([^0-9]*)/ig, '');
+      }
+
+      // Create a Sprint History log
+      result.raw.forEach(function (item) {
+        var sp = item.match(/(name=[^,]*,)/);
+        sp = sp[sp.length - 1].replace(/([^0-9]*)/ig, '');
+        if (!result.history.includes(sp)) {
+          result.history.push(sp);
+        }
+      });
+
+      return result;
+    }
+
+    // Create an Epic Link
+
+  }, {
+    key: 'getEpic',
+    value: function getEpic(epic, data) {
+      for (var i = 0; i < data.issues.length; i++) {
+        if (data.issues[0].key === epic) {
+          return data.issues[0].fields.summary;
+        }
+      }
+      return epic;
+    }
+  }]);
+
+  return Parse;
+}();
+
+exports.default = Parse;
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports) {
 
 module.exports = [{"label":"Sprint 18","field":"sprint18","startDate":"08/14/2017","endDate":"08/28/2017","phase":"1","class":"past"},{"label":"Sprint 19","field":"sprint19","startDate":"08/29/2017","endDate":"09/11/2017","phase":"1","class":"past"},{"label":"Sprint 20","field":"sprint20","startDate":"09/12/2017","endDate":"09/25/2017","phase":"1","class":"past"},{"label":"Sprint 21","field":"sprint21","startDate":"09/26/2017","endDate":"10/09/2017","phase":"2","class":"past"},{"label":"Sprint 22","field":"sprint22","startDate":"10/10/2017","endDate":"10/23/2017","phase":"2","class":"current"},{"label":"Sprint 23","field":"sprint23","startDate":"10/24/2017","endDate":"11/06/2017","phase":"2","class":"future"},{"label":"Sprint 24","field":"sprint24","startDate":"11/07/2017","endDate":"11/20/2017","phase":"3","class":"future"},{"label":"Sprint 25","field":"sprint25","startDate":"11/21/2017","endDate":"12/04/2017","phase":"3","class":"future"},{"label":"Sprint 26","field":"sprint26","startDate":"12/05/2017","endDate":"12/18/2017","phase":"3","class":"future"},{"label":"Sprint 27","field":"sprint27","startDate":"12/19/2017","endDate":"01/01/2018","phase":"4","class":"future"},{"label":"Sprint 28","field":"sprint28","startDate":"01/02/2018","endDate":"01/15/2018","phase":"4","class":"future"},{"label":"Sprint 29","field":"sprint29","startDate":"01/16/2018","endDate":"01/29/2018","phase":"4","class":"future"},{"label":"Sprint 30","field":"sprint30","startDate":"01/30/2018","endDate":"02/12/2018","phase":"5","class":"future"},{"label":"Sprint 31","field":"sprint31","startDate":"02/13/2018","endDate":"02/26/2018","phase":"5","class":"future"},{"label":"Sprint 32","field":"sprint32","startDate":"02/27/2018","endDate":"03/12/2018","phase":"5","class":"future"}]
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9487,20 +9719,19 @@ module.exports = [{"label":"Sprint 18","field":"sprint18","startDate":"08/14/201
 /**
  * @namespace Chart
  */
-var Chart = __webpack_require__(248)();
+var Chart = __webpack_require__(249)();
 
 Chart.helpers = __webpack_require__(2);
 
 // @todo dispatch these helpers into appropriated helpers/helpers.* file and write unit tests!
-__webpack_require__(252)(Chart);
+__webpack_require__(253)(Chart);
 
 Chart.defaults = __webpack_require__(3);
 Chart.Element = __webpack_require__(4);
 Chart.elements = __webpack_require__(5);
-Chart.Interaction = __webpack_require__(11);
-Chart.platform = __webpack_require__(12);
+Chart.Interaction = __webpack_require__(12);
+Chart.platform = __webpack_require__(13);
 
-__webpack_require__(263)(Chart);
 __webpack_require__(264)(Chart);
 __webpack_require__(265)(Chart);
 __webpack_require__(266)(Chart);
@@ -9508,36 +9739,37 @@ __webpack_require__(267)(Chart);
 __webpack_require__(268)(Chart);
 __webpack_require__(269)(Chart);
 __webpack_require__(270)(Chart);
-
 __webpack_require__(271)(Chart);
+
 __webpack_require__(272)(Chart);
 __webpack_require__(273)(Chart);
 __webpack_require__(274)(Chart);
 __webpack_require__(275)(Chart);
 __webpack_require__(276)(Chart);
+__webpack_require__(277)(Chart);
 
 // Controllers must be loaded after elements
 // See Chart.core.datasetController.dataElementType
-__webpack_require__(278)(Chart);
 __webpack_require__(279)(Chart);
 __webpack_require__(280)(Chart);
 __webpack_require__(281)(Chart);
 __webpack_require__(282)(Chart);
 __webpack_require__(283)(Chart);
 __webpack_require__(284)(Chart);
-
 __webpack_require__(285)(Chart);
+
 __webpack_require__(286)(Chart);
 __webpack_require__(287)(Chart);
 __webpack_require__(288)(Chart);
 __webpack_require__(289)(Chart);
 __webpack_require__(290)(Chart);
 __webpack_require__(291)(Chart);
+__webpack_require__(292)(Chart);
 
 // Loading built-it plugins
 var plugins = [];
 
-plugins.push(__webpack_require__(292)(Chart), __webpack_require__(293)(Chart), __webpack_require__(294)(Chart));
+plugins.push(__webpack_require__(293)(Chart), __webpack_require__(294)(Chart), __webpack_require__(295)(Chart));
 
 Chart.plugins.register(plugins);
 
@@ -9560,7 +9792,7 @@ if (typeof window !== 'undefined') {
 Chart.canvasHelpers = Chart.helpers.canvas;
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9569,8 +9801,8 @@ Chart.canvasHelpers = Chart.helpers.canvas;
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /* MIT license */
-var convert = __webpack_require__(253);
-var string = __webpack_require__(255);
+var convert = __webpack_require__(254);
+var string = __webpack_require__(256);
 
 var Color = function Color(obj) {
 	if (obj instanceof Color) {
@@ -10049,7 +10281,7 @@ if (typeof window !== 'undefined') {
 module.exports = Color;
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10385,15 +10617,15 @@ module.exports = {
 };
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var helpers = __webpack_require__(2);
-var basic = __webpack_require__(261);
-var dom = __webpack_require__(262);
+var basic = __webpack_require__(262);
+var dom = __webpack_require__(263);
 
 // @TODO Make possible to select another platform at build time.
 var implementation = dom._enabled ? dom : basic;
@@ -10465,7 +10697,7 @@ module.exports = helpers.extend({
  */
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10495,7 +10727,7 @@ module.exports = function (module) {
 };
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10578,7 +10810,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10716,7 +10948,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10784,7 +11016,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10852,7 +11084,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10974,7 +11206,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11043,7 +11275,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11157,7 +11389,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11225,7 +11457,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11341,7 +11573,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11483,7 +11715,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11582,7 +11814,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11708,7 +11940,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11834,7 +12066,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11951,7 +12183,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12103,7 +12335,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12197,7 +12429,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12392,7 +12624,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12464,7 +12696,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12553,7 +12785,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12622,7 +12854,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12709,7 +12941,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12797,7 +13029,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12884,7 +13116,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12972,7 +13204,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13082,7 +13314,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13155,7 +13387,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13224,7 +13456,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13297,7 +13529,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13370,7 +13602,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13443,7 +13675,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13525,7 +13757,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13617,7 +13849,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13708,7 +13940,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13797,7 +14029,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13872,7 +14104,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13989,7 +14221,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14102,7 +14334,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14171,7 +14403,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14263,7 +14495,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14346,7 +14578,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14433,7 +14665,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14517,7 +14749,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14600,7 +14832,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14686,7 +14918,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14817,7 +15049,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14926,7 +15158,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15059,7 +15291,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15213,7 +15445,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15331,7 +15563,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15436,7 +15668,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15528,7 +15760,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15664,7 +15896,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15743,7 +15975,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15832,7 +16064,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15924,7 +16156,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16021,7 +16253,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16117,7 +16349,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16184,7 +16416,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16319,7 +16551,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16397,7 +16629,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16493,7 +16725,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16640,7 +16872,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16719,7 +16951,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16845,7 +17077,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16951,7 +17183,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17063,7 +17295,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17136,7 +17368,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17235,7 +17467,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17323,7 +17555,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17511,7 +17743,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17602,7 +17834,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17694,7 +17926,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17799,7 +18031,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17871,7 +18103,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18003,7 +18235,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18100,7 +18332,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18197,7 +18429,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18266,7 +18498,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18399,7 +18631,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18515,7 +18747,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18588,7 +18820,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18657,7 +18889,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18741,7 +18973,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18933,7 +19165,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19019,7 +19251,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19088,7 +19320,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19169,7 +19401,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19339,7 +19571,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19510,7 +19742,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19589,7 +19821,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19700,7 +19932,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19811,7 +20043,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19908,7 +20140,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19983,7 +20215,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20051,7 +20283,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20190,7 +20422,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20288,7 +20520,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20362,7 +20594,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20438,7 +20670,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20509,7 +20741,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20626,7 +20858,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20726,7 +20958,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20827,7 +21059,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20894,7 +21126,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20961,7 +21193,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21116,7 +21348,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21203,7 +21435,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21270,7 +21502,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21337,7 +21569,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21426,7 +21658,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 124 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21500,7 +21732,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 125 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21569,7 +21801,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 126 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21688,7 +21920,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 127 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21802,7 +22034,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21915,1248 +22147,49 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 });
 
 /***/ }),
-/* 129 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Parse = function () {
-  function Parse() {
-    _classCallCheck(this, Parse);
-  }
-
-  // Find a value in an array
-
-
-  _createClass(Parse, [{
-    key: 'arrayContains',
-    value: function arrayContains(array, value) {
-      for (var i = 0; i < array.length; i++) {
-        if (array[i] === value) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // Parse links in configured columns
-
-  }, {
-    key: 'parseLink',
-    value: function parseLink(value, link) {
-      var result = link.replace('@value', value);
-      var a = document.createElement('a');
-      a.setAttribute('href', result);
-      a.setAttribute('target', '_blank');
-      a.appendChild(document.createTextNode(value));
-      return a;
-    }
-
-    // Parse a multi-part value
-
-  }, {
-    key: 'parseValue',
-    value: function parseValue(value, data) {
-      var parts = value.split('.');
-      var result = data;
-      parts.forEach(function (part) {
-        if (result && result.hasOwnProperty(part)) {
-          result = result[part];
-        }
-      });
-      return result;
-    }
-
-    // Parse Jira data into data element
-
-  }, {
-    key: 'parseData',
-    value: function parseData(input) {
-      var _this = this;
-
-      var data = [];
-      var row = {};
-      input.issues.forEach(function (task) {
-
-        row = {};
-        row.key = task.key;
-        row.priority = task.fields.priority.name;
-        row.description = task.fields.summary;
-        row.status = task.fields.status.name;
-        row.assignee = !task.fields.assignee ? 'unassigned' : task.fields.assignee.displayName;
-
-        row.numtasks = 1;
-        row.debt = '';
-
-        // Calculate risk
-        row.risk = 0;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.risk = 2;
-        }
-
-        // Calculate numeric priority
-        row.rank = 6;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.rank = 0;
-        } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
-          row.rank = 1;
-        } else if (row.priority.toLowerCase().indexOf('high') > -1) {
-          row.rank = 2;
-        } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
-          row.rank = 3;
-        } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
-          row.rank = 5;
-        } else if (row.priority.toLowerCase().indexOf('low') > -1) {
-          row.rank = 4;
-        }
-
-        // Calculate the estimate field
-        row.estimate = task.fields.aggregatetimeoriginalestimate;
-        row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
-        row.remaining = row.estimate - row.timespent;
-        if (!isNaN(row.estimate)) {
-          row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
-        }
-
-        // Calculate remaining & percentage
-        if (!isNaN(row.remaining)) {
-          row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
-        }
-
-        // Get epic information
-        row.epic = task.fields.customfield_10003;
-        row.epic = _this.getEpic(row.epic, input);
-
-        // Get sprint information
-        row.sprint = task.fields.customfield_10007;
-        if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-          row.sprint = _this.parseSprint(row.sprint);
-        }
-
-        // Populate empty sprint values
-        if (!row.sprint) {
-          row.sprint = { current: 999, history: [] };
-        }
-
-        // Capture Sprint data
-        row.pushed = 0;
-        if (row.sprint && row.sprint.history) {
-          row.sprint.history.forEach(function (sp, index) {
-            if (row.sprint.current === sp) {
-              row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
-              if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-                row['sprint' + sp] = '0';
-              }
-            } else {
-              row['sprint' + sp] = "-";
-              row.pushed++;
-            }
-          });
-        }
-
-        // Add to collection
-        data.push(row);
-      });
-
-      // Sort based on Sprint then Priority / Rank
-      data.sort(function (a, b) {
-        if (a.sprint) {
-          return a.sprint.current - b.sprint.current || a.rank - b.rank;
-        }
-      });
-
-      console.log('----- Data Object -----');
-      console.log(data);
-
-      return data;
-    }
-
-    // Append Sprints to Configuration
-
-  }, {
-    key: 'appendSprints',
-    value: function appendSprints(config, sprints) {
-      var conf = [];
-      config.forEach(function (item) {
-        conf.push(item);
-        if (item.label.indexOf('Status') === 0) {
-          sprints.forEach(function (sprint) {
-            conf.push(sprint);
-          });
-        }
-      });
-      config = conf;
-      return config;
-    }
-
-    // Parses Sprint value from string
-
-  }, {
-    key: 'parseSprint',
-    value: function parseSprint(input) {
-      var sprint = '';
-      var result = {};
-      result.raw = input;
-      result.current = input[input.length - 1];
-      result.history = [];
-
-      // Capture the current Sprint
-      sprint = result.current.match(/(name=[^,]*,)/);
-      if (sprint !== null && Array.isArray(sprint)) {
-        result.current = sprint[sprint.length - 1].replace(/([^0-9]*)/ig, '');
-      }
-
-      // Create a Sprint History log
-      result.raw.forEach(function (item) {
-        var sp = item.match(/(name=[^,]*,)/);
-        sp = sp[sp.length - 1].replace(/([^0-9]*)/ig, '');
-        if (!result.history.includes(sp)) {
-          result.history.push(sp);
-        }
-      });
-
-      return result;
-    }
-
-    // Create an Epic Link
-
-  }, {
-    key: 'getEpic',
-    value: function getEpic(epic, data) {
-      for (var i = 0; i < data.issues.length; i++) {
-        if (data.issues[0].key === epic) {
-          return data.issues[0].fields.summary;
-        }
-      }
-      return epic;
-    }
-  }]);
-
-  return Parse;
-}();
-
-exports.default = Parse;
-
-/***/ }),
 /* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-/*! @preserve
- * numeral.js
- * version : 2.0.6
- * author : Adam Draper
- * license : MIT
- * http://adamwdraper.github.com/Numeral-js/
- */
+module.exports = exports = markobj;
 
-(function (global, factory) {
-    if (true) {
-        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
-				__WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-    } else if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object' && module.exports) {
-        module.exports = factory();
-    } else {
-        global.numeral = factory();
-    }
-})(undefined, function () {
-    /************************************
-        Variables
-    ************************************/
+// Returns an object built from an HTML string
+function markobj(html) {
 
-    var _numeral,
-        _,
-        VERSION = '2.0.6',
-        formats = {},
-        locales = {},
-        defaults = {
-        currentLocale: 'en',
-        zeroFormat: null,
-        nullFormat: null,
-        defaultFormat: '0,0',
-        scalePercentBy100: true
-    },
-        options = {
-        currentLocale: defaults.currentLocale,
-        zeroFormat: defaults.zeroFormat,
-        nullFormat: defaults.nullFormat,
-        defaultFormat: defaults.defaultFormat,
-        scalePercentBy100: defaults.scalePercentBy100
-    };
+  var rootEl = 'div';
+  var rootIx = 0;
 
-    /************************************
-        Constructors
-    ************************************/
+  // If you're creating elements that are children of tables, then you have to
+  // use a table as the root element. A tbody is also appended to any newly
+  // made table, so our returned index has to increase
+  if (html.substring(1, 3) === 'tr' || html.substring(1, 3) === 'td' || html.substring(1, 3) === 'th' || html.substring(1, 6) === 'tbody' || html.substring(1, 6) === 'thead' || html.substring(1, 6) === 'tfoot' || html.substring(1, 8) === 'caption' || html.substring(1, 4) === 'col' || html.substring(1, 9) === 'colgroup') {
+    rootEl = 'table';
+  }
 
-    // Numeral prototype object
-    function Numeral(input, number) {
-        this._input = input;
+  if (html.substring(1, 6) === 'tbody' || html.substring(1, 6) === 'thead' || html.substring(1, 6) === 'tfoot') {
+    rootIx = 0;
+  }
 
-        this._value = number;
-    }
+  if (html.substring(1, 3) === 'tr') {
+    rootIx = 1;
+  }
 
-    _numeral = function numeral(input) {
-        var value, kind, unformatFunction, regexp;
+  if (html.substring(1, 3) === 'td' || html.substring(1, 3) === 'th') {
+    rootIx = 2;
+  }
 
-        if (_numeral.isNumeral(input)) {
-            value = input.value();
-        } else if (input === 0 || typeof input === 'undefined') {
-            value = 0;
-        } else if (input === null || _.isNaN(input)) {
-            value = null;
-        } else if (typeof input === 'string') {
-            if (options.zeroFormat && input === options.zeroFormat) {
-                value = 0;
-            } else if (options.nullFormat && input === options.nullFormat || !input.replace(/[^0-9]+/g, '').length) {
-                value = null;
-            } else {
-                for (kind in formats) {
-                    regexp = typeof formats[kind].regexps.unformat === 'function' ? formats[kind].regexps.unformat() : formats[kind].regexps.unformat;
+  var tmp = document.createElement(rootEl);
+  tmp.innerHTML = html;
 
-                    if (regexp && input.match(regexp)) {
-                        unformatFunction = formats[kind].unformat;
-
-                        break;
-                    }
-                }
-
-                unformatFunction = unformatFunction || _numeral._.stringToNumber;
-
-                value = unformatFunction(input);
-            }
-        } else {
-            value = Number(input) || null;
-        }
-
-        return new Numeral(input, value);
-    };
-
-    // version number
-    _numeral.version = VERSION;
-
-    // compare numeral object
-    _numeral.isNumeral = function (obj) {
-        return obj instanceof Numeral;
-    };
-
-    // helper functions
-    _numeral._ = _ = {
-        // formats numbers separators, decimals places, signs, abbreviations
-        numberToFormat: function numberToFormat(value, format, roundingFunction) {
-            var locale = locales[_numeral.options.currentLocale],
-                negP = false,
-                optDec = false,
-                leadingCount = 0,
-                abbr = '',
-                trillion = 1000000000000,
-                billion = 1000000000,
-                million = 1000000,
-                thousand = 1000,
-                decimal = '',
-                neg = false,
-                abbrForce,
-                // force abbreviation
-            abs,
-                min,
-                max,
-                power,
-                int,
-                precision,
-                signed,
-                thousands,
-                output;
-
-            // make sure we never format a null value
-            value = value || 0;
-
-            abs = Math.abs(value);
-
-            // see if we should use parentheses for negative number or if we should prefix with a sign
-            // if both are present we default to parentheses
-            if (_numeral._.includes(format, '(')) {
-                negP = true;
-                format = format.replace(/[\(|\)]/g, '');
-            } else if (_numeral._.includes(format, '+') || _numeral._.includes(format, '-')) {
-                signed = _numeral._.includes(format, '+') ? format.indexOf('+') : value < 0 ? format.indexOf('-') : -1;
-                format = format.replace(/[\+|\-]/g, '');
-            }
-
-            // see if abbreviation is wanted
-            if (_numeral._.includes(format, 'a')) {
-                abbrForce = format.match(/a(k|m|b|t)?/);
-
-                abbrForce = abbrForce ? abbrForce[1] : false;
-
-                // check for space before abbreviation
-                if (_numeral._.includes(format, ' a')) {
-                    abbr = ' ';
-                }
-
-                format = format.replace(new RegExp(abbr + 'a[kmbt]?'), '');
-
-                if (abs >= trillion && !abbrForce || abbrForce === 't') {
-                    // trillion
-                    abbr += locale.abbreviations.trillion;
-                    value = value / trillion;
-                } else if (abs < trillion && abs >= billion && !abbrForce || abbrForce === 'b') {
-                    // billion
-                    abbr += locale.abbreviations.billion;
-                    value = value / billion;
-                } else if (abs < billion && abs >= million && !abbrForce || abbrForce === 'm') {
-                    // million
-                    abbr += locale.abbreviations.million;
-                    value = value / million;
-                } else if (abs < million && abs >= thousand && !abbrForce || abbrForce === 'k') {
-                    // thousand
-                    abbr += locale.abbreviations.thousand;
-                    value = value / thousand;
-                }
-            }
-
-            // check for optional decimals
-            if (_numeral._.includes(format, '[.]')) {
-                optDec = true;
-                format = format.replace('[.]', '.');
-            }
-
-            // break number and format
-            int = value.toString().split('.')[0];
-            precision = format.split('.')[1];
-            thousands = format.indexOf(',');
-            leadingCount = (format.split('.')[0].split(',')[0].match(/0/g) || []).length;
-
-            if (precision) {
-                if (_numeral._.includes(precision, '[')) {
-                    precision = precision.replace(']', '');
-                    precision = precision.split('[');
-                    decimal = _numeral._.toFixed(value, precision[0].length + precision[1].length, roundingFunction, precision[1].length);
-                } else {
-                    decimal = _numeral._.toFixed(value, precision.length, roundingFunction);
-                }
-
-                int = decimal.split('.')[0];
-
-                if (_numeral._.includes(decimal, '.')) {
-                    decimal = locale.delimiters.decimal + decimal.split('.')[1];
-                } else {
-                    decimal = '';
-                }
-
-                if (optDec && Number(decimal.slice(1)) === 0) {
-                    decimal = '';
-                }
-            } else {
-                int = _numeral._.toFixed(value, 0, roundingFunction);
-            }
-
-            // check abbreviation again after rounding
-            if (abbr && !abbrForce && Number(int) >= 1000 && abbr !== locale.abbreviations.trillion) {
-                int = String(Number(int) / 1000);
-
-                switch (abbr) {
-                    case locale.abbreviations.thousand:
-                        abbr = locale.abbreviations.million;
-                        break;
-                    case locale.abbreviations.million:
-                        abbr = locale.abbreviations.billion;
-                        break;
-                    case locale.abbreviations.billion:
-                        abbr = locale.abbreviations.trillion;
-                        break;
-                }
-            }
-
-            // format number
-            if (_numeral._.includes(int, '-')) {
-                int = int.slice(1);
-                neg = true;
-            }
-
-            if (int.length < leadingCount) {
-                for (var i = leadingCount - int.length; i > 0; i--) {
-                    int = '0' + int;
-                }
-            }
-
-            if (thousands > -1) {
-                int = int.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + locale.delimiters.thousands);
-            }
-
-            if (format.indexOf('.') === 0) {
-                int = '';
-            }
-
-            output = int + decimal + (abbr ? abbr : '');
-
-            if (negP) {
-                output = (negP && neg ? '(' : '') + output + (negP && neg ? ')' : '');
-            } else {
-                if (signed >= 0) {
-                    output = signed === 0 ? (neg ? '-' : '+') + output : output + (neg ? '-' : '+');
-                } else if (neg) {
-                    output = '-' + output;
-                }
-            }
-
-            return output;
-        },
-        // unformats numbers separators, decimals places, signs, abbreviations
-        stringToNumber: function stringToNumber(string) {
-            var locale = locales[options.currentLocale],
-                stringOriginal = string,
-                abbreviations = {
-                thousand: 3,
-                million: 6,
-                billion: 9,
-                trillion: 12
-            },
-                abbreviation,
-                value,
-                i,
-                regexp;
-
-            if (options.zeroFormat && string === options.zeroFormat) {
-                value = 0;
-            } else if (options.nullFormat && string === options.nullFormat || !string.replace(/[^0-9]+/g, '').length) {
-                value = null;
-            } else {
-                value = 1;
-
-                if (locale.delimiters.decimal !== '.') {
-                    string = string.replace(/\./g, '').replace(locale.delimiters.decimal, '.');
-                }
-
-                for (abbreviation in abbreviations) {
-                    regexp = new RegExp('[^a-zA-Z]' + locale.abbreviations[abbreviation] + '(?:\\)|(\\' + locale.currency.symbol + ')?(?:\\))?)?$');
-
-                    if (stringOriginal.match(regexp)) {
-                        value *= Math.pow(10, abbreviations[abbreviation]);
-                        break;
-                    }
-                }
-
-                // check for negative number
-                value *= (string.split('-').length + Math.min(string.split('(').length - 1, string.split(')').length - 1)) % 2 ? 1 : -1;
-
-                // remove non numbers
-                string = string.replace(/[^0-9\.]+/g, '');
-
-                value *= Number(string);
-            }
-
-            return value;
-        },
-        isNaN: function (_isNaN) {
-            function isNaN(_x) {
-                return _isNaN.apply(this, arguments);
-            }
-
-            isNaN.toString = function () {
-                return _isNaN.toString();
-            };
-
-            return isNaN;
-        }(function (value) {
-            return typeof value === 'number' && isNaN(value);
-        }),
-        includes: function includes(string, search) {
-            return string.indexOf(search) !== -1;
-        },
-        insert: function insert(string, subString, start) {
-            return string.slice(0, start) + subString + string.slice(start);
-        },
-        reduce: function reduce(array, callback /*, initialValue*/) {
-            if (this === null) {
-                throw new TypeError('Array.prototype.reduce called on null or undefined');
-            }
-
-            if (typeof callback !== 'function') {
-                throw new TypeError(callback + ' is not a function');
-            }
-
-            var t = Object(array),
-                len = t.length >>> 0,
-                k = 0,
-                value;
-
-            if (arguments.length === 3) {
-                value = arguments[2];
-            } else {
-                while (k < len && !(k in t)) {
-                    k++;
-                }
-
-                if (k >= len) {
-                    throw new TypeError('Reduce of empty array with no initial value');
-                }
-
-                value = t[k++];
-            }
-            for (; k < len; k++) {
-                if (k in t) {
-                    value = callback(value, t[k], k, t);
-                }
-            }
-            return value;
-        },
-        /**
-         * Computes the multiplier necessary to make x >= 1,
-         * effectively eliminating miscalculations caused by
-         * finite precision.
-         */
-        multiplier: function multiplier(x) {
-            var parts = x.toString().split('.');
-
-            return parts.length < 2 ? 1 : Math.pow(10, parts[1].length);
-        },
-        /**
-         * Given a variable number of arguments, returns the maximum
-         * multiplier that must be used to normalize an operation involving
-         * all of them.
-         */
-        correctionFactor: function correctionFactor() {
-            var args = Array.prototype.slice.call(arguments);
-
-            return args.reduce(function (accum, next) {
-                var mn = _.multiplier(next);
-                return accum > mn ? accum : mn;
-            }, 1);
-        },
-        /**
-         * Implementation of toFixed() that treats floats more like decimals
-         *
-         * Fixes binary rounding issues (eg. (0.615).toFixed(2) === '0.61') that present
-         * problems for accounting- and finance-related software.
-         */
-        toFixed: function toFixed(value, maxDecimals, roundingFunction, optionals) {
-            var splitValue = value.toString().split('.'),
-                minDecimals = maxDecimals - (optionals || 0),
-                boundedPrecision,
-                optionalsRegExp,
-                power,
-                output;
-
-            // Use the smallest precision value possible to avoid errors from floating point representation
-            if (splitValue.length === 2) {
-                boundedPrecision = Math.min(Math.max(splitValue[1].length, minDecimals), maxDecimals);
-            } else {
-                boundedPrecision = minDecimals;
-            }
-
-            power = Math.pow(10, boundedPrecision);
-
-            // Multiply up by precision, round accurately, then divide and use native toFixed():
-            output = (roundingFunction(value + 'e+' + boundedPrecision) / power).toFixed(boundedPrecision);
-
-            if (optionals > maxDecimals - boundedPrecision) {
-                optionalsRegExp = new RegExp('\\.?0{1,' + (optionals - (maxDecimals - boundedPrecision)) + '}$');
-                output = output.replace(optionalsRegExp, '');
-            }
-
-            return output;
-        }
-    };
-
-    // avaliable options
-    _numeral.options = options;
-
-    // avaliable formats
-    _numeral.formats = formats;
-
-    // avaliable formats
-    _numeral.locales = locales;
-
-    // This function sets the current locale.  If
-    // no arguments are passed in, it will simply return the current global
-    // locale key.
-    _numeral.locale = function (key) {
-        if (key) {
-            options.currentLocale = key.toLowerCase();
-        }
-
-        return options.currentLocale;
-    };
-
-    // This function provides access to the loaded locale data.  If
-    // no arguments are passed in, it will simply return the current
-    // global locale object.
-    _numeral.localeData = function (key) {
-        if (!key) {
-            return locales[options.currentLocale];
-        }
-
-        key = key.toLowerCase();
-
-        if (!locales[key]) {
-            throw new Error('Unknown locale : ' + key);
-        }
-
-        return locales[key];
-    };
-
-    _numeral.reset = function () {
-        for (var property in defaults) {
-            options[property] = defaults[property];
-        }
-    };
-
-    _numeral.zeroFormat = function (format) {
-        options.zeroFormat = typeof format === 'string' ? format : null;
-    };
-
-    _numeral.nullFormat = function (format) {
-        options.nullFormat = typeof format === 'string' ? format : null;
-    };
-
-    _numeral.defaultFormat = function (format) {
-        options.defaultFormat = typeof format === 'string' ? format : '0.0';
-    };
-
-    _numeral.register = function (type, name, format) {
-        name = name.toLowerCase();
-
-        if (this[type + 's'][name]) {
-            throw new TypeError(name + ' ' + type + ' already registered.');
-        }
-
-        this[type + 's'][name] = format;
-
-        return format;
-    };
-
-    _numeral.validate = function (val, culture) {
-        var _decimalSep, _thousandSep, _currSymbol, _valArray, _abbrObj, _thousandRegEx, localeData, temp;
-
-        //coerce val to string
-        if (typeof val !== 'string') {
-            val += '';
-
-            if (console.warn) {
-                console.warn('Numeral.js: Value is not string. It has been co-erced to: ', val);
-            }
-        }
-
-        //trim whitespaces from either sides
-        val = val.trim();
-
-        //if val is just digits return true
-        if (!!val.match(/^\d+$/)) {
-            return true;
-        }
-
-        //if val is empty return false
-        if (val === '') {
-            return false;
-        }
-
-        //get the decimal and thousands separator from numeral.localeData
-        try {
-            //check if the culture is understood by numeral. if not, default it to current locale
-            localeData = _numeral.localeData(culture);
-        } catch (e) {
-            localeData = _numeral.localeData(_numeral.locale());
-        }
-
-        //setup the delimiters and currency symbol based on culture/locale
-        _currSymbol = localeData.currency.symbol;
-        _abbrObj = localeData.abbreviations;
-        _decimalSep = localeData.delimiters.decimal;
-        if (localeData.delimiters.thousands === '.') {
-            _thousandSep = '\\.';
-        } else {
-            _thousandSep = localeData.delimiters.thousands;
-        }
-
-        // validating currency symbol
-        temp = val.match(/^[^\d]+/);
-        if (temp !== null) {
-            val = val.substr(1);
-            if (temp[0] !== _currSymbol) {
-                return false;
-            }
-        }
-
-        //validating abbreviation symbol
-        temp = val.match(/[^\d]+$/);
-        if (temp !== null) {
-            val = val.slice(0, -1);
-            if (temp[0] !== _abbrObj.thousand && temp[0] !== _abbrObj.million && temp[0] !== _abbrObj.billion && temp[0] !== _abbrObj.trillion) {
-                return false;
-            }
-        }
-
-        _thousandRegEx = new RegExp(_thousandSep + '{2}');
-
-        if (!val.match(/[^\d.,]/g)) {
-            _valArray = val.split(_decimalSep);
-            if (_valArray.length > 2) {
-                return false;
-            } else {
-                if (_valArray.length < 2) {
-                    return !!_valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx);
-                } else {
-                    if (_valArray[0].length === 1) {
-                        return !!_valArray[0].match(/^\d+$/) && !_valArray[0].match(_thousandRegEx) && !!_valArray[1].match(/^\d+$/);
-                    } else {
-                        return !!_valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx) && !!_valArray[1].match(/^\d+$/);
-                    }
-                }
-            }
-        }
-
-        return false;
-    };
-
-    /************************************
-        Numeral Prototype
-    ************************************/
-
-    _numeral.fn = Numeral.prototype = {
-        clone: function clone() {
-            return _numeral(this);
-        },
-        format: function format(inputString, roundingFunction) {
-            var value = this._value,
-                format = inputString || options.defaultFormat,
-                kind,
-                output,
-                formatFunction;
-
-            // make sure we have a roundingFunction
-            roundingFunction = roundingFunction || Math.round;
-
-            // format based on value
-            if (value === 0 && options.zeroFormat !== null) {
-                output = options.zeroFormat;
-            } else if (value === null && options.nullFormat !== null) {
-                output = options.nullFormat;
-            } else {
-                for (kind in formats) {
-                    if (format.match(formats[kind].regexps.format)) {
-                        formatFunction = formats[kind].format;
-
-                        break;
-                    }
-                }
-
-                formatFunction = formatFunction || _numeral._.numberToFormat;
-
-                output = formatFunction(value, format, roundingFunction);
-            }
-
-            return output;
-        },
-        value: function value() {
-            return this._value;
-        },
-        input: function input() {
-            return this._input;
-        },
-        set: function set(value) {
-            this._value = Number(value);
-
-            return this;
-        },
-        add: function add(value) {
-            var corrFactor = _.correctionFactor.call(null, this._value, value);
-
-            function cback(accum, curr, currI, O) {
-                return accum + Math.round(corrFactor * curr);
-            }
-
-            this._value = _.reduce([this._value, value], cback, 0) / corrFactor;
-
-            return this;
-        },
-        subtract: function subtract(value) {
-            var corrFactor = _.correctionFactor.call(null, this._value, value);
-
-            function cback(accum, curr, currI, O) {
-                return accum - Math.round(corrFactor * curr);
-            }
-
-            this._value = _.reduce([value], cback, Math.round(this._value * corrFactor)) / corrFactor;
-
-            return this;
-        },
-        multiply: function multiply(value) {
-            function cback(accum, curr, currI, O) {
-                var corrFactor = _.correctionFactor(accum, curr);
-                return Math.round(accum * corrFactor) * Math.round(curr * corrFactor) / Math.round(corrFactor * corrFactor);
-            }
-
-            this._value = _.reduce([this._value, value], cback, 1);
-
-            return this;
-        },
-        divide: function divide(value) {
-            function cback(accum, curr, currI, O) {
-                var corrFactor = _.correctionFactor(accum, curr);
-                return Math.round(accum * corrFactor) / Math.round(curr * corrFactor);
-            }
-
-            this._value = _.reduce([this._value, value], cback);
-
-            return this;
-        },
-        difference: function difference(value) {
-            return Math.abs(_numeral(this._value).subtract(value).value());
-        }
-    };
-
-    /************************************
-        Default Locale && Format
-    ************************************/
-
-    _numeral.register('locale', 'en', {
-        delimiters: {
-            thousands: ',',
-            decimal: '.'
-        },
-        abbreviations: {
-            thousand: 'k',
-            million: 'm',
-            billion: 'b',
-            trillion: 't'
-        },
-        ordinal: function ordinal(number) {
-            var b = number % 10;
-            return ~~(number % 100 / 10) === 1 ? 'th' : b === 1 ? 'st' : b === 2 ? 'nd' : b === 3 ? 'rd' : 'th';
-        },
-        currency: {
-            symbol: '$'
-        }
-    });
-
-    (function () {
-        _numeral.register('format', 'bps', {
-            regexps: {
-                format: /(BPS)/,
-                unformat: /(BPS)/
-            },
-            format: function format(value, _format, roundingFunction) {
-                var space = _numeral._.includes(_format, ' BPS') ? ' ' : '',
-                    output;
-
-                value = value * 10000;
-
-                // check for space before BPS
-                _format = _format.replace(/\s?BPS/, '');
-
-                output = _numeral._.numberToFormat(value, _format, roundingFunction);
-
-                if (_numeral._.includes(output, ')')) {
-                    output = output.split('');
-
-                    output.splice(-1, 0, space + 'BPS');
-
-                    output = output.join('');
-                } else {
-                    output = output + space + 'BPS';
-                }
-
-                return output;
-            },
-            unformat: function unformat(string) {
-                return +(_numeral._.stringToNumber(string) * 0.0001).toFixed(15);
-            }
-        });
-    })();
-
-    (function () {
-        var decimal = {
-            base: 1000,
-            suffixes: ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-        },
-            binary = {
-            base: 1024,
-            suffixes: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-        };
-
-        var allSuffixes = decimal.suffixes.concat(binary.suffixes.filter(function (item) {
-            return decimal.suffixes.indexOf(item) < 0;
-        }));
-        var unformatRegex = allSuffixes.join('|');
-        // Allow support for BPS (http://www.investopedia.com/terms/b/basispoint.asp)
-        unformatRegex = '(' + unformatRegex.replace('B', 'B(?!PS)') + ')';
-
-        _numeral.register('format', 'bytes', {
-            regexps: {
-                format: /([0\s]i?b)/,
-                unformat: new RegExp(unformatRegex)
-            },
-            format: function format(value, _format2, roundingFunction) {
-                var output,
-                    bytes = _numeral._.includes(_format2, 'ib') ? binary : decimal,
-                    suffix = _numeral._.includes(_format2, ' b') || _numeral._.includes(_format2, ' ib') ? ' ' : '',
-                    power,
-                    min,
-                    max;
-
-                // check for space before
-                _format2 = _format2.replace(/\s?i?b/, '');
-
-                for (power = 0; power <= bytes.suffixes.length; power++) {
-                    min = Math.pow(bytes.base, power);
-                    max = Math.pow(bytes.base, power + 1);
-
-                    if (value === null || value === 0 || value >= min && value < max) {
-                        suffix += bytes.suffixes[power];
-
-                        if (min > 0) {
-                            value = value / min;
-                        }
-
-                        break;
-                    }
-                }
-
-                output = _numeral._.numberToFormat(value, _format2, roundingFunction);
-
-                return output + suffix;
-            },
-            unformat: function unformat(string) {
-                var value = _numeral._.stringToNumber(string),
-                    power,
-                    bytesMultiplier;
-
-                if (value) {
-                    for (power = decimal.suffixes.length - 1; power >= 0; power--) {
-                        if (_numeral._.includes(string, decimal.suffixes[power])) {
-                            bytesMultiplier = Math.pow(decimal.base, power);
-
-                            break;
-                        }
-
-                        if (_numeral._.includes(string, binary.suffixes[power])) {
-                            bytesMultiplier = Math.pow(binary.base, power);
-
-                            break;
-                        }
-                    }
-
-                    value *= bytesMultiplier || 1;
-                }
-
-                return value;
-            }
-        });
-    })();
-
-    (function () {
-        _numeral.register('format', 'currency', {
-            regexps: {
-                format: /(\$)/
-            },
-            format: function format(value, _format3, roundingFunction) {
-                var locale = _numeral.locales[_numeral.options.currentLocale],
-                    symbols = {
-                    before: _format3.match(/^([\+|\-|\(|\s|\$]*)/)[0],
-                    after: _format3.match(/([\+|\-|\)|\s|\$]*)$/)[0]
-                },
-                    output,
-                    symbol,
-                    i;
-
-                // strip format of spaces and $
-                _format3 = _format3.replace(/\s?\$\s?/, '');
-
-                // format the number
-                output = _numeral._.numberToFormat(value, _format3, roundingFunction);
-
-                // update the before and after based on value
-                if (value >= 0) {
-                    symbols.before = symbols.before.replace(/[\-\(]/, '');
-                    symbols.after = symbols.after.replace(/[\-\)]/, '');
-                } else if (value < 0 && !_numeral._.includes(symbols.before, '-') && !_numeral._.includes(symbols.before, '(')) {
-                    symbols.before = '-' + symbols.before;
-                }
-
-                // loop through each before symbol
-                for (i = 0; i < symbols.before.length; i++) {
-                    symbol = symbols.before[i];
-
-                    switch (symbol) {
-                        case '$':
-                            output = _numeral._.insert(output, locale.currency.symbol, i);
-                            break;
-                        case ' ':
-                            output = _numeral._.insert(output, ' ', i + locale.currency.symbol.length - 1);
-                            break;
-                    }
-                }
-
-                // loop through each after symbol
-                for (i = symbols.after.length - 1; i >= 0; i--) {
-                    symbol = symbols.after[i];
-
-                    switch (symbol) {
-                        case '$':
-                            output = i === symbols.after.length - 1 ? output + locale.currency.symbol : _numeral._.insert(output, locale.currency.symbol, -(symbols.after.length - (1 + i)));
-                            break;
-                        case ' ':
-                            output = i === symbols.after.length - 1 ? output + ' ' : _numeral._.insert(output, ' ', -(symbols.after.length - (1 + i) + locale.currency.symbol.length - 1));
-                            break;
-                    }
-                }
-
-                return output;
-            }
-        });
-    })();
-
-    (function () {
-        _numeral.register('format', 'exponential', {
-            regexps: {
-                format: /(e\+|e-)/,
-                unformat: /(e\+|e-)/
-            },
-            format: function format(value, _format4, roundingFunction) {
-                var output,
-                    exponential = typeof value === 'number' && !_numeral._.isNaN(value) ? value.toExponential() : '0e+0',
-                    parts = exponential.split('e');
-
-                _format4 = _format4.replace(/e[\+|\-]{1}0/, '');
-
-                output = _numeral._.numberToFormat(Number(parts[0]), _format4, roundingFunction);
-
-                return output + 'e' + parts[1];
-            },
-            unformat: function unformat(string) {
-                var parts = _numeral._.includes(string, 'e+') ? string.split('e+') : string.split('e-'),
-                    value = Number(parts[0]),
-                    power = Number(parts[1]);
-
-                power = _numeral._.includes(string, 'e-') ? power *= -1 : power;
-
-                function cback(accum, curr, currI, O) {
-                    var corrFactor = _numeral._.correctionFactor(accum, curr),
-                        num = accum * corrFactor * (curr * corrFactor) / (corrFactor * corrFactor);
-                    return num;
-                }
-
-                return _numeral._.reduce([value, Math.pow(10, power)], cback, 1);
-            }
-        });
-    })();
-
-    (function () {
-        _numeral.register('format', 'ordinal', {
-            regexps: {
-                format: /(o)/
-            },
-            format: function format(value, _format5, roundingFunction) {
-                var locale = _numeral.locales[_numeral.options.currentLocale],
-                    output,
-                    ordinal = _numeral._.includes(_format5, ' o') ? ' ' : '';
-
-                // check for space before
-                _format5 = _format5.replace(/\s?o/, '');
-
-                ordinal += locale.ordinal(value);
-
-                output = _numeral._.numberToFormat(value, _format5, roundingFunction);
-
-                return output + ordinal;
-            }
-        });
-    })();
-
-    (function () {
-        _numeral.register('format', 'percentage', {
-            regexps: {
-                format: /(%)/,
-                unformat: /(%)/
-            },
-            format: function format(value, _format6, roundingFunction) {
-                var space = _numeral._.includes(_format6, ' %') ? ' ' : '',
-                    output;
-
-                if (_numeral.options.scalePercentBy100) {
-                    value = value * 100;
-                }
-
-                // check for space before %
-                _format6 = _format6.replace(/\s?\%/, '');
-
-                output = _numeral._.numberToFormat(value, _format6, roundingFunction);
-
-                if (_numeral._.includes(output, ')')) {
-                    output = output.split('');
-
-                    output.splice(-1, 0, space + '%');
-
-                    output = output.join('');
-                } else {
-                    output = output + space + '%';
-                }
-
-                return output;
-            },
-            unformat: function unformat(string) {
-                var number = _numeral._.stringToNumber(string);
-                if (_numeral.options.scalePercentBy100) {
-                    return number * 0.01;
-                }
-                return number;
-            }
-        });
-    })();
-
-    (function () {
-        _numeral.register('format', 'time', {
-            regexps: {
-                format: /(:)/,
-                unformat: /(:)/
-            },
-            format: function format(value, _format7, roundingFunction) {
-                var hours = Math.floor(value / 60 / 60),
-                    minutes = Math.floor((value - hours * 60 * 60) / 60),
-                    seconds = Math.round(value - hours * 60 * 60 - minutes * 60);
-
-                return hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
-            },
-            unformat: function unformat(string) {
-                var timeArray = string.split(':'),
-                    seconds = 0;
-
-                // turn hours and minutes into seconds and add them all up
-                if (timeArray.length === 3) {
-                    // hours
-                    seconds = seconds + Number(timeArray[0]) * 60 * 60;
-                    // minutes
-                    seconds = seconds + Number(timeArray[1]) * 60;
-                    // seconds
-                    seconds = seconds + Number(timeArray[2]);
-                } else if (timeArray.length === 2) {
-                    // minutes
-                    seconds = seconds + Number(timeArray[0]) * 60;
-                    // seconds
-                    seconds = seconds + Number(timeArray[1]);
-                }
-                return Number(seconds);
-            }
-        });
-    })();
-
-    return _numeral;
-});
+  if (rootIx === 2) {
+    return tmp.childNodes[0].childNodes[0].childNodes[0];
+  } else if (rootIx === 1) {
+    return tmp.childNodes[0].childNodes[0];
+  }
+  return tmp.childNodes[0];
+}
 
 /***/ }),
 /* 131 */
@@ -34580,119 +33613,1147 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 /***/ }),
 /* 246 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/*! @preserve
+ * numeral.js
+ * version : 2.0.6
+ * author : Adam Draper
+ * license : MIT
+ * http://adamwdraper.github.com/Numeral-js/
+ */
+
+(function (global, factory) {
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
+				__WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    } else if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object' && module.exports) {
+        module.exports = factory();
+    } else {
+        global.numeral = factory();
+    }
+})(undefined, function () {
+    /************************************
+        Variables
+    ************************************/
+
+    var _numeral,
+        _,
+        VERSION = '2.0.6',
+        formats = {},
+        locales = {},
+        defaults = {
+        currentLocale: 'en',
+        zeroFormat: null,
+        nullFormat: null,
+        defaultFormat: '0,0',
+        scalePercentBy100: true
+    },
+        options = {
+        currentLocale: defaults.currentLocale,
+        zeroFormat: defaults.zeroFormat,
+        nullFormat: defaults.nullFormat,
+        defaultFormat: defaults.defaultFormat,
+        scalePercentBy100: defaults.scalePercentBy100
+    };
+
+    /************************************
+        Constructors
+    ************************************/
+
+    // Numeral prototype object
+    function Numeral(input, number) {
+        this._input = input;
+
+        this._value = number;
+    }
+
+    _numeral = function numeral(input) {
+        var value, kind, unformatFunction, regexp;
+
+        if (_numeral.isNumeral(input)) {
+            value = input.value();
+        } else if (input === 0 || typeof input === 'undefined') {
+            value = 0;
+        } else if (input === null || _.isNaN(input)) {
+            value = null;
+        } else if (typeof input === 'string') {
+            if (options.zeroFormat && input === options.zeroFormat) {
+                value = 0;
+            } else if (options.nullFormat && input === options.nullFormat || !input.replace(/[^0-9]+/g, '').length) {
+                value = null;
+            } else {
+                for (kind in formats) {
+                    regexp = typeof formats[kind].regexps.unformat === 'function' ? formats[kind].regexps.unformat() : formats[kind].regexps.unformat;
+
+                    if (regexp && input.match(regexp)) {
+                        unformatFunction = formats[kind].unformat;
+
+                        break;
+                    }
+                }
+
+                unformatFunction = unformatFunction || _numeral._.stringToNumber;
+
+                value = unformatFunction(input);
+            }
+        } else {
+            value = Number(input) || null;
+        }
+
+        return new Numeral(input, value);
+    };
+
+    // version number
+    _numeral.version = VERSION;
+
+    // compare numeral object
+    _numeral.isNumeral = function (obj) {
+        return obj instanceof Numeral;
+    };
+
+    // helper functions
+    _numeral._ = _ = {
+        // formats numbers separators, decimals places, signs, abbreviations
+        numberToFormat: function numberToFormat(value, format, roundingFunction) {
+            var locale = locales[_numeral.options.currentLocale],
+                negP = false,
+                optDec = false,
+                leadingCount = 0,
+                abbr = '',
+                trillion = 1000000000000,
+                billion = 1000000000,
+                million = 1000000,
+                thousand = 1000,
+                decimal = '',
+                neg = false,
+                abbrForce,
+                // force abbreviation
+            abs,
+                min,
+                max,
+                power,
+                int,
+                precision,
+                signed,
+                thousands,
+                output;
+
+            // make sure we never format a null value
+            value = value || 0;
+
+            abs = Math.abs(value);
+
+            // see if we should use parentheses for negative number or if we should prefix with a sign
+            // if both are present we default to parentheses
+            if (_numeral._.includes(format, '(')) {
+                negP = true;
+                format = format.replace(/[\(|\)]/g, '');
+            } else if (_numeral._.includes(format, '+') || _numeral._.includes(format, '-')) {
+                signed = _numeral._.includes(format, '+') ? format.indexOf('+') : value < 0 ? format.indexOf('-') : -1;
+                format = format.replace(/[\+|\-]/g, '');
+            }
+
+            // see if abbreviation is wanted
+            if (_numeral._.includes(format, 'a')) {
+                abbrForce = format.match(/a(k|m|b|t)?/);
+
+                abbrForce = abbrForce ? abbrForce[1] : false;
+
+                // check for space before abbreviation
+                if (_numeral._.includes(format, ' a')) {
+                    abbr = ' ';
+                }
+
+                format = format.replace(new RegExp(abbr + 'a[kmbt]?'), '');
+
+                if (abs >= trillion && !abbrForce || abbrForce === 't') {
+                    // trillion
+                    abbr += locale.abbreviations.trillion;
+                    value = value / trillion;
+                } else if (abs < trillion && abs >= billion && !abbrForce || abbrForce === 'b') {
+                    // billion
+                    abbr += locale.abbreviations.billion;
+                    value = value / billion;
+                } else if (abs < billion && abs >= million && !abbrForce || abbrForce === 'm') {
+                    // million
+                    abbr += locale.abbreviations.million;
+                    value = value / million;
+                } else if (abs < million && abs >= thousand && !abbrForce || abbrForce === 'k') {
+                    // thousand
+                    abbr += locale.abbreviations.thousand;
+                    value = value / thousand;
+                }
+            }
+
+            // check for optional decimals
+            if (_numeral._.includes(format, '[.]')) {
+                optDec = true;
+                format = format.replace('[.]', '.');
+            }
+
+            // break number and format
+            int = value.toString().split('.')[0];
+            precision = format.split('.')[1];
+            thousands = format.indexOf(',');
+            leadingCount = (format.split('.')[0].split(',')[0].match(/0/g) || []).length;
+
+            if (precision) {
+                if (_numeral._.includes(precision, '[')) {
+                    precision = precision.replace(']', '');
+                    precision = precision.split('[');
+                    decimal = _numeral._.toFixed(value, precision[0].length + precision[1].length, roundingFunction, precision[1].length);
+                } else {
+                    decimal = _numeral._.toFixed(value, precision.length, roundingFunction);
+                }
+
+                int = decimal.split('.')[0];
+
+                if (_numeral._.includes(decimal, '.')) {
+                    decimal = locale.delimiters.decimal + decimal.split('.')[1];
+                } else {
+                    decimal = '';
+                }
+
+                if (optDec && Number(decimal.slice(1)) === 0) {
+                    decimal = '';
+                }
+            } else {
+                int = _numeral._.toFixed(value, 0, roundingFunction);
+            }
+
+            // check abbreviation again after rounding
+            if (abbr && !abbrForce && Number(int) >= 1000 && abbr !== locale.abbreviations.trillion) {
+                int = String(Number(int) / 1000);
+
+                switch (abbr) {
+                    case locale.abbreviations.thousand:
+                        abbr = locale.abbreviations.million;
+                        break;
+                    case locale.abbreviations.million:
+                        abbr = locale.abbreviations.billion;
+                        break;
+                    case locale.abbreviations.billion:
+                        abbr = locale.abbreviations.trillion;
+                        break;
+                }
+            }
+
+            // format number
+            if (_numeral._.includes(int, '-')) {
+                int = int.slice(1);
+                neg = true;
+            }
+
+            if (int.length < leadingCount) {
+                for (var i = leadingCount - int.length; i > 0; i--) {
+                    int = '0' + int;
+                }
+            }
+
+            if (thousands > -1) {
+                int = int.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + locale.delimiters.thousands);
+            }
+
+            if (format.indexOf('.') === 0) {
+                int = '';
+            }
+
+            output = int + decimal + (abbr ? abbr : '');
+
+            if (negP) {
+                output = (negP && neg ? '(' : '') + output + (negP && neg ? ')' : '');
+            } else {
+                if (signed >= 0) {
+                    output = signed === 0 ? (neg ? '-' : '+') + output : output + (neg ? '-' : '+');
+                } else if (neg) {
+                    output = '-' + output;
+                }
+            }
+
+            return output;
+        },
+        // unformats numbers separators, decimals places, signs, abbreviations
+        stringToNumber: function stringToNumber(string) {
+            var locale = locales[options.currentLocale],
+                stringOriginal = string,
+                abbreviations = {
+                thousand: 3,
+                million: 6,
+                billion: 9,
+                trillion: 12
+            },
+                abbreviation,
+                value,
+                i,
+                regexp;
+
+            if (options.zeroFormat && string === options.zeroFormat) {
+                value = 0;
+            } else if (options.nullFormat && string === options.nullFormat || !string.replace(/[^0-9]+/g, '').length) {
+                value = null;
+            } else {
+                value = 1;
+
+                if (locale.delimiters.decimal !== '.') {
+                    string = string.replace(/\./g, '').replace(locale.delimiters.decimal, '.');
+                }
+
+                for (abbreviation in abbreviations) {
+                    regexp = new RegExp('[^a-zA-Z]' + locale.abbreviations[abbreviation] + '(?:\\)|(\\' + locale.currency.symbol + ')?(?:\\))?)?$');
+
+                    if (stringOriginal.match(regexp)) {
+                        value *= Math.pow(10, abbreviations[abbreviation]);
+                        break;
+                    }
+                }
+
+                // check for negative number
+                value *= (string.split('-').length + Math.min(string.split('(').length - 1, string.split(')').length - 1)) % 2 ? 1 : -1;
+
+                // remove non numbers
+                string = string.replace(/[^0-9\.]+/g, '');
+
+                value *= Number(string);
+            }
+
+            return value;
+        },
+        isNaN: function (_isNaN) {
+            function isNaN(_x) {
+                return _isNaN.apply(this, arguments);
+            }
+
+            isNaN.toString = function () {
+                return _isNaN.toString();
+            };
+
+            return isNaN;
+        }(function (value) {
+            return typeof value === 'number' && isNaN(value);
+        }),
+        includes: function includes(string, search) {
+            return string.indexOf(search) !== -1;
+        },
+        insert: function insert(string, subString, start) {
+            return string.slice(0, start) + subString + string.slice(start);
+        },
+        reduce: function reduce(array, callback /*, initialValue*/) {
+            if (this === null) {
+                throw new TypeError('Array.prototype.reduce called on null or undefined');
+            }
+
+            if (typeof callback !== 'function') {
+                throw new TypeError(callback + ' is not a function');
+            }
+
+            var t = Object(array),
+                len = t.length >>> 0,
+                k = 0,
+                value;
+
+            if (arguments.length === 3) {
+                value = arguments[2];
+            } else {
+                while (k < len && !(k in t)) {
+                    k++;
+                }
+
+                if (k >= len) {
+                    throw new TypeError('Reduce of empty array with no initial value');
+                }
+
+                value = t[k++];
+            }
+            for (; k < len; k++) {
+                if (k in t) {
+                    value = callback(value, t[k], k, t);
+                }
+            }
+            return value;
+        },
+        /**
+         * Computes the multiplier necessary to make x >= 1,
+         * effectively eliminating miscalculations caused by
+         * finite precision.
+         */
+        multiplier: function multiplier(x) {
+            var parts = x.toString().split('.');
+
+            return parts.length < 2 ? 1 : Math.pow(10, parts[1].length);
+        },
+        /**
+         * Given a variable number of arguments, returns the maximum
+         * multiplier that must be used to normalize an operation involving
+         * all of them.
+         */
+        correctionFactor: function correctionFactor() {
+            var args = Array.prototype.slice.call(arguments);
+
+            return args.reduce(function (accum, next) {
+                var mn = _.multiplier(next);
+                return accum > mn ? accum : mn;
+            }, 1);
+        },
+        /**
+         * Implementation of toFixed() that treats floats more like decimals
+         *
+         * Fixes binary rounding issues (eg. (0.615).toFixed(2) === '0.61') that present
+         * problems for accounting- and finance-related software.
+         */
+        toFixed: function toFixed(value, maxDecimals, roundingFunction, optionals) {
+            var splitValue = value.toString().split('.'),
+                minDecimals = maxDecimals - (optionals || 0),
+                boundedPrecision,
+                optionalsRegExp,
+                power,
+                output;
+
+            // Use the smallest precision value possible to avoid errors from floating point representation
+            if (splitValue.length === 2) {
+                boundedPrecision = Math.min(Math.max(splitValue[1].length, minDecimals), maxDecimals);
+            } else {
+                boundedPrecision = minDecimals;
+            }
+
+            power = Math.pow(10, boundedPrecision);
+
+            // Multiply up by precision, round accurately, then divide and use native toFixed():
+            output = (roundingFunction(value + 'e+' + boundedPrecision) / power).toFixed(boundedPrecision);
+
+            if (optionals > maxDecimals - boundedPrecision) {
+                optionalsRegExp = new RegExp('\\.?0{1,' + (optionals - (maxDecimals - boundedPrecision)) + '}$');
+                output = output.replace(optionalsRegExp, '');
+            }
+
+            return output;
+        }
+    };
+
+    // avaliable options
+    _numeral.options = options;
+
+    // avaliable formats
+    _numeral.formats = formats;
+
+    // avaliable formats
+    _numeral.locales = locales;
+
+    // This function sets the current locale.  If
+    // no arguments are passed in, it will simply return the current global
+    // locale key.
+    _numeral.locale = function (key) {
+        if (key) {
+            options.currentLocale = key.toLowerCase();
+        }
+
+        return options.currentLocale;
+    };
+
+    // This function provides access to the loaded locale data.  If
+    // no arguments are passed in, it will simply return the current
+    // global locale object.
+    _numeral.localeData = function (key) {
+        if (!key) {
+            return locales[options.currentLocale];
+        }
+
+        key = key.toLowerCase();
+
+        if (!locales[key]) {
+            throw new Error('Unknown locale : ' + key);
+        }
+
+        return locales[key];
+    };
+
+    _numeral.reset = function () {
+        for (var property in defaults) {
+            options[property] = defaults[property];
+        }
+    };
+
+    _numeral.zeroFormat = function (format) {
+        options.zeroFormat = typeof format === 'string' ? format : null;
+    };
+
+    _numeral.nullFormat = function (format) {
+        options.nullFormat = typeof format === 'string' ? format : null;
+    };
+
+    _numeral.defaultFormat = function (format) {
+        options.defaultFormat = typeof format === 'string' ? format : '0.0';
+    };
+
+    _numeral.register = function (type, name, format) {
+        name = name.toLowerCase();
+
+        if (this[type + 's'][name]) {
+            throw new TypeError(name + ' ' + type + ' already registered.');
+        }
+
+        this[type + 's'][name] = format;
+
+        return format;
+    };
+
+    _numeral.validate = function (val, culture) {
+        var _decimalSep, _thousandSep, _currSymbol, _valArray, _abbrObj, _thousandRegEx, localeData, temp;
+
+        //coerce val to string
+        if (typeof val !== 'string') {
+            val += '';
+
+            if (console.warn) {
+                console.warn('Numeral.js: Value is not string. It has been co-erced to: ', val);
+            }
+        }
+
+        //trim whitespaces from either sides
+        val = val.trim();
+
+        //if val is just digits return true
+        if (!!val.match(/^\d+$/)) {
+            return true;
+        }
+
+        //if val is empty return false
+        if (val === '') {
+            return false;
+        }
+
+        //get the decimal and thousands separator from numeral.localeData
+        try {
+            //check if the culture is understood by numeral. if not, default it to current locale
+            localeData = _numeral.localeData(culture);
+        } catch (e) {
+            localeData = _numeral.localeData(_numeral.locale());
+        }
+
+        //setup the delimiters and currency symbol based on culture/locale
+        _currSymbol = localeData.currency.symbol;
+        _abbrObj = localeData.abbreviations;
+        _decimalSep = localeData.delimiters.decimal;
+        if (localeData.delimiters.thousands === '.') {
+            _thousandSep = '\\.';
+        } else {
+            _thousandSep = localeData.delimiters.thousands;
+        }
+
+        // validating currency symbol
+        temp = val.match(/^[^\d]+/);
+        if (temp !== null) {
+            val = val.substr(1);
+            if (temp[0] !== _currSymbol) {
+                return false;
+            }
+        }
+
+        //validating abbreviation symbol
+        temp = val.match(/[^\d]+$/);
+        if (temp !== null) {
+            val = val.slice(0, -1);
+            if (temp[0] !== _abbrObj.thousand && temp[0] !== _abbrObj.million && temp[0] !== _abbrObj.billion && temp[0] !== _abbrObj.trillion) {
+                return false;
+            }
+        }
+
+        _thousandRegEx = new RegExp(_thousandSep + '{2}');
+
+        if (!val.match(/[^\d.,]/g)) {
+            _valArray = val.split(_decimalSep);
+            if (_valArray.length > 2) {
+                return false;
+            } else {
+                if (_valArray.length < 2) {
+                    return !!_valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx);
+                } else {
+                    if (_valArray[0].length === 1) {
+                        return !!_valArray[0].match(/^\d+$/) && !_valArray[0].match(_thousandRegEx) && !!_valArray[1].match(/^\d+$/);
+                    } else {
+                        return !!_valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx) && !!_valArray[1].match(/^\d+$/);
+                    }
+                }
+            }
+        }
+
+        return false;
+    };
+
+    /************************************
+        Numeral Prototype
+    ************************************/
+
+    _numeral.fn = Numeral.prototype = {
+        clone: function clone() {
+            return _numeral(this);
+        },
+        format: function format(inputString, roundingFunction) {
+            var value = this._value,
+                format = inputString || options.defaultFormat,
+                kind,
+                output,
+                formatFunction;
+
+            // make sure we have a roundingFunction
+            roundingFunction = roundingFunction || Math.round;
+
+            // format based on value
+            if (value === 0 && options.zeroFormat !== null) {
+                output = options.zeroFormat;
+            } else if (value === null && options.nullFormat !== null) {
+                output = options.nullFormat;
+            } else {
+                for (kind in formats) {
+                    if (format.match(formats[kind].regexps.format)) {
+                        formatFunction = formats[kind].format;
+
+                        break;
+                    }
+                }
+
+                formatFunction = formatFunction || _numeral._.numberToFormat;
+
+                output = formatFunction(value, format, roundingFunction);
+            }
+
+            return output;
+        },
+        value: function value() {
+            return this._value;
+        },
+        input: function input() {
+            return this._input;
+        },
+        set: function set(value) {
+            this._value = Number(value);
+
+            return this;
+        },
+        add: function add(value) {
+            var corrFactor = _.correctionFactor.call(null, this._value, value);
+
+            function cback(accum, curr, currI, O) {
+                return accum + Math.round(corrFactor * curr);
+            }
+
+            this._value = _.reduce([this._value, value], cback, 0) / corrFactor;
+
+            return this;
+        },
+        subtract: function subtract(value) {
+            var corrFactor = _.correctionFactor.call(null, this._value, value);
+
+            function cback(accum, curr, currI, O) {
+                return accum - Math.round(corrFactor * curr);
+            }
+
+            this._value = _.reduce([value], cback, Math.round(this._value * corrFactor)) / corrFactor;
+
+            return this;
+        },
+        multiply: function multiply(value) {
+            function cback(accum, curr, currI, O) {
+                var corrFactor = _.correctionFactor(accum, curr);
+                return Math.round(accum * corrFactor) * Math.round(curr * corrFactor) / Math.round(corrFactor * corrFactor);
+            }
+
+            this._value = _.reduce([this._value, value], cback, 1);
+
+            return this;
+        },
+        divide: function divide(value) {
+            function cback(accum, curr, currI, O) {
+                var corrFactor = _.correctionFactor(accum, curr);
+                return Math.round(accum * corrFactor) / Math.round(curr * corrFactor);
+            }
+
+            this._value = _.reduce([this._value, value], cback);
+
+            return this;
+        },
+        difference: function difference(value) {
+            return Math.abs(_numeral(this._value).subtract(value).value());
+        }
+    };
+
+    /************************************
+        Default Locale && Format
+    ************************************/
+
+    _numeral.register('locale', 'en', {
+        delimiters: {
+            thousands: ',',
+            decimal: '.'
+        },
+        abbreviations: {
+            thousand: 'k',
+            million: 'm',
+            billion: 'b',
+            trillion: 't'
+        },
+        ordinal: function ordinal(number) {
+            var b = number % 10;
+            return ~~(number % 100 / 10) === 1 ? 'th' : b === 1 ? 'st' : b === 2 ? 'nd' : b === 3 ? 'rd' : 'th';
+        },
+        currency: {
+            symbol: '$'
+        }
+    });
+
+    (function () {
+        _numeral.register('format', 'bps', {
+            regexps: {
+                format: /(BPS)/,
+                unformat: /(BPS)/
+            },
+            format: function format(value, _format, roundingFunction) {
+                var space = _numeral._.includes(_format, ' BPS') ? ' ' : '',
+                    output;
+
+                value = value * 10000;
+
+                // check for space before BPS
+                _format = _format.replace(/\s?BPS/, '');
+
+                output = _numeral._.numberToFormat(value, _format, roundingFunction);
+
+                if (_numeral._.includes(output, ')')) {
+                    output = output.split('');
+
+                    output.splice(-1, 0, space + 'BPS');
+
+                    output = output.join('');
+                } else {
+                    output = output + space + 'BPS';
+                }
+
+                return output;
+            },
+            unformat: function unformat(string) {
+                return +(_numeral._.stringToNumber(string) * 0.0001).toFixed(15);
+            }
+        });
+    })();
+
+    (function () {
+        var decimal = {
+            base: 1000,
+            suffixes: ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        },
+            binary = {
+            base: 1024,
+            suffixes: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+        };
+
+        var allSuffixes = decimal.suffixes.concat(binary.suffixes.filter(function (item) {
+            return decimal.suffixes.indexOf(item) < 0;
+        }));
+        var unformatRegex = allSuffixes.join('|');
+        // Allow support for BPS (http://www.investopedia.com/terms/b/basispoint.asp)
+        unformatRegex = '(' + unformatRegex.replace('B', 'B(?!PS)') + ')';
+
+        _numeral.register('format', 'bytes', {
+            regexps: {
+                format: /([0\s]i?b)/,
+                unformat: new RegExp(unformatRegex)
+            },
+            format: function format(value, _format2, roundingFunction) {
+                var output,
+                    bytes = _numeral._.includes(_format2, 'ib') ? binary : decimal,
+                    suffix = _numeral._.includes(_format2, ' b') || _numeral._.includes(_format2, ' ib') ? ' ' : '',
+                    power,
+                    min,
+                    max;
+
+                // check for space before
+                _format2 = _format2.replace(/\s?i?b/, '');
+
+                for (power = 0; power <= bytes.suffixes.length; power++) {
+                    min = Math.pow(bytes.base, power);
+                    max = Math.pow(bytes.base, power + 1);
+
+                    if (value === null || value === 0 || value >= min && value < max) {
+                        suffix += bytes.suffixes[power];
+
+                        if (min > 0) {
+                            value = value / min;
+                        }
+
+                        break;
+                    }
+                }
+
+                output = _numeral._.numberToFormat(value, _format2, roundingFunction);
+
+                return output + suffix;
+            },
+            unformat: function unformat(string) {
+                var value = _numeral._.stringToNumber(string),
+                    power,
+                    bytesMultiplier;
+
+                if (value) {
+                    for (power = decimal.suffixes.length - 1; power >= 0; power--) {
+                        if (_numeral._.includes(string, decimal.suffixes[power])) {
+                            bytesMultiplier = Math.pow(decimal.base, power);
+
+                            break;
+                        }
+
+                        if (_numeral._.includes(string, binary.suffixes[power])) {
+                            bytesMultiplier = Math.pow(binary.base, power);
+
+                            break;
+                        }
+                    }
+
+                    value *= bytesMultiplier || 1;
+                }
+
+                return value;
+            }
+        });
+    })();
+
+    (function () {
+        _numeral.register('format', 'currency', {
+            regexps: {
+                format: /(\$)/
+            },
+            format: function format(value, _format3, roundingFunction) {
+                var locale = _numeral.locales[_numeral.options.currentLocale],
+                    symbols = {
+                    before: _format3.match(/^([\+|\-|\(|\s|\$]*)/)[0],
+                    after: _format3.match(/([\+|\-|\)|\s|\$]*)$/)[0]
+                },
+                    output,
+                    symbol,
+                    i;
+
+                // strip format of spaces and $
+                _format3 = _format3.replace(/\s?\$\s?/, '');
+
+                // format the number
+                output = _numeral._.numberToFormat(value, _format3, roundingFunction);
+
+                // update the before and after based on value
+                if (value >= 0) {
+                    symbols.before = symbols.before.replace(/[\-\(]/, '');
+                    symbols.after = symbols.after.replace(/[\-\)]/, '');
+                } else if (value < 0 && !_numeral._.includes(symbols.before, '-') && !_numeral._.includes(symbols.before, '(')) {
+                    symbols.before = '-' + symbols.before;
+                }
+
+                // loop through each before symbol
+                for (i = 0; i < symbols.before.length; i++) {
+                    symbol = symbols.before[i];
+
+                    switch (symbol) {
+                        case '$':
+                            output = _numeral._.insert(output, locale.currency.symbol, i);
+                            break;
+                        case ' ':
+                            output = _numeral._.insert(output, ' ', i + locale.currency.symbol.length - 1);
+                            break;
+                    }
+                }
+
+                // loop through each after symbol
+                for (i = symbols.after.length - 1; i >= 0; i--) {
+                    symbol = symbols.after[i];
+
+                    switch (symbol) {
+                        case '$':
+                            output = i === symbols.after.length - 1 ? output + locale.currency.symbol : _numeral._.insert(output, locale.currency.symbol, -(symbols.after.length - (1 + i)));
+                            break;
+                        case ' ':
+                            output = i === symbols.after.length - 1 ? output + ' ' : _numeral._.insert(output, ' ', -(symbols.after.length - (1 + i) + locale.currency.symbol.length - 1));
+                            break;
+                    }
+                }
+
+                return output;
+            }
+        });
+    })();
+
+    (function () {
+        _numeral.register('format', 'exponential', {
+            regexps: {
+                format: /(e\+|e-)/,
+                unformat: /(e\+|e-)/
+            },
+            format: function format(value, _format4, roundingFunction) {
+                var output,
+                    exponential = typeof value === 'number' && !_numeral._.isNaN(value) ? value.toExponential() : '0e+0',
+                    parts = exponential.split('e');
+
+                _format4 = _format4.replace(/e[\+|\-]{1}0/, '');
+
+                output = _numeral._.numberToFormat(Number(parts[0]), _format4, roundingFunction);
+
+                return output + 'e' + parts[1];
+            },
+            unformat: function unformat(string) {
+                var parts = _numeral._.includes(string, 'e+') ? string.split('e+') : string.split('e-'),
+                    value = Number(parts[0]),
+                    power = Number(parts[1]);
+
+                power = _numeral._.includes(string, 'e-') ? power *= -1 : power;
+
+                function cback(accum, curr, currI, O) {
+                    var corrFactor = _numeral._.correctionFactor(accum, curr),
+                        num = accum * corrFactor * (curr * corrFactor) / (corrFactor * corrFactor);
+                    return num;
+                }
+
+                return _numeral._.reduce([value, Math.pow(10, power)], cback, 1);
+            }
+        });
+    })();
+
+    (function () {
+        _numeral.register('format', 'ordinal', {
+            regexps: {
+                format: /(o)/
+            },
+            format: function format(value, _format5, roundingFunction) {
+                var locale = _numeral.locales[_numeral.options.currentLocale],
+                    output,
+                    ordinal = _numeral._.includes(_format5, ' o') ? ' ' : '';
+
+                // check for space before
+                _format5 = _format5.replace(/\s?o/, '');
+
+                ordinal += locale.ordinal(value);
+
+                output = _numeral._.numberToFormat(value, _format5, roundingFunction);
+
+                return output + ordinal;
+            }
+        });
+    })();
+
+    (function () {
+        _numeral.register('format', 'percentage', {
+            regexps: {
+                format: /(%)/,
+                unformat: /(%)/
+            },
+            format: function format(value, _format6, roundingFunction) {
+                var space = _numeral._.includes(_format6, ' %') ? ' ' : '',
+                    output;
+
+                if (_numeral.options.scalePercentBy100) {
+                    value = value * 100;
+                }
+
+                // check for space before %
+                _format6 = _format6.replace(/\s?\%/, '');
+
+                output = _numeral._.numberToFormat(value, _format6, roundingFunction);
+
+                if (_numeral._.includes(output, ')')) {
+                    output = output.split('');
+
+                    output.splice(-1, 0, space + '%');
+
+                    output = output.join('');
+                } else {
+                    output = output + space + '%';
+                }
+
+                return output;
+            },
+            unformat: function unformat(string) {
+                var number = _numeral._.stringToNumber(string);
+                if (_numeral.options.scalePercentBy100) {
+                    return number * 0.01;
+                }
+                return number;
+            }
+        });
+    })();
+
+    (function () {
+        _numeral.register('format', 'time', {
+            regexps: {
+                format: /(:)/,
+                unformat: /(:)/
+            },
+            format: function format(value, _format7, roundingFunction) {
+                var hours = Math.floor(value / 60 / 60),
+                    minutes = Math.floor((value - hours * 60 * 60) / 60),
+                    seconds = Math.round(value - hours * 60 * 60 - minutes * 60);
+
+                return hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+            },
+            unformat: function unformat(string) {
+                var timeArray = string.split(':'),
+                    seconds = 0;
+
+                // turn hours and minutes into seconds and add them all up
+                if (timeArray.length === 3) {
+                    // hours
+                    seconds = seconds + Number(timeArray[0]) * 60 * 60;
+                    // minutes
+                    seconds = seconds + Number(timeArray[1]) * 60;
+                    // seconds
+                    seconds = seconds + Number(timeArray[2]);
+                } else if (timeArray.length === 2) {
+                    // minutes
+                    seconds = seconds + Number(timeArray[0]) * 60;
+                    // seconds
+                    seconds = seconds + Number(timeArray[1]);
+                }
+                return Number(seconds);
+            }
+        });
+    })();
+
+    return _numeral;
+});
+
+/***/ }),
+/* 247 */
 /***/ (function(module, exports) {
 
 module.exports = {"hideFutureSprints":false,"sprintsPerPhase":3,"hoursPerPoint":3,"estimate":{"dev":0.999,"qa":0.001},"risk":{"blocker":2,"delay":1,"early":-1,"debt":0.25,"resourceDeficitHourBlocks":25},"baseUrl":"http://localhost/viz/src/assets/data/sample-full.json","jiraUrl":"https://daymon.atlassian.net/rest/api/2/search?jql=project%20%3D%20NES%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0"}
 
 /***/ }),
-/* 247 */
+/* 248 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _Parse = __webpack_require__(320);
-
-var _Parse2 = _interopRequireDefault(_Parse);
-
-var _aggregates = __webpack_require__(295);
-
-var _aggregates2 = _interopRequireDefault(_aggregates);
-
-var _Plan = __webpack_require__(319);
-
-var _Plan2 = _interopRequireDefault(_Plan);
-
-var _chart = __webpack_require__(9);
+var _chart = __webpack_require__(10);
 
 var _chart2 = _interopRequireDefault(_chart);
 
-var _team = __webpack_require__(303);
+var _Authentication = __webpack_require__(296);
 
-var _team2 = _interopRequireDefault(_team);
+var _Authentication2 = _interopRequireDefault(_Authentication);
 
-var _reports = __webpack_require__(321);
+var _Parse = __webpack_require__(8);
 
-var _reports2 = _interopRequireDefault(_reports);
+var _Parse2 = _interopRequireDefault(_Parse);
 
-var _dashboard = __webpack_require__(300);
+var _Aggregates = __webpack_require__(297);
 
-var _dashboard2 = _interopRequireDefault(_dashboard);
+var _Aggregates2 = _interopRequireDefault(_Aggregates);
 
-var _actions = __webpack_require__(297);
+var _Plan = __webpack_require__(298);
 
-var _actions2 = _interopRequireDefault(_actions);
+var _Plan2 = _interopRequireDefault(_Plan);
+
+var _Team = __webpack_require__(299);
+
+var _Team2 = _interopRequireDefault(_Team);
+
+var _Reports = __webpack_require__(308);
+
+var _Reports2 = _interopRequireDefault(_Reports);
+
+var _Dashboard = __webpack_require__(310);
+
+var _Dashboard2 = _interopRequireDefault(_Dashboard);
+
+var _Actions = __webpack_require__(312);
+
+var _Actions2 = _interopRequireDefault(_Actions);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var config = __webpack_require__(246);
-var table = __webpack_require__(312);
-var sprints = __webpack_require__(8);
+var config = __webpack_require__(247);
+var table = __webpack_require__(313);
+var sprints = __webpack_require__(9);
 
-var styles = __webpack_require__(313);
+var styles = __webpack_require__(314);
 
 // Fetches content
 var init = function init() {
 
+  var auth = new _Authentication2.default();
   var parse = new _Parse2.default();
-  var aggregate = new _aggregates2.default();
+  var aggregate = new _Aggregates2.default();
   var plan = new _Plan2.default();
-  var team = new _team2.default();
-  var reports = new _reports2.default();
-  var dashboard = new _dashboard2.default();
-  var actions = new _actions2.default();
+  var team = new _Team2.default();
+  var reports = new _Reports2.default();
+  var dashboard = new _Dashboard2.default();
+  var actions = new _Actions2.default();
 
   var resources = [config.baseUrl];
 
-  var getContent = function getContent(url) {
-    return fetch(url).then(function (res) {
-      return res.json();
-    }).then(function (response) {
-      return response;
+  // Ensure authentication token exists
+  if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
+
+    // TODO: Create authentication routine
+    localStorage.setItem('VIZ_AUTH_TOKEN', {
+      token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
+  } else {
+
+    // Retrieve content from server
+    var getContent = function getContent(url) {
+      return fetch(url).then(function (res) {
+        return res.json();
+      }).then(function (response) {
+        return response;
+      });
+    };
+
+    // Use content, parse data and render
+    Promise.all(resources.map(getContent)).then(function (results) {
+
+      var stories = results[0];
+
+      // Append Sprint Data to Configuration
+      var settings = parse.appendSprints(table, sprints);
+
+      // Parse Story Data
+      var data = parse.parseData(stories);
+      var aggregates = aggregate.parseAggregates(data, sprints, config);
+
+      // Render Header Row
+      plan.renderHeader(sprints, config, aggregates);
+
+      // Render Table
+      data.forEach(function (task) {
+        plan.renderTable(task, settings, config, aggregates);
+      });
+
+      // Render the Aggregate Values
+      plan.renderAggregates(aggregates);
+
+      // Assign Actions
+      actions.navigation(aggregates.sprint);
+
+      // Assign values to dashboard
+      dashboard.setValues(aggregates);
+
+      // Render Charts
+      reports.renderCharts(aggregates);
+
+      // Render Teams
+      team.renderTeams();
     });
-  };
-
-  Promise.all(resources.map(getContent)).then(function (results) {
-
-    var stories = results[0];
-
-    // Append Sprint Data to Configuration
-    var settings = parse.appendSprints(table, sprints);
-
-    // Parse Story Data
-    var data = parse.parseData(stories);
-    var aggregates = aggregate.parseAggregates(data, sprints, config);
-
-    // Render Header Row
-    plan.renderHeader(sprints, config, aggregates);
-
-    // Render Table
-    data.forEach(function (task) {
-      plan.renderTable(task, settings, config, aggregates);
-    });
-
-    // Render the Aggregate Values
-    plan.renderAggregates(aggregates);
-
-    // Assign Actions
-    actions.navigation(aggregates.sprint);
-
-    // Assign values to dashboard
-    dashboard.setValues(aggregates);
-
-    // Render Charts
-    reports.renderCharts(aggregates);
-
-    // Render Teams
-    team.renderTeams();
-  });
+  }
 };
 
 // Initialize the app
 init();
 
 /***/ }),
-/* 248 */
+/* 249 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34747,7 +34808,7 @@ module.exports = function () {
 };
 
 /***/ }),
-/* 249 */
+/* 250 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35003,7 +35064,7 @@ module.exports = {
 helpers.easingEffects = effects;
 
 /***/ }),
-/* 250 */
+/* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35219,7 +35280,7 @@ helpers.drawRoundedRectangle = function (ctx) {
 };
 
 /***/ }),
-/* 251 */
+/* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35321,7 +35382,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 252 */
+/* 253 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35329,7 +35390,7 @@ module.exports = {
 /* global document: false */
 
 
-var color = __webpack_require__(10);
+var color = __webpack_require__(11);
 var defaults = __webpack_require__(3);
 var helpers = __webpack_require__(2);
 
@@ -35941,13 +36002,13 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 253 */
+/* 254 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var conversions = __webpack_require__(254);
+var conversions = __webpack_require__(255);
 
 var convert = function convert() {
   return new Converter();
@@ -36037,7 +36098,7 @@ Converter.prototype.getValues = function (space) {
 module.exports = convert;
 
 /***/ }),
-/* 254 */
+/* 255 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -36740,14 +36801,14 @@ for (var key in cssKeywords) {
 }
 
 /***/ }),
-/* 255 */
+/* 256 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 /* MIT license */
-var colorNames = __webpack_require__(256);
+var colorNames = __webpack_require__(257);
 
 module.exports = {
    getRgba: getRgba,
@@ -36957,7 +37018,7 @@ for (var name in colorNames) {
 }
 
 /***/ }),
-/* 256 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37115,7 +37176,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 257 */
+/* 258 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37228,7 +37289,7 @@ module.exports = Element.extend({
 });
 
 /***/ }),
-/* 258 */
+/* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37325,7 +37386,7 @@ module.exports = Element.extend({
 });
 
 /***/ }),
-/* 259 */
+/* 260 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37437,7 +37498,7 @@ module.exports = Element.extend({
 });
 
 /***/ }),
-/* 260 */
+/* 261 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37655,7 +37716,7 @@ module.exports = Element.extend({
 });
 
 /***/ }),
-/* 261 */
+/* 262 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37678,7 +37739,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 262 */
+/* 263 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38101,7 +38162,7 @@ helpers.addEvent = _addEventListener;
 helpers.removeEvent = _removeEventListener;
 
 /***/ }),
-/* 263 */
+/* 264 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38481,7 +38542,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 264 */
+/* 265 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38658,7 +38719,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 265 */
+/* 266 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38668,8 +38729,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var defaults = __webpack_require__(3);
 var helpers = __webpack_require__(2);
-var Interaction = __webpack_require__(11);
-var platform = __webpack_require__(12);
+var Interaction = __webpack_require__(12);
+var platform = __webpack_require__(13);
 
 module.exports = function (Chart) {
 	var plugins = Chart.plugins;
@@ -39536,7 +39597,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 266 */
+/* 267 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -39872,7 +39933,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 267 */
+/* 268 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40297,7 +40358,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 268 */
+/* 269 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40348,7 +40409,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 269 */
+/* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41247,7 +41308,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 270 */
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42197,7 +42258,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 271 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42335,7 +42396,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 272 */
+/* 273 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42473,7 +42534,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 273 */
+/* 274 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42665,7 +42726,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 274 */
+/* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42910,7 +42971,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 275 */
+/* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43432,7 +43493,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 276 */
+/* 277 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44161,240 +44222,240 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 277 */
+/* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var map = {
-	"./af": 14,
-	"./af.js": 14,
-	"./ar": 15,
-	"./ar-dz": 16,
-	"./ar-dz.js": 16,
-	"./ar-kw": 17,
-	"./ar-kw.js": 17,
-	"./ar-ly": 18,
-	"./ar-ly.js": 18,
-	"./ar-ma": 19,
-	"./ar-ma.js": 19,
-	"./ar-sa": 20,
-	"./ar-sa.js": 20,
-	"./ar-tn": 21,
-	"./ar-tn.js": 21,
-	"./ar.js": 15,
-	"./az": 22,
-	"./az.js": 22,
-	"./be": 23,
-	"./be.js": 23,
-	"./bg": 24,
-	"./bg.js": 24,
-	"./bn": 25,
-	"./bn.js": 25,
-	"./bo": 26,
-	"./bo.js": 26,
-	"./br": 27,
-	"./br.js": 27,
-	"./bs": 28,
-	"./bs.js": 28,
-	"./ca": 29,
-	"./ca.js": 29,
-	"./cs": 30,
-	"./cs.js": 30,
-	"./cv": 31,
-	"./cv.js": 31,
-	"./cy": 32,
-	"./cy.js": 32,
-	"./da": 33,
-	"./da.js": 33,
-	"./de": 34,
-	"./de-at": 35,
-	"./de-at.js": 35,
-	"./de-ch": 36,
-	"./de-ch.js": 36,
-	"./de.js": 34,
-	"./dv": 37,
-	"./dv.js": 37,
-	"./el": 38,
-	"./el.js": 38,
-	"./en-au": 39,
-	"./en-au.js": 39,
-	"./en-ca": 40,
-	"./en-ca.js": 40,
-	"./en-gb": 41,
-	"./en-gb.js": 41,
-	"./en-ie": 42,
-	"./en-ie.js": 42,
-	"./en-nz": 43,
-	"./en-nz.js": 43,
-	"./eo": 44,
-	"./eo.js": 44,
-	"./es": 45,
-	"./es-do": 46,
-	"./es-do.js": 46,
-	"./es.js": 45,
-	"./et": 47,
-	"./et.js": 47,
-	"./eu": 48,
-	"./eu.js": 48,
-	"./fa": 49,
-	"./fa.js": 49,
-	"./fi": 50,
-	"./fi.js": 50,
-	"./fo": 51,
-	"./fo.js": 51,
-	"./fr": 52,
-	"./fr-ca": 53,
-	"./fr-ca.js": 53,
-	"./fr-ch": 54,
-	"./fr-ch.js": 54,
-	"./fr.js": 52,
-	"./fy": 55,
-	"./fy.js": 55,
-	"./gd": 56,
-	"./gd.js": 56,
-	"./gl": 57,
-	"./gl.js": 57,
-	"./gom-latn": 58,
-	"./gom-latn.js": 58,
-	"./he": 59,
-	"./he.js": 59,
-	"./hi": 60,
-	"./hi.js": 60,
-	"./hr": 61,
-	"./hr.js": 61,
-	"./hu": 62,
-	"./hu.js": 62,
-	"./hy-am": 63,
-	"./hy-am.js": 63,
-	"./id": 64,
-	"./id.js": 64,
-	"./is": 65,
-	"./is.js": 65,
-	"./it": 66,
-	"./it.js": 66,
-	"./ja": 67,
-	"./ja.js": 67,
-	"./jv": 68,
-	"./jv.js": 68,
-	"./ka": 69,
-	"./ka.js": 69,
-	"./kk": 70,
-	"./kk.js": 70,
-	"./km": 71,
-	"./km.js": 71,
-	"./kn": 72,
-	"./kn.js": 72,
-	"./ko": 73,
-	"./ko.js": 73,
-	"./ky": 74,
-	"./ky.js": 74,
-	"./lb": 75,
-	"./lb.js": 75,
-	"./lo": 76,
-	"./lo.js": 76,
-	"./lt": 77,
-	"./lt.js": 77,
-	"./lv": 78,
-	"./lv.js": 78,
-	"./me": 79,
-	"./me.js": 79,
-	"./mi": 80,
-	"./mi.js": 80,
-	"./mk": 81,
-	"./mk.js": 81,
-	"./ml": 82,
-	"./ml.js": 82,
-	"./mr": 83,
-	"./mr.js": 83,
-	"./ms": 84,
-	"./ms-my": 85,
-	"./ms-my.js": 85,
-	"./ms.js": 84,
-	"./my": 86,
-	"./my.js": 86,
-	"./nb": 87,
-	"./nb.js": 87,
-	"./ne": 88,
-	"./ne.js": 88,
-	"./nl": 89,
-	"./nl-be": 90,
-	"./nl-be.js": 90,
-	"./nl.js": 89,
-	"./nn": 91,
-	"./nn.js": 91,
-	"./pa-in": 92,
-	"./pa-in.js": 92,
-	"./pl": 93,
-	"./pl.js": 93,
-	"./pt": 94,
-	"./pt-br": 95,
-	"./pt-br.js": 95,
-	"./pt.js": 94,
-	"./ro": 96,
-	"./ro.js": 96,
-	"./ru": 97,
-	"./ru.js": 97,
-	"./sd": 98,
-	"./sd.js": 98,
-	"./se": 99,
-	"./se.js": 99,
-	"./si": 100,
-	"./si.js": 100,
-	"./sk": 101,
-	"./sk.js": 101,
-	"./sl": 102,
-	"./sl.js": 102,
-	"./sq": 103,
-	"./sq.js": 103,
-	"./sr": 104,
-	"./sr-cyrl": 105,
-	"./sr-cyrl.js": 105,
-	"./sr.js": 104,
-	"./ss": 106,
-	"./ss.js": 106,
-	"./sv": 107,
-	"./sv.js": 107,
-	"./sw": 108,
-	"./sw.js": 108,
-	"./ta": 109,
-	"./ta.js": 109,
-	"./te": 110,
-	"./te.js": 110,
-	"./tet": 111,
-	"./tet.js": 111,
-	"./th": 112,
-	"./th.js": 112,
-	"./tl-ph": 113,
-	"./tl-ph.js": 113,
-	"./tlh": 114,
-	"./tlh.js": 114,
-	"./tr": 115,
-	"./tr.js": 115,
-	"./tzl": 116,
-	"./tzl.js": 116,
-	"./tzm": 117,
-	"./tzm-latn": 118,
-	"./tzm-latn.js": 118,
-	"./tzm.js": 117,
-	"./uk": 119,
-	"./uk.js": 119,
-	"./ur": 120,
-	"./ur.js": 120,
-	"./uz": 121,
-	"./uz-latn": 122,
-	"./uz-latn.js": 122,
-	"./uz.js": 121,
-	"./vi": 123,
-	"./vi.js": 123,
-	"./x-pseudo": 124,
-	"./x-pseudo.js": 124,
-	"./yo": 125,
-	"./yo.js": 125,
-	"./zh-cn": 126,
-	"./zh-cn.js": 126,
-	"./zh-hk": 127,
-	"./zh-hk.js": 127,
-	"./zh-tw": 128,
-	"./zh-tw.js": 128
+	"./af": 15,
+	"./af.js": 15,
+	"./ar": 16,
+	"./ar-dz": 17,
+	"./ar-dz.js": 17,
+	"./ar-kw": 18,
+	"./ar-kw.js": 18,
+	"./ar-ly": 19,
+	"./ar-ly.js": 19,
+	"./ar-ma": 20,
+	"./ar-ma.js": 20,
+	"./ar-sa": 21,
+	"./ar-sa.js": 21,
+	"./ar-tn": 22,
+	"./ar-tn.js": 22,
+	"./ar.js": 16,
+	"./az": 23,
+	"./az.js": 23,
+	"./be": 24,
+	"./be.js": 24,
+	"./bg": 25,
+	"./bg.js": 25,
+	"./bn": 26,
+	"./bn.js": 26,
+	"./bo": 27,
+	"./bo.js": 27,
+	"./br": 28,
+	"./br.js": 28,
+	"./bs": 29,
+	"./bs.js": 29,
+	"./ca": 30,
+	"./ca.js": 30,
+	"./cs": 31,
+	"./cs.js": 31,
+	"./cv": 32,
+	"./cv.js": 32,
+	"./cy": 33,
+	"./cy.js": 33,
+	"./da": 34,
+	"./da.js": 34,
+	"./de": 35,
+	"./de-at": 36,
+	"./de-at.js": 36,
+	"./de-ch": 37,
+	"./de-ch.js": 37,
+	"./de.js": 35,
+	"./dv": 38,
+	"./dv.js": 38,
+	"./el": 39,
+	"./el.js": 39,
+	"./en-au": 40,
+	"./en-au.js": 40,
+	"./en-ca": 41,
+	"./en-ca.js": 41,
+	"./en-gb": 42,
+	"./en-gb.js": 42,
+	"./en-ie": 43,
+	"./en-ie.js": 43,
+	"./en-nz": 44,
+	"./en-nz.js": 44,
+	"./eo": 45,
+	"./eo.js": 45,
+	"./es": 46,
+	"./es-do": 47,
+	"./es-do.js": 47,
+	"./es.js": 46,
+	"./et": 48,
+	"./et.js": 48,
+	"./eu": 49,
+	"./eu.js": 49,
+	"./fa": 50,
+	"./fa.js": 50,
+	"./fi": 51,
+	"./fi.js": 51,
+	"./fo": 52,
+	"./fo.js": 52,
+	"./fr": 53,
+	"./fr-ca": 54,
+	"./fr-ca.js": 54,
+	"./fr-ch": 55,
+	"./fr-ch.js": 55,
+	"./fr.js": 53,
+	"./fy": 56,
+	"./fy.js": 56,
+	"./gd": 57,
+	"./gd.js": 57,
+	"./gl": 58,
+	"./gl.js": 58,
+	"./gom-latn": 59,
+	"./gom-latn.js": 59,
+	"./he": 60,
+	"./he.js": 60,
+	"./hi": 61,
+	"./hi.js": 61,
+	"./hr": 62,
+	"./hr.js": 62,
+	"./hu": 63,
+	"./hu.js": 63,
+	"./hy-am": 64,
+	"./hy-am.js": 64,
+	"./id": 65,
+	"./id.js": 65,
+	"./is": 66,
+	"./is.js": 66,
+	"./it": 67,
+	"./it.js": 67,
+	"./ja": 68,
+	"./ja.js": 68,
+	"./jv": 69,
+	"./jv.js": 69,
+	"./ka": 70,
+	"./ka.js": 70,
+	"./kk": 71,
+	"./kk.js": 71,
+	"./km": 72,
+	"./km.js": 72,
+	"./kn": 73,
+	"./kn.js": 73,
+	"./ko": 74,
+	"./ko.js": 74,
+	"./ky": 75,
+	"./ky.js": 75,
+	"./lb": 76,
+	"./lb.js": 76,
+	"./lo": 77,
+	"./lo.js": 77,
+	"./lt": 78,
+	"./lt.js": 78,
+	"./lv": 79,
+	"./lv.js": 79,
+	"./me": 80,
+	"./me.js": 80,
+	"./mi": 81,
+	"./mi.js": 81,
+	"./mk": 82,
+	"./mk.js": 82,
+	"./ml": 83,
+	"./ml.js": 83,
+	"./mr": 84,
+	"./mr.js": 84,
+	"./ms": 85,
+	"./ms-my": 86,
+	"./ms-my.js": 86,
+	"./ms.js": 85,
+	"./my": 87,
+	"./my.js": 87,
+	"./nb": 88,
+	"./nb.js": 88,
+	"./ne": 89,
+	"./ne.js": 89,
+	"./nl": 90,
+	"./nl-be": 91,
+	"./nl-be.js": 91,
+	"./nl.js": 90,
+	"./nn": 92,
+	"./nn.js": 92,
+	"./pa-in": 93,
+	"./pa-in.js": 93,
+	"./pl": 94,
+	"./pl.js": 94,
+	"./pt": 95,
+	"./pt-br": 96,
+	"./pt-br.js": 96,
+	"./pt.js": 95,
+	"./ro": 97,
+	"./ro.js": 97,
+	"./ru": 98,
+	"./ru.js": 98,
+	"./sd": 99,
+	"./sd.js": 99,
+	"./se": 100,
+	"./se.js": 100,
+	"./si": 101,
+	"./si.js": 101,
+	"./sk": 102,
+	"./sk.js": 102,
+	"./sl": 103,
+	"./sl.js": 103,
+	"./sq": 104,
+	"./sq.js": 104,
+	"./sr": 105,
+	"./sr-cyrl": 106,
+	"./sr-cyrl.js": 106,
+	"./sr.js": 105,
+	"./ss": 107,
+	"./ss.js": 107,
+	"./sv": 108,
+	"./sv.js": 108,
+	"./sw": 109,
+	"./sw.js": 109,
+	"./ta": 110,
+	"./ta.js": 110,
+	"./te": 111,
+	"./te.js": 111,
+	"./tet": 112,
+	"./tet.js": 112,
+	"./th": 113,
+	"./th.js": 113,
+	"./tl-ph": 114,
+	"./tl-ph.js": 114,
+	"./tlh": 115,
+	"./tlh.js": 115,
+	"./tr": 116,
+	"./tr.js": 116,
+	"./tzl": 117,
+	"./tzl.js": 117,
+	"./tzm": 118,
+	"./tzm-latn": 119,
+	"./tzm-latn.js": 119,
+	"./tzm.js": 118,
+	"./uk": 120,
+	"./uk.js": 120,
+	"./ur": 121,
+	"./ur.js": 121,
+	"./uz": 122,
+	"./uz-latn": 123,
+	"./uz-latn.js": 123,
+	"./uz.js": 122,
+	"./vi": 124,
+	"./vi.js": 124,
+	"./x-pseudo": 125,
+	"./x-pseudo.js": 125,
+	"./yo": 126,
+	"./yo.js": 126,
+	"./zh-cn": 127,
+	"./zh-cn.js": 127,
+	"./zh-hk": 128,
+	"./zh-hk.js": 128,
+	"./zh-tw": 129,
+	"./zh-tw.js": 129
 };
 function webpackContext(req) {
 	return __webpack_require__(webpackContextResolve(req));
@@ -44410,10 +44471,10 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = 277;
+webpackContext.id = 278;
 
 /***/ }),
-/* 278 */
+/* 279 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44832,7 +44893,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 279 */
+/* 280 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45000,7 +45061,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 280 */
+/* 281 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45305,7 +45366,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 281 */
+/* 282 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45641,7 +45702,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 282 */
+/* 283 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -45869,7 +45930,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 283 */
+/* 284 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46038,7 +46099,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 284 */
+/* 285 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46085,7 +46146,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 285 */
+/* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46101,7 +46162,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 286 */
+/* 287 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46116,7 +46177,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 287 */
+/* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46132,7 +46193,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 288 */
+/* 289 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46148,7 +46209,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 289 */
+/* 290 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46164,7 +46225,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 290 */
+/* 291 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46180,7 +46241,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 291 */
+/* 292 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46194,7 +46255,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 292 */
+/* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -46521,7 +46582,7 @@ module.exports = function () {
 };
 
 /***/ }),
-/* 293 */
+/* 294 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47090,7 +47151,7 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 294 */
+/* 295 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47337,7 +47398,37 @@ module.exports = function (Chart) {
 };
 
 /***/ }),
-/* 295 */
+/* 296 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Authentication Class
+ * TODO: This is an authentication stub. Integration will be built with Jira,
+ * Google OAuth2, etc.
+ *
+ */
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Authentication = function Authentication() {
+  _classCallCheck(this, Authentication);
+
+  this.token = {};
+  this.token.type = 'bearer';
+  this.token.value = '';
+};
+
+exports.default = Authentication;
+
+/***/ }),
+/* 297 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47631,8 +47722,254 @@ var Aggregates = function () {
 exports.default = Aggregates;
 
 /***/ }),
-/* 296 */,
-/* 297 */
+/* 298 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Parse = __webpack_require__(8);
+
+var _Parse2 = _interopRequireDefault(_Parse);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var markobj = __webpack_require__(130);
+
+var Plan = function () {
+  function Plan() {
+    _classCallCheck(this, Plan);
+
+    this.parse = new _Parse2.default();
+  }
+
+  // Inject Sprints / Phases into Table
+
+
+  _createClass(Plan, [{
+    key: 'renderHeader',
+    value: function renderHeader(sprints, config, aggregates) {
+      var _this = this;
+
+      var th1 = void 0,
+          th2 = void 0,
+          th3 = '';
+      var dates = '';
+      var d1 = void 0,
+          d2 = void 0,
+          current = '';
+      var newRow1 = document.createElement('tr');
+      var newRow2 = document.createElement('tr');
+      var newRow3 = document.createElement('tr');
+      var header = document.querySelector('#release-plan thead');
+      var headRow = header.querySelector('tr');
+      var headers = headRow.querySelectorAll('th');
+
+      var phases = [];
+      var sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
+
+      headers.forEach(function (el) {
+        if (el.innerText === "Status") {
+          newRow1.appendChild(el);
+          sprints.forEach(function (sprint) {
+
+            // Populate Phase labels
+            if (!_this.parse.arrayContains(phases, sprint.phase)) {
+
+              current = '';
+              if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
+                current = 'current';
+              }
+
+              th1 = document.createElement('th');
+              th1.setAttribute('colspan', sprintsPerPhase);
+              th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
+              th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
+            }
+
+            // Populate Sprint labels
+            th2 = document.createElement('th');
+            th2.setAttribute('class', 'sprint nowrap ' + sprint.class);
+            th2.appendChild(document.createTextNode(sprint.label));
+
+            // Populate dates
+            th3 = document.createElement('th');
+            th3.setAttribute('class', 'dates nowrap ' + sprint.class);
+            d1 = new Date(sprint.startDate);
+            d2 = new Date(sprint.endDate);
+            dates = d1.getMonth() + 1 + '/' + d1.getDate();
+            dates += '-' + (d2.getMonth() + 1) + '/' + d2.getDate();
+            th3.appendChild(document.createTextNode(dates));
+
+            // Append rows to the header
+            if (!_this.parse.arrayContains(phases, sprint.phase)) {
+              newRow1.appendChild(th1);
+              phases.push(sprint.phase);
+            }
+            newRow2.appendChild(th2);
+            newRow3.appendChild(th3);
+          });
+        } else {
+          newRow1.appendChild(el);
+        }
+      });
+
+      header.removeChild(headRow);
+      header.appendChild(newRow1);
+      header.appendChild(newRow2);
+      header.appendChild(newRow3);
+    }
+
+    // Renders rows into the table
+
+  }, {
+    key: 'renderTable',
+    value: function renderTable(task, sprints, config, aggregates) {
+      var _this2 = this;
+
+      var tbody = document.querySelector('#release-plan tbody');
+      var td = void 0;
+      var column = '';
+      var value = '';
+
+      var trClass = task.priority.toLowerCase().indexOf('block') > -1 ? 'blocker' : '';
+
+      var tr = markobj('<tr id="' + task.key + '"\n      data-sprint="' + task.sprint.current + '"\n      data-assignee="' + task.assignee + '"\n      class="' + trClass + '"></tr>');
+
+      tbody.appendChild(tr);
+
+      sprints.forEach(function (item, index) {
+
+        column = item.label;
+        value = task[item.field];
+
+        // Parse the value if the field is a multi-node path
+        if (item.field.indexOf('.') > -1) {
+          value = _this2.parse.parseValue(item.field, task);
+        }
+
+        // Create a new cell
+        td = document.createElement('td');
+
+        // Clear "999" from Sprints
+        if (item.field.indexOf('sprint') > -1 && value === 999) {
+          value = '';
+        }
+
+        // Set class of the element
+        if (item.class.indexOf('@value') > -1) {
+          var cls = value.toLowerCase().replace(/(\s){1,}/ig, '-');
+          td.setAttribute('class', cls);
+        } else {
+          if (item.phase && item.class.indexOf('phase') === -1) {
+            item.class += ' phase' + item.phase;
+          }
+
+          td.setAttribute('class', item.class);
+        }
+
+        // Find the value
+        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== "object") {
+
+          if (item.title) {
+            td.setAttribute('title', value);
+          }
+
+          if (item.hidden) {
+
+            td.setAttribute('data-value', value);
+          } else if (item.link && item.link !== '') {
+            var a = _this2.parse.parseLink(value, item.link);
+            td.appendChild(a);
+          } else if (value && value !== '') {
+
+            td.appendChild(document.createTextNode(value));
+
+            if (value === "-") {
+              td.setAttribute('class', item.class + ' pushed');
+              td.setAttribute('title', 'Pushed');
+            } else if (value === "unassigned") {
+              td.setAttribute('class', item.class + ' dimmed');
+            }
+
+            if (task.sprint && task.sprint.current && value !== '-' && column.indexOf('Sprint ') > -1) {
+              td.setAttribute('class', item.class + ' active');
+            }
+          }
+        }
+
+        tr.appendChild(td);
+      });
+    }
+
+    // Renders totals into the grid
+
+  }, {
+    key: 'renderAggregates',
+    value: function renderAggregates(aggregates) {
+
+      var sprints1 = void 0,
+          sprints2 = void 0,
+          sprints3 = void 0,
+          sprints4 = void 0,
+          sprints5 = void 0,
+          sprints6 = void 0,
+          sprints7 = void 0,
+          sprints8 = void 0,
+          blanks = void 0;
+      var table = document.querySelector('table');
+
+      blanks = '<tr><td colspan="10" class="empty label"></td>';
+
+      // Loop through the aggregate values
+      for (var key in aggregates.subtotals) {
+
+        var percentage = aggregates.subtotals[key].tasks / aggregates.totals.project.tasks * 100;
+        var completion = aggregates.subtotals[key].completed / aggregates.totals.project.tasks * 100;
+        var completionClass = completion < 100 ? 'bad' : 'good';
+        var spilledClass = parseInt(aggregates.subtotals[key].spilled, 10) > 0 ? 'warning' : 'white';
+        var phase = 'phase' + aggregates.subtotals[key].phase;
+        var defaultClass = aggregates.subtotals[key].class;
+
+        sprints1 += '<td class="' + defaultClass + ' total">' + aggregates.subtotals[key].estimate + '</td>';
+        sprints2 += '<td class="' + defaultClass + ' subtotal">' + aggregates.subtotals[key].hours.dev + '</td>';
+        sprints3 += '<td class="' + defaultClass + ' subtotal">' + aggregates.subtotals[key].hours.qa + '</td>';
+        sprints4 += '<td class="' + defaultClass + ' ' + spilledClass + ' ' + phase + '">' + aggregates.subtotals[key].spilled + '</td>';
+        sprints5 += '<td class="' + defaultClass + ' subtotal ' + phase + '">' + aggregates.subtotals[key].tasks + '</td>';
+        sprints6 += '<td class="' + defaultClass + ' total ' + phase + '">' + percentage + '%</td>';
+        sprints7 += '<td class="' + defaultClass + ' subtotal ' + phase + '">' + aggregates.subtotals[key].completed + '</td>';
+        sprints8 += '<td class="' + defaultClass + ' subtotal ' + completionClass + '">' + completion + '%</td>';
+
+        blanks += '<td class="' + defaultClass + ' empty ' + phase + '"></td>';
+      }
+
+      blanks += '<td colspan="5" class="empty plain"></td></tr>';
+
+      // Build out the footer
+      var footerRows = markobj('<tfoot>\n      <tr><td colspan="10" class="label">Total story points per Sprint</td>' + sprints1 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total Dev Hours per Sprint</td>' + sprints2 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total QA Hours per Sprint</td>' + sprints3 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Stories Spilled across Sprints</td>' + sprints4 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Total Stories by Sprint</td>' + sprints5 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Target Completion Percentage</td>' + sprints6 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Sprint Stories Completed</td>' + sprints7 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Sprint Completion Percentage</td>' + sprints8 + '<td colspan="5" class="plain"></td></tr>\n    </tfoot>');
+
+      // Append the footer to the table
+      table.appendChild(footerRows);
+    }
+  }]);
+
+  return Plan;
+}();
+
+exports.default = Plan;
+
+/***/ }),
+/* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -47646,278 +47983,795 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var parse = __webpack_require__(129);
+var markobj = __webpack_require__(130);
+var arraySort = __webpack_require__(300);
+var moment = __webpack_require__(0);
+var numeral = __webpack_require__(246);
 
-var Actions = function () {
-  function Actions() {
-    _classCallCheck(this, Actions);
+var config = __webpack_require__(247);
+var team = __webpack_require__(306);
+var sprints = __webpack_require__(9);
+var holidays = __webpack_require__(307);
+
+/**
+ * Team Class
+ * Defines data and UI elements related to the Teams tab in the application
+ *
+ */
+
+var Team = function () {
+  function Team() {
+    _classCallCheck(this, Team);
   }
 
-  _createClass(Actions, [{
-    key: 'displayCurrent',
-    value: function displayCurrent(sprint) {
-      this.displayNone();
-      var future = document.querySelectorAll('.future');
-      future.forEach(function (el) {
-        el.style.display = 'none';
+  /**
+   * Subtract holidays from regular schedule
+   * @param sprint Number
+   * @param member Number indicating the specific team member being targeted
+   */
+
+
+  _createClass(Team, [{
+    key: 'getHolidays',
+    value: function getHolidays(sprint, member) {
+      var hours = 0;
+      var startDate = moment(sprint.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
+      var endDate = moment(sprint.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
+      holidays.forEach(function (holiday) {
+        if (moment(holiday.date).isBetween(startDate, endDate)) {
+          if (holiday.members.includes(member.name) || holiday.teams.includes(member.team)) {
+            hours += holiday.hours;
+          }
+        }
       });
-      var mine = document.querySelectorAll('[data-sprint="' + sprint + '"]');
-      mine.forEach(function (el) {
-        el.style.display = 'table-row';
-      });
+      return hours;
     }
+
+    /**
+     * Parse team member data
+     */
+
   }, {
-    key: 'displayMe',
-    value: function displayMe() {
-      var me = 'Joshua Miller';
-      var theirs = document.querySelectorAll('table tbody tr');
-      theirs.forEach(function (el) {
-        el.style.display = 'none';
+    key: 'parseData',
+    value: function parseData() {
+      var _this = this;
+
+      var data = {
+        members: [],
+        subtotals: {
+          teams: {}
+        },
+        totals: {
+          roles: {},
+          sprints: {}
+        }
+      };
+
+      var offset = 0;
+      var hours = 0;
+      var lastTeam = '';
+
+      // Sort by Team, then Name
+      arraySort(team, 'team', 'name');
+
+      // Parse data for each team member
+      team.forEach(function (member, idx) {
+
+        data.members[idx] = {};
+        data.members[idx].sprints = {};
+
+        // Copy keys into the new data element
+        for (var key in member) {
+          data.members[idx][key] = member[key];
+        }
+
+        // Create Team for SubTotals
+        if (!data.subtotals.teams[member.team]) {
+          data.subtotals.teams[member.team] = {};
+        }
+
+        // Calculate Sprint Totals
+        sprints.forEach(function (sprint) {
+
+          offset = _this.getHolidays(sprint, member);
+          hours = member.hours - offset;
+
+          // Assign the member:sprint value
+          data.members[idx].sprints[sprint.field] = hours;
+
+          // Increment the team:sprint subtotal
+          if (!data.subtotals.teams[member.team][sprint.field]) {
+            data.subtotals.teams[member.team][sprint.field] = 0;
+          }
+          data.subtotals.teams[member.team][sprint.field] += hours;
+
+          // Increment the total:sprint total
+          if (!data.totals.sprints[sprint.field]) {
+            data.totals.sprints[sprint.field] = 0;
+          }
+          data.totals.sprints[sprint.field] += hours;
+
+          // Increment role totals
+          if (!data.totals.roles[member.role]) {
+            data.totals.roles[member.role] = 0;
+          }
+          data.totals.roles[member.role] += hours;
+        });
+
+        if (lastTeam === '') {
+          lastTeam = member.team;
+        } else if (lastTeam !== '' && lastTeam !== member.team) {
+          // End team
+          lastTeam = member.team;
+        }
       });
-      var mine = document.querySelectorAll('[data-assignee="' + me + '"]');
-      mine.forEach(function (el) {
-        el.style.display = 'table-row';
-      });
+
+      // Sort by Team, then Name
+      arraySort(data.members, 'team', 'name');
+
+      return data;
     }
+
+    /**
+     * Draw the team member table
+     */
+
   }, {
-    key: 'displayAll',
-    value: function displayAll() {
-      var rows = document.querySelectorAll('table tbody tr');
-      rows.forEach(function (el) {
-        el.style.display = 'table-row';
-      });
-      var future = document.querySelectorAll('.future');
-      future.forEach(function (el) {
-        el.style.display = 'table-cell';
-      });
-    }
-  }, {
-    key: 'displayNone',
-    value: function displayNone() {
-      var rows = document.querySelectorAll('table tbody tr');
-      rows.forEach(function (el) {
-        el.style.display = 'none';
-      });
-    }
-  }, {
-    key: 'tabs',
-    value: function tabs(target) {
-      var sections = document.querySelectorAll('section');
-      sections.forEach(function (sec) {
-        sec.classList.remove('active');
-        if (target === sec.getAttribute('id')) {
-          sec.classList.add('active');
+    key: 'renderTeams',
+    value: function renderTeams() {
+      var _this2 = this;
+
+      // Parse the data before beginning
+      var data = this.parseData();
+
+      var cls = '';
+      var currentTeam = '';
+      var sprintHours = void 0;
+      var sprintCount = 0;
+      var totalMemberHours = 0;
+      var sprintData = '';
+
+      // Get the table header and body
+      var body = document.querySelector('#team-data table tbody');
+
+      // Construct Sprint Header
+      this.renderSprintHeaderRow();
+
+      // Iterate over each team member
+      var tr = void 0;
+      data.members.forEach(function (member, idx) {
+
+        // Construct Sprint Rows
+        sprintCount = 0;
+        totalMemberHours = 0;
+        sprintData = '';
+        for (var key in member.sprints) {
+          cls = member.sprints[key] < member.hours ? 'pto' : 'full';
+          totalMemberHours += member.sprints[key];
+          sprintData += '<td class="' + cls + '">' + member.sprints[key] + '</td>';
+          sprintCount++;
+        }
+
+        // Add Subtotal Rows as Appropriate
+        if (currentTeam !== member.team) {
+          if (currentTeam !== '') {
+            _this2.renderSubTotalRow(data, currentTeam);
+          }
+          currentTeam = member.team;
+          _this2.renderTeamNameRow(currentTeam, body, sprintCount);
+        }
+
+        // Construct each row of the table
+        tr = markobj('<tr id="' + member.jiraName + '">\n        <td>' + member.name + '</td>\n        <td>' + member.role + '</td>\n        <td>' + member.allocation + '</td>\n        <td>' + member.hours + '</td>\n        ' + sprintData + '\n        <td class="subtotal">' + totalMemberHours + '</td>\n      </tr>');
+
+        // Append the row to the table body
+        body.appendChild(tr);
+
+        // Show last SubTotal row
+        if (idx === data.members.length - 1) {
+          _this2.renderSubTotalRow(data, currentTeam);
         }
       });
     }
+
+    /**
+     * Render Team Name Row
+     * Draws the team name row in the Team chart
+     * @param name String containing the team's name
+     * @param target Object reference to the target element
+     * @param columns Number of columns in the final chart
+     */
+
   }, {
-    key: 'setMenuStatus',
-    value: function setMenuStatus(element, nav) {
-      nav.forEach(function (el) {
-        el.classList.remove('active');
-      });
-      element.classList.add('active');
+    key: 'renderTeamNameRow',
+    value: function renderTeamNameRow(name, target, columns) {
+      var sprintHeaders = markobj('<tr><td colspan="' + (5 + columns) + '"\n      class="title">' + name + ' Team</td></tr>');
+      target.appendChild(sprintHeaders);
     }
 
-    /* Assign Click Actions to Buttons */
+    /**
+     * Renders Sprint Header Row
+     */
 
   }, {
-    key: 'navigation',
-    value: function navigation(sprint) {
-      var _this = this;
-
-      var nav = document.querySelectorAll('nav ul li a');
-      nav.forEach(function (button) {
-        button.addEventListener('click', function (event) {
-          var element = event.target;
-          var id = element.getAttribute('href').replace('#', '');
-          if (id === 'current') {
-            _this.displayCurrent(sprint);
-          } else if (id === 'me') {
-            _this.displayMe();
-          } else if (id === 'all') {
-            _this.displayAll();
-          } else {
-            _this.tabs(id);
-          }
-          _this.setMenuStatus(element, nav);
-        });
+    key: 'renderSprintHeaderRow',
+    value: function renderSprintHeaderRow() {
+      var header = document.querySelector('#team-data table thead tr');
+      var sprintHeaders = '';
+      sprints.forEach(function (sprint) {
+        sprintHeaders = markobj('<th>' + sprint.label + '</th>');
+        header.appendChild(sprintHeaders);
       });
+      sprintHeaders = markobj('<th>Totals</th>');
+      header.appendChild(sprintHeaders);
+    }
+
+    /**
+     * Renders SubTotal Rows for Each Team
+     * @param data Object
+     * @param team Number
+     */
+
+  }, {
+    key: 'renderSubTotalRow',
+    value: function renderSubTotalRow(data, team) {
+
+      var body = document.querySelector('#team-data table tbody');
+      var sprints = data.subtotals.teams[team];
+
+      var tr = void 0;
+      var sprintCount = 0;
+      var teamTotal = 0;
+      var pointCount = 0;
+      var sprintSubTotal = '';
+      var pointSubTotal = '';
+
+      for (var key in sprints) {
+        pointCount = numeral(sprints[key] / config.hoursPerPoint).format('0.0');
+        sprintSubTotal += '<td>' + sprints[key] + '</td>';
+        pointSubTotal += '<td>' + pointCount + '</td>';
+        teamTotal += sprints[key];
+        sprintCount++;
+      }
+
+      tr = markobj('<tr class="subtotal">\n      <td colspan="4" class="label">Available Team Hours per Sprint</td>\n      ' + sprintSubTotal + '\n      <td class="total">' + teamTotal + '</td>\n    </tr>');
+      body.appendChild(tr);
+
+      tr = markobj('<tr class="subtotal">\n      <td colspan="4" class="label">Estimated Point Velocity</td>\n      ' + pointSubTotal + '\n      <td class="total">' + teamTotal + '</td>\n    </tr>');
+      body.appendChild(tr);
+
+      tr = markobj('<tr class="spacer"><td colspan="' + (5 + sprintCount) + '">&nbsp;</td></tr>');
+      body.appendChild(tr);
     }
   }]);
 
-  return Actions;
+  return Team;
 }();
 
-exports.default = Actions;
-
-/***/ }),
-/* 298 */,
-/* 299 */
-/***/ (function(module, exports) {
-
-module.exports = [{"name":"spilled","title":"Spilled Stories by Sprint","type":"doughnut","datasets":[{"label":"Stories","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}"}]},{"name":"tasks","title":"Tasks by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Scheduled","stack":"Stack 0","source":"subs","value":"tasks","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Spilled","stack":"Stack 0","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate2","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"committed-vs-available","title":"Committed Hours vs. Available Hours","type":"horizontalBar","stacked":true,"class":"doublewide","datasets":[{"label":"Available","stack":"Stack 0","source":"team","value":"available","text":"Sprint ${sprint.sprint}","colors":"#ec9998"},{"label":"Committed","stack":"Stack 0","source":"team","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"}]}]
+exports.default = Team;
 
 /***/ }),
 /* 300 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/*!
+ * array-sort <https://github.com/jonschlinkert/array-sort>
+ *
+ * Copyright (c) 2015-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
 
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var defaultCompare = __webpack_require__(301);
+var typeOf = __webpack_require__(303);
+var get = __webpack_require__(304);
 
-var tiles = __webpack_require__(301);
-var sprints = __webpack_require__(8);
+/**
+ * Sort an array of objects by one or more properties.
+ *
+ * @param  {Array} `arr` The Array to sort.
+ * @param  {String|Array|Function} `props` One or more object paths or comparison functions.
+ * @param  {Object} `opts` Pass `{ reverse: true }` to reverse the sort order.
+ * @return {Array} Returns a sorted array.
+ * @api public
+ */
 
-var numeral = __webpack_require__(130);
-var moment = __webpack_require__(0);
-
-var Dashboard = function () {
-  function Dashboard() {
-    _classCallCheck(this, Dashboard);
+function arraySort(arr, props, opts) {
+  if (arr == null) {
+    return [];
   }
 
-  /**
-   * Extract data from the aggregates element based on path
-   *
-   */
+  if (!Array.isArray(arr)) {
+    throw new TypeError('array-sort expects an array.');
+  }
 
+  if (arguments.length === 1) {
+    return arr.sort();
+  }
 
-  _createClass(Dashboard, [{
-    key: 'getDataFromPath',
-    value: function getDataFromPath(path, aggregates) {
-      // let value = '';
-      var source = aggregates;
-      var obj = void 0;
-      var tree = path.split('.');
-      tree.forEach(function (limb, idx) {
-        try {
-          if (idx > 0) {
-            source = obj;
-          }
-          obj = source[limb];
-        } catch (e) {
-          console.log(path + ' failed at: ' + limb);
-          console.log(e);
-        }
-      });
-      return obj;
-    }
+  var args = flatten([].slice.call(arguments, 1));
 
-    /**
-     * Return a status from the defined value ranges in the Dashboard config
-     *
-     */
+  // if the last argument appears to be a plain object,
+  // it's not a valid `compare` arg, so it must be options.
+  if (typeOf(args[args.length - 1]) === 'object') {
+    opts = args.pop();
+  }
+  return arr.sort(sortBy(args, opts));
+}
 
-  }, {
-    key: 'getDaysRemaining',
-    value: function getDaysRemaining(aggregates) {
-      var currentSprint = aggregates.sprint;
-      var currentPhase = aggregates.phase;
-      var lastDate = moment().format();
-      sprints.forEach(function (sprint) {
-        if (sprint.class.indexOf('current') > -1) {
-          aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
-        }
-        if (parseInt(sprint.phase, 10) === currentPhase) {
-          lastDate = sprint.endDate;
-        }
-      });
+/**
+ * Iterate over each comparison property or function until `1` or `-1`
+ * is returned.
+ *
+ * @param  {String|Array|Function} `props` One or more object paths or comparison functions.
+ * @param  {Object} `opts` Pass `{ reverse: true }` to reverse the sort order.
+ * @return {Array}
+ */
 
-      aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
+function sortBy(props, opts) {
+  opts = opts || {};
 
-      return aggregates;
-    }
+  return function compareFn(a, b) {
+    var len = props.length,
+        i = -1;
+    var result;
 
-    /**
-     * Return a status from the defined value ranges in the Dashboard config
-     *
-     */
-
-  }, {
-    key: 'getStatusFromValue',
-    value: function getStatusFromValue(value, tile) {
-
-      var scales = tiles.scales;
-      var scale = void 0;
-      var status = '';
-
-      tiles.scales.forEach(function (item) {
-        if (item.name === tile.scale) {
-          scale = item;
-        }
-      });
-
-      for (var key in tile.ranges) {
-        if (tile.ranges[key] === value) {
-          status = key;
-        } else if (Array.isArray(tile.ranges[key]) && tile.ranges[key].includes(value)) {
-          status = key;
-        } else if (Array.isArray(tile.ranges[key]) && value >= tile.ranges[key][0] && value <= tile.ranges[key][1]) {
-          status = key;
-        }
+    while (++i < len) {
+      result = compare(props[i], a, b);
+      if (result !== 0) {
+        break;
       }
-
-      return status;
     }
-
-    /**
-     * Set values for the dashboard from aggregates
-     *
-     */
-
-  }, {
-    key: 'setValues',
-    value: function setValues(aggregates) {
-      var _this = this;
-
-      var dash = document.querySelector('#dashboard .wrapper');
-      var div = '';
-      var value = '';
-
-      aggregates = this.getDaysRemaining(aggregates);
-
-      console.log(aggregates);
-
-      tiles.tiles.forEach(function (tile) {
-
-        value = _this.getDataFromPath(tile.source, aggregates) || tile.default || 0;
-        status = _this.getStatusFromValue(value, tile);
-
-        if (tile.format) {
-          if (tile.format.indexOf('%') > -1) {
-            value = value / 100;
-          }
-          value = numeral(value).format(tile.format);
-        }
-
-        div += '<div class="tile ' + tile.tile + ' ' + status + '">\n        <div>' + value + '</div>\n        <h2>' + tile.label + '</h2>\n      </div>';
-      });
-
-      dash.innerHTML = div;
+    if (opts.reverse === true) {
+      return result * -1;
     }
-  }]);
+    return result;
+  };
+}
 
-  return Dashboard;
-}();
+/**
+ * Compare `a` to `b`. If an object `prop` is passed, then
+ * `a[prop]` is compared to `b[prop]`
+ */
 
-exports.default = Dashboard;
+function compare(prop, a, b) {
+  if (typeof prop === 'function') {
+    // expose `compare` to custom function
+    return prop(a, b, compare.bind(null, null));
+  }
+  // compare object values
+  if (prop && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object' && (typeof b === 'undefined' ? 'undefined' : _typeof(b)) === 'object') {
+    return compare(null, get(a, prop), get(b, prop));
+  }
+  return defaultCompare(a, b);
+}
+
+/**
+ * Flatten the given array.
+ */
+
+function flatten(arr) {
+  return [].concat.apply([], arr);
+}
+
+/**
+ * Expose `arraySort`
+ */
+
+module.exports = arraySort;
 
 /***/ }),
 /* 301 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = {"scales":[{"name":"binary","scale":["good","bad"]},{"name":"stoplight","scale":["low","medium","high"]},{"name":"mood","scale":["happy","meh","hmpf","sad"]},{"name":"terror","scale":["lowest","low","medium","high","highest","blocker"]}],"tiles":[{"tile":"mood","label":"Current Mood","source":"mood","default":":)","scale":"mood","ranges":{"happy":":)","meh":":|","hmpf":":/","sad":":("}},{"tile":"project-blockers","label":"Active Blockers","source":"totals.project.blockers","scale":"binary","ranges":{"good":0,"bad":[1,9999]}},{"tile":"project-risk","label":"Risk Level","source":"risk","format":"0%","scale":"terror","ranges":{"lowest":[0,5],"low":[6,10],"medium":[11,15],"high":[16,20],"highest":[21,40],"blocker":[41,100]}},{"tile":"project-phase","label":"Current Phase","source":"phase"},{"tile":"project-phase-days-remaining","label":"Days Remaining in Phase","source":"daysInPhase"},{"tile":"project-target-completion","label":"Target Completion","source":"","format":"0%"},{"tile":"project-completion","label":"Project Completion","source":"totals.project.rate","format":"0%"},{"tile":"sprint-completion","label":"Sprint Completion","source":"totals.sprint.rate","format":"0%","scale":"terror","ranges":{"low":[76,100],"medium":[51,75],"high":[26,50],"highest":[0,25]}},{"tile":"sprint-current","label":"Current Sprint","source":"sprint"},{"tile":"sprint-days-remaining","label":"Days Remaining in Sprint","source":"daysInSprint"},{"tile":"project-debt","label":"Debt Level","source":"debt","format":"0%","scale":"terror","ranges":{"lowest":[-10,-1],"low":[0,10],"medium":[11,25],"high":[26,50],"highest":[51,100],"blocker":[101,999]}},{"tile":"project-tasks-complete","label":"Total Tasks Completed","source":"totals.project.completed"},{"tile":"sprint-tasks-complete","label":"Sprint: Tasks Completed","source":"totals.sprint.completed"},{"tile":"sprint-blockers","label":"Sprint: Blockers","source":"totals.sprint.blockers"},{"tile":"sprint-lost-hours","label":"Sprint: Lost Hours","source":"totals.sprint.lost"},{"tile":"project-mood","label":"Spilled Stories","source":"totals.project.pushed","scale":"terror","ranges":{"lowest":[-10,-1],"low":[0,10],"medium":[11,25],"high":[26,50],"highest":[51,100],"blocker":[101,999]}},{"tile":"project-tasks-total","label":"Total Tasks","source":"totals.project.tasks"},{"tile":"sprint-tasks-total","label":"Sprint: Total Tasks","source":"totals.sprint.tasks"},{"tile":"sprint-pushed-stories","label":"Sprint: Pushed Stories","source":"totals.sprint.pushed"},{"tile":"sprint-incidents","label":"Sprint: Total Incidents","source":"totals.sprint.incidents"}]}
+"use strict";
+
+
+var typeOf = __webpack_require__(302);
+
+/**
+ * Basic sort algorithm that has similar behavior to `Array.prototype.sort`
+ * for null and undefined, but also allows sorting by an object property.
+ *
+ * @param {Mixed} `a` First value to compare.
+ * @param {Mixed} `b` Second value to compare.
+ * @param {String} `prop` Optional property to use when comparing objects. If specified must be a string.
+ * @return {Number} Returns 1 when `a` should come after `b`, -1 when `a` should come before `b`, and 0 when `a` and `b` are equal.
+ * @api public
+ */
+
+module.exports = function defaultCompare(a, b, prop) {
+  if (prop != null && typeOf(prop) !== 'string') {
+    throw new TypeError('expected "prop" to be undefined or a string');
+  }
+
+  var typeA = typeOf(a);
+  var typeB = typeOf(b);
+
+  if (prop) {
+    if (typeA === 'object') {
+      a = a[prop];
+      typeA = typeOf(a);
+    }
+    if (typeB === 'object') {
+      b = b[prop];
+      typeB = typeOf(b);
+    }
+  }
+
+  if (typeA === 'null') {
+    return typeB === 'null' ? 0 : typeB === 'undefined' ? -1 : 1;
+  } else if (typeA === 'undefined') {
+    return typeB === 'null' ? 1 : typeB === 'undefined' ? 0 : 1;
+  } else if (typeB === 'null' || typeB === 'undefined') {
+    return -1;
+  } else {
+    return a < b ? -1 : a > b ? 1 : 0;
+  }
+};
 
 /***/ }),
 /* 302 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var toString = Object.prototype.toString;
+
+/**
+ * Get the native `typeof` a value.
+ *
+ * @param  {*} `val`
+ * @return {*} Native javascript type
+ */
+
+module.exports = function kindOf(val) {
+  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
+
+  // primitivies
+  if (type === 'undefined') {
+    return 'undefined';
+  }
+  if (val === null) {
+    return 'null';
+  }
+  if (val === true || val === false || val instanceof Boolean) {
+    return 'boolean';
+  }
+  if (type === 'string' || val instanceof String) {
+    return 'string';
+  }
+  if (type === 'number' || val instanceof Number) {
+    return 'number';
+  }
+
+  // functions
+  if (type === 'function' || val instanceof Function) {
+    if (typeof val.constructor.name !== 'undefined' && val.constructor.name.slice(0, 9) === 'Generator') {
+      return 'generatorfunction';
+    }
+    return 'function';
+  }
+
+  // array
+  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
+    return 'array';
+  }
+
+  // check for instances of RegExp and Date before calling `toString`
+  if (val instanceof RegExp) {
+    return 'regexp';
+  }
+  if (val instanceof Date) {
+    return 'date';
+  }
+
+  // other objects
+  type = toString.call(val);
+
+  if (type === '[object RegExp]') {
+    return 'regexp';
+  }
+  if (type === '[object Date]') {
+    return 'date';
+  }
+  if (type === '[object Arguments]') {
+    return 'arguments';
+  }
+  if (type === '[object Error]') {
+    return 'error';
+  }
+  if (type === '[object Promise]') {
+    return 'promise';
+  }
+
+  // buffer
+  if (isBuffer(val)) {
+    return 'buffer';
+  }
+
+  // es6: Map, WeakMap, Set, WeakSet
+  if (type === '[object Set]') {
+    return 'set';
+  }
+  if (type === '[object WeakSet]') {
+    return 'weakset';
+  }
+  if (type === '[object Map]') {
+    return 'map';
+  }
+  if (type === '[object WeakMap]') {
+    return 'weakmap';
+  }
+  if (type === '[object Symbol]') {
+    return 'symbol';
+  }
+  if (type === '[object Map Iterator]') {
+    return 'mapiterator';
+  }
+  if (type === '[object Set Iterator]') {
+    return 'setiterator';
+  }
+
+  // typed arrays
+  if (type === '[object Int8Array]') {
+    return 'int8array';
+  }
+  if (type === '[object Uint8Array]') {
+    return 'uint8array';
+  }
+  if (type === '[object Uint8ClampedArray]') {
+    return 'uint8clampedarray';
+  }
+  if (type === '[object Int16Array]') {
+    return 'int16array';
+  }
+  if (type === '[object Uint16Array]') {
+    return 'uint16array';
+  }
+  if (type === '[object Int32Array]') {
+    return 'int32array';
+  }
+  if (type === '[object Uint32Array]') {
+    return 'uint32array';
+  }
+  if (type === '[object Float32Array]') {
+    return 'float32array';
+  }
+  if (type === '[object Float64Array]') {
+    return 'float64array';
+  }
+
+  // must be a plain object
+  return 'object';
+};
+
+/**
+ * If you need to support Safari 5-7 (8-10 yr-old browser),
+ * take a look at https://github.com/feross/is-buffer
+ */
+
+function isBuffer(val) {
+  return val.constructor && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
+}
+
+/***/ }),
+/* 303 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var toString = Object.prototype.toString;
+
+/**
+ * Get the native `typeof` a value.
+ *
+ * @param  {*} `val`
+ * @return {*} Native javascript type
+ */
+
+module.exports = function kindOf(val) {
+  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
+
+  // primitivies
+  if (type === 'undefined') {
+    return 'undefined';
+  }
+  if (val === null) {
+    return 'null';
+  }
+  if (val === true || val === false || val instanceof Boolean) {
+    return 'boolean';
+  }
+  if (type === 'string' || val instanceof String) {
+    return 'string';
+  }
+  if (type === 'number' || val instanceof Number) {
+    return 'number';
+  }
+
+  // functions
+  if (type === 'function' || val instanceof Function) {
+    if (typeof val.constructor.name !== 'undefined' && val.constructor.name.slice(0, 9) === 'Generator') {
+      return 'generatorfunction';
+    }
+    return 'function';
+  }
+
+  // array
+  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
+    return 'array';
+  }
+
+  // check for instances of RegExp and Date before calling `toString`
+  if (val instanceof RegExp) {
+    return 'regexp';
+  }
+  if (val instanceof Date) {
+    return 'date';
+  }
+
+  // other objects
+  type = toString.call(val);
+
+  if (type === '[object RegExp]') {
+    return 'regexp';
+  }
+  if (type === '[object Date]') {
+    return 'date';
+  }
+  if (type === '[object Arguments]') {
+    return 'arguments';
+  }
+  if (type === '[object Error]') {
+    return 'error';
+  }
+  if (type === '[object Promise]') {
+    return 'promise';
+  }
+
+  // buffer
+  if (isBuffer(val)) {
+    return 'buffer';
+  }
+
+  // es6: Map, WeakMap, Set, WeakSet
+  if (type === '[object Set]') {
+    return 'set';
+  }
+  if (type === '[object WeakSet]') {
+    return 'weakset';
+  }
+  if (type === '[object Map]') {
+    return 'map';
+  }
+  if (type === '[object WeakMap]') {
+    return 'weakmap';
+  }
+  if (type === '[object Symbol]') {
+    return 'symbol';
+  }
+  if (type === '[object Map Iterator]') {
+    return 'mapiterator';
+  }
+  if (type === '[object Set Iterator]') {
+    return 'setiterator';
+  }
+
+  // typed arrays
+  if (type === '[object Int8Array]') {
+    return 'int8array';
+  }
+  if (type === '[object Uint8Array]') {
+    return 'uint8array';
+  }
+  if (type === '[object Uint8ClampedArray]') {
+    return 'uint8clampedarray';
+  }
+  if (type === '[object Int16Array]') {
+    return 'int16array';
+  }
+  if (type === '[object Uint16Array]') {
+    return 'uint16array';
+  }
+  if (type === '[object Int32Array]') {
+    return 'int32array';
+  }
+  if (type === '[object Uint32Array]') {
+    return 'uint32array';
+  }
+  if (type === '[object Float32Array]') {
+    return 'float32array';
+  }
+  if (type === '[object Float64Array]') {
+    return 'float64array';
+  }
+
+  // must be a plain object
+  return 'object';
+};
+
+/**
+ * If you need to support Safari 5-7 (8-10 yr-old browser),
+ * take a look at https://github.com/feross/is-buffer
+ */
+
+function isBuffer(val) {
+  return val.constructor && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
+}
+
+/***/ }),
+/* 304 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/*!
+ * get-value <https://github.com/jonschlinkert/get-value>
+ *
+ * Copyright (c) 2014-2015, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+module.exports = function (obj, prop, a, b, c) {
+  if (!isObject(obj) || !prop) {
+    return obj;
+  }
+
+  prop = toString(prop);
+
+  // allowing for multiple properties to be passed as
+  // a string or array, but much faster (3-4x) than doing
+  // `[].slice.call(arguments)`
+  if (a) prop += '.' + toString(a);
+  if (b) prop += '.' + toString(b);
+  if (c) prop += '.' + toString(c);
+
+  if (prop in obj) {
+    return obj[prop];
+  }
+
+  var segs = prop.split('.');
+  var len = segs.length;
+  var i = -1;
+
+  while (obj && ++i < len) {
+    var key = segs[i];
+    while (key[key.length - 1] === '\\') {
+      key = key.slice(0, -1) + '.' + segs[++i];
+    }
+    obj = obj[key];
+  }
+  return obj;
+};
+
+function isObject(val) {
+  return val !== null && ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' || typeof val === 'function');
+}
+
+function toString(val) {
+  if (!val) return '';
+  if (Array.isArray(val)) {
+    return val.join('.');
+  }
+  return val;
+}
+
+/***/ }),
+/* 305 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var map = {
@@ -48166,634 +49020,19 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = 302;
-
-/***/ }),
-/* 303 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var markobj = __webpack_require__(304);
-var arraySort = __webpack_require__(305);
-var moment = __webpack_require__(0);
-var numeral = __webpack_require__(130);
-
-var config = __webpack_require__(246);
-var team = __webpack_require__(310);
-var sprints = __webpack_require__(8);
-var holidays = __webpack_require__(311);
-
-var Team = function () {
-  function Team() {
-    _classCallCheck(this, Team);
-  }
-
-  /**
-   * Subtract holidays from regular schedule
-   *
-   */
-
-
-  _createClass(Team, [{
-    key: 'getHolidays',
-    value: function getHolidays(sprint, member) {
-      var hours = 0;
-      var startDate = moment(sprint.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
-      var endDate = moment(sprint.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
-      holidays.forEach(function (holiday) {
-        if (moment(holiday.date).isBetween(startDate, endDate)) {
-          if (holiday.members.includes(member.name) || holiday.teams.includes(member.team)) {
-            hours += holiday.hours;
-          }
-        }
-      });
-      return hours;
-    }
-
-    /**
-     * Parse team member data
-     *
-     */
-
-  }, {
-    key: 'parseData',
-    value: function parseData() {
-      var _this = this;
-
-      var data = {
-        members: [],
-        subtotals: {
-          teams: {}
-        },
-        totals: {
-          roles: {},
-          sprints: {}
-        }
-      };
-
-      var offset = 0;
-      var hours = 0;
-      var lastTeam = '';
-
-      // Sort by Team, then Name
-      arraySort(team, 'team', 'name');
-
-      // Parse data for each team member
-      team.forEach(function (member, idx) {
-
-        data.members[idx] = {};
-        data.members[idx].sprints = {};
-
-        // Copy keys into the new data element
-        for (var key in member) {
-          data.members[idx][key] = member[key];
-        }
-
-        // Create Team for SubTotals
-        if (!data.subtotals.teams[member.team]) {
-          data.subtotals.teams[member.team] = {};
-        }
-
-        // Calculate Sprint Totals
-        sprints.forEach(function (sprint) {
-
-          offset = _this.getHolidays(sprint, member);
-          hours = member.hours - offset;
-
-          // Assign the member:sprint value
-          data.members[idx].sprints[sprint.field] = hours;
-
-          // Increment the team:sprint subtotal
-          if (!data.subtotals.teams[member.team][sprint.field]) {
-            data.subtotals.teams[member.team][sprint.field] = 0;
-          }
-          data.subtotals.teams[member.team][sprint.field] += hours;
-
-          // Increment the total:sprint total
-          if (!data.totals.sprints[sprint.field]) {
-            data.totals.sprints[sprint.field] = 0;
-          }
-          data.totals.sprints[sprint.field] += hours;
-
-          // Increment role totals
-          if (!data.totals.roles[member.role]) {
-            data.totals.roles[member.role] = 0;
-          }
-          data.totals.roles[member.role] += hours;
-        });
-
-        if (lastTeam === '') {
-          lastTeam = member.team;
-        } else if (lastTeam !== '' && lastTeam !== member.team) {
-          // End team
-          lastTeam = member.team;
-        }
-      });
-
-      console.log(data);
-
-      // Sort by Team, then Name
-      arraySort(data.members, 'team', 'name');
-
-      return data;
-    }
-
-    /**
-     * Draw the team member table
-     *
-     */
-
-  }, {
-    key: 'renderTeams',
-    value: function renderTeams() {
-      var _this2 = this;
-
-      // Parse the data before beginning
-      var data = this.parseData();
-
-      var cls = '';
-      var currentTeam = '';
-      var sprintHours = void 0;
-      var sprintCount = 0;
-      var totalMemberHours = 0;
-      var sprintData = '';
-
-      // Get the table header and body
-      var body = document.querySelector('#team-data table tbody');
-
-      // Construct Sprint Header
-      this.renderSprintHeaderRow();
-
-      // Iterate over each team member
-      var tr = void 0;
-      data.members.forEach(function (member, idx) {
-
-        // Construct Sprint Rows
-        sprintCount = 0;
-        totalMemberHours = 0;
-        sprintData = '';
-        for (var key in member.sprints) {
-          cls = member.sprints[key] < member.hours ? 'pto' : 'full';
-          totalMemberHours += member.sprints[key];
-          sprintData += '<td class="' + cls + '">' + member.sprints[key] + '</td>';
-          sprintCount++;
-        }
-
-        // Add Subtotal Rows as Appropriate
-        if (currentTeam !== member.team) {
-          if (currentTeam !== '') {
-            _this2.renderSubTotalRow(data, currentTeam);
-          }
-          currentTeam = member.team;
-          _this2.renderTeamNameRow(currentTeam, body, sprintCount);
-        }
-
-        // Construct each row of the table
-        tr = markobj('<tr id="' + member.jiraName + '">\n        <td>' + member.name + '</td>\n        <td>' + member.role + '</td>\n        <td>' + member.allocation + '</td>\n        <td>' + member.hours + '</td>\n        ' + sprintData + '\n        <td class="subtotal">' + totalMemberHours + '</td>\n      </tr>');
-
-        // Append the row to the table body
-        body.appendChild(tr);
-
-        // Show last SubTotal row
-        if (idx === data.members.length - 1) {
-          _this2.renderSubTotalRow(data, currentTeam);
-        }
-      });
-    }
-  }, {
-    key: 'renderTeamNameRow',
-    value: function renderTeamNameRow(name, target, columns) {
-      var sprintHeaders = markobj('<tr><td colspan="' + (5 + columns) + '"\n      class="title">' + name + ' Team</td></tr>');
-      target.appendChild(sprintHeaders);
-    }
-
-    /**
-     * Renders Sprint Header Row
-     *
-     */
-
-  }, {
-    key: 'renderSprintHeaderRow',
-    value: function renderSprintHeaderRow() {
-      var header = document.querySelector('#team-data table thead tr');
-      var sprintHeaders = '';
-      sprints.forEach(function (sprint) {
-        sprintHeaders = markobj('<th>' + sprint.label + '</th>');
-        header.appendChild(sprintHeaders);
-      });
-      sprintHeaders = markobj('<th>Totals</th>');
-      header.appendChild(sprintHeaders);
-    }
-
-    /**
-     * Renders SubTotal Rows for Each Team
-     *
-     */
-
-  }, {
-    key: 'renderSubTotalRow',
-    value: function renderSubTotalRow(data, team) {
-
-      var body = document.querySelector('#team-data table tbody');
-      var sprints = data.subtotals.teams[team];
-
-      var tr = void 0;
-      var sprintCount = 0;
-      var teamTotal = 0;
-      var pointCount = 0;
-      var sprintSubTotal = '';
-      var pointSubTotal = '';
-
-      for (var key in sprints) {
-        pointCount = numeral(sprints[key] / config.hoursPerPoint).format('0.0');
-        sprintSubTotal += '<td>' + sprints[key] + '</td>';
-        pointSubTotal += '<td>' + pointCount + '</td>';
-        teamTotal += sprints[key];
-        sprintCount++;
-      }
-
-      tr = markobj('<tr class="subtotal">\n      <td colspan="4" class="label">Available Team Hours per Sprint</td>\n      ' + sprintSubTotal + '\n      <td class="total">' + teamTotal + '</td>\n    </tr>');
-      body.appendChild(tr);
-
-      tr = markobj('<tr class="subtotal">\n      <td colspan="4" class="label">Estimated Point Velocity</td>\n      ' + pointSubTotal + '\n      <td class="total">' + teamTotal + '</td>\n    </tr>');
-      body.appendChild(tr);
-
-      tr = markobj('<tr class="spacer"><td colspan="' + (5 + sprintCount) + '">&nbsp;</td></tr>');
-      body.appendChild(tr);
-    }
-  }]);
-
-  return Team;
-}();
-
-exports.default = Team;
-
-/***/ }),
-/* 304 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = exports = markobj;
-
-// Returns an object built from an HTML string
-function markobj(html) {
-
-  var rootEl = 'div';
-  var rootIx = 0;
-
-  // If you're creating elements that are children of tables, then you have to
-  // use a table as the root element. A tbody is also appended to any newly
-  // made table, so our returned index has to increase
-  if (html.substring(1, 3) === 'tr' || html.substring(1, 3) === 'td' || html.substring(1, 3) === 'th' || html.substring(1, 6) === 'tbody' || html.substring(1, 6) === 'thead' || html.substring(1, 6) === 'tfoot' || html.substring(1, 8) === 'caption' || html.substring(1, 4) === 'col' || html.substring(1, 9) === 'colgroup') {
-    rootEl = 'table';
-  }
-
-  if (html.substring(1, 6) === 'tbody' || html.substring(1, 6) === 'thead' || html.substring(1, 6) === 'tfoot') {
-    rootIx = 0;
-  }
-
-  if (html.substring(1, 3) === 'tr') {
-    rootIx = 1;
-  }
-
-  if (html.substring(1, 3) === 'td' || html.substring(1, 3) === 'th') {
-    rootIx = 2;
-  }
-
-  var tmp = document.createElement(rootEl);
-  tmp.innerHTML = html;
-
-  if (rootIx === 2) {
-    return tmp.childNodes[0].childNodes[0].childNodes[0];
-  } else if (rootIx === 1) {
-    return tmp.childNodes[0].childNodes[0];
-  }
-  return tmp.childNodes[0];
-}
-
-/***/ }),
-/* 305 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*!
- * array-sort <https://github.com/jonschlinkert/array-sort>
- *
- * Copyright (c) 2015-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var defaultCompare = __webpack_require__(306);
-var typeOf = __webpack_require__(308);
-var get = __webpack_require__(309);
-
-/**
- * Sort an array of objects by one or more properties.
- *
- * @param  {Array} `arr` The Array to sort.
- * @param  {String|Array|Function} `props` One or more object paths or comparison functions.
- * @param  {Object} `opts` Pass `{ reverse: true }` to reverse the sort order.
- * @return {Array} Returns a sorted array.
- * @api public
- */
-
-function arraySort(arr, props, opts) {
-  if (arr == null) {
-    return [];
-  }
-
-  if (!Array.isArray(arr)) {
-    throw new TypeError('array-sort expects an array.');
-  }
-
-  if (arguments.length === 1) {
-    return arr.sort();
-  }
-
-  var args = flatten([].slice.call(arguments, 1));
-
-  // if the last argument appears to be a plain object,
-  // it's not a valid `compare` arg, so it must be options.
-  if (typeOf(args[args.length - 1]) === 'object') {
-    opts = args.pop();
-  }
-  return arr.sort(sortBy(args, opts));
-}
-
-/**
- * Iterate over each comparison property or function until `1` or `-1`
- * is returned.
- *
- * @param  {String|Array|Function} `props` One or more object paths or comparison functions.
- * @param  {Object} `opts` Pass `{ reverse: true }` to reverse the sort order.
- * @return {Array}
- */
-
-function sortBy(props, opts) {
-  opts = opts || {};
-
-  return function compareFn(a, b) {
-    var len = props.length,
-        i = -1;
-    var result;
-
-    while (++i < len) {
-      result = compare(props[i], a, b);
-      if (result !== 0) {
-        break;
-      }
-    }
-    if (opts.reverse === true) {
-      return result * -1;
-    }
-    return result;
-  };
-}
-
-/**
- * Compare `a` to `b`. If an object `prop` is passed, then
- * `a[prop]` is compared to `b[prop]`
- */
-
-function compare(prop, a, b) {
-  if (typeof prop === 'function') {
-    // expose `compare` to custom function
-    return prop(a, b, compare.bind(null, null));
-  }
-  // compare object values
-  if (prop && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object' && (typeof b === 'undefined' ? 'undefined' : _typeof(b)) === 'object') {
-    return compare(null, get(a, prop), get(b, prop));
-  }
-  return defaultCompare(a, b);
-}
-
-/**
- * Flatten the given array.
- */
-
-function flatten(arr) {
-  return [].concat.apply([], arr);
-}
-
-/**
- * Expose `arraySort`
- */
-
-module.exports = arraySort;
+webpackContext.id = 305;
 
 /***/ }),
 /* 306 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-
-
-var typeOf = __webpack_require__(307);
-
-/**
- * Basic sort algorithm that has similar behavior to `Array.prototype.sort`
- * for null and undefined, but also allows sorting by an object property.
- *
- * @param {Mixed} `a` First value to compare.
- * @param {Mixed} `b` Second value to compare.
- * @param {String} `prop` Optional property to use when comparing objects. If specified must be a string.
- * @return {Number} Returns 1 when `a` should come after `b`, -1 when `a` should come before `b`, and 0 when `a` and `b` are equal.
- * @api public
- */
-
-module.exports = function defaultCompare(a, b, prop) {
-  if (prop != null && typeOf(prop) !== 'string') {
-    throw new TypeError('expected "prop" to be undefined or a string');
-  }
-
-  var typeA = typeOf(a);
-  var typeB = typeOf(b);
-
-  if (prop) {
-    if (typeA === 'object') {
-      a = a[prop];
-      typeA = typeOf(a);
-    }
-    if (typeB === 'object') {
-      b = b[prop];
-      typeB = typeOf(b);
-    }
-  }
-
-  if (typeA === 'null') {
-    return typeB === 'null' ? 0 : typeB === 'undefined' ? -1 : 1;
-  } else if (typeA === 'undefined') {
-    return typeB === 'null' ? 1 : typeB === 'undefined' ? 0 : 1;
-  } else if (typeB === 'null' || typeB === 'undefined') {
-    return -1;
-  } else {
-    return a < b ? -1 : a > b ? 1 : 0;
-  }
-};
+module.exports = [{"team":"Eagle","jiraName":"sgeorge","name":"Shaheen","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Eagle","jiraName":"jnix","name":"Jacob","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Eagle","jiraName":"Josh.Miller","name":"Josh","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Ashoka_K","name":"Ashoka","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Offshore","jiraName":"aselvaraj","name":"Arun","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Offshore","jiraName":"pranali.dedge","name":"Pranali","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"pallavi.bhadange","name":"Pallavi","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"amit.mistry01","name":"Amit","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Chintan_Desai01","name":"Chintan","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"ApurvaMukund_A01","name":"Apurva","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"vaishali.tekale","name":"Vaishali","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Raman_Mittal","name":"Raman","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Tanvi.Chopda","name":"Tanvi","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Akshay_Agrawal04","name":"Akshay","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Megha_R03","name":"Megha","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"sohan.255312","name":"Sohan","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"kunal.karmarkar","name":"Kunal","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"dfreireich","name":"Dave","role":"qa","allocation":"100%","hours":50,"lead":true},{"team":"QA","jiraName":"Souvik_Ghosh06","name":"Souvik","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"pranjal.sharma","name":"Pranjal","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"?","name":"?","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"Design","jiraName":"scornell","name":"Steven","role":"design","allocation":"100%","hours":50,"lead":true},{"team":"Design","jiraName":"asingh","name":"Alekh","role":"design","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"atran","name":"Anh","role":"mgmt","allocation":"100%","hours":50,"lead":true},{"team":"Misc","jiraName":"nsavant","name":"Nikhil","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"wbaeck","name":"Wolfgang","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"SShliakhtsitsau","name":"Stas","role":"mgmt","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"MBorden","name":"Mitch","role":"mgmt","allocation":"100%","hours":50,"lead":false}]
 
 /***/ }),
 /* 307 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var toString = Object.prototype.toString;
-
-/**
- * Get the native `typeof` a value.
- *
- * @param  {*} `val`
- * @return {*} Native javascript type
- */
-
-module.exports = function kindOf(val) {
-  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
-
-  // primitivies
-  if (type === 'undefined') {
-    return 'undefined';
-  }
-  if (val === null) {
-    return 'null';
-  }
-  if (val === true || val === false || val instanceof Boolean) {
-    return 'boolean';
-  }
-  if (type === 'string' || val instanceof String) {
-    return 'string';
-  }
-  if (type === 'number' || val instanceof Number) {
-    return 'number';
-  }
-
-  // functions
-  if (type === 'function' || val instanceof Function) {
-    if (typeof val.constructor.name !== 'undefined' && val.constructor.name.slice(0, 9) === 'Generator') {
-      return 'generatorfunction';
-    }
-    return 'function';
-  }
-
-  // array
-  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
-    return 'array';
-  }
-
-  // check for instances of RegExp and Date before calling `toString`
-  if (val instanceof RegExp) {
-    return 'regexp';
-  }
-  if (val instanceof Date) {
-    return 'date';
-  }
-
-  // other objects
-  type = toString.call(val);
-
-  if (type === '[object RegExp]') {
-    return 'regexp';
-  }
-  if (type === '[object Date]') {
-    return 'date';
-  }
-  if (type === '[object Arguments]') {
-    return 'arguments';
-  }
-  if (type === '[object Error]') {
-    return 'error';
-  }
-  if (type === '[object Promise]') {
-    return 'promise';
-  }
-
-  // buffer
-  if (isBuffer(val)) {
-    return 'buffer';
-  }
-
-  // es6: Map, WeakMap, Set, WeakSet
-  if (type === '[object Set]') {
-    return 'set';
-  }
-  if (type === '[object WeakSet]') {
-    return 'weakset';
-  }
-  if (type === '[object Map]') {
-    return 'map';
-  }
-  if (type === '[object WeakMap]') {
-    return 'weakmap';
-  }
-  if (type === '[object Symbol]') {
-    return 'symbol';
-  }
-  if (type === '[object Map Iterator]') {
-    return 'mapiterator';
-  }
-  if (type === '[object Set Iterator]') {
-    return 'setiterator';
-  }
-
-  // typed arrays
-  if (type === '[object Int8Array]') {
-    return 'int8array';
-  }
-  if (type === '[object Uint8Array]') {
-    return 'uint8array';
-  }
-  if (type === '[object Uint8ClampedArray]') {
-    return 'uint8clampedarray';
-  }
-  if (type === '[object Int16Array]') {
-    return 'int16array';
-  }
-  if (type === '[object Uint16Array]') {
-    return 'uint16array';
-  }
-  if (type === '[object Int32Array]') {
-    return 'int32array';
-  }
-  if (type === '[object Uint32Array]') {
-    return 'uint32array';
-  }
-  if (type === '[object Float32Array]') {
-    return 'float32array';
-  }
-  if (type === '[object Float64Array]') {
-    return 'float64array';
-  }
-
-  // must be a plain object
-  return 'object';
-};
-
-/**
- * If you need to support Safari 5-7 (8-10 yr-old browser),
- * take a look at https://github.com/feross/is-buffer
- */
-
-function isBuffer(val) {
-  return val.constructor && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
-}
+module.exports = [{"name":"PTO","date":"2017-11-12","hours":5,"teams":[],"members":["Alekh"]},{"name":"Thanksgiving Day","date":"2017-11-23","hours":8,"teams":["Design","Eagle","Misc","QA"],"members":[]},{"name":"Christmas Eve","date":"2017-12-24","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"Christmas Day","date":"2017-12-25","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"New Year's Eve","date":"2017-12-31","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"New Year's Day","date":"2018-01-01","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]}]
 
 /***/ }),
 /* 308 */
@@ -48802,729 +49041,13 @@ function isBuffer(val) {
 "use strict";
 
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var toString = Object.prototype.toString;
-
-/**
- * Get the native `typeof` a value.
- *
- * @param  {*} `val`
- * @return {*} Native javascript type
- */
-
-module.exports = function kindOf(val) {
-  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
-
-  // primitivies
-  if (type === 'undefined') {
-    return 'undefined';
-  }
-  if (val === null) {
-    return 'null';
-  }
-  if (val === true || val === false || val instanceof Boolean) {
-    return 'boolean';
-  }
-  if (type === 'string' || val instanceof String) {
-    return 'string';
-  }
-  if (type === 'number' || val instanceof Number) {
-    return 'number';
-  }
-
-  // functions
-  if (type === 'function' || val instanceof Function) {
-    if (typeof val.constructor.name !== 'undefined' && val.constructor.name.slice(0, 9) === 'Generator') {
-      return 'generatorfunction';
-    }
-    return 'function';
-  }
-
-  // array
-  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
-    return 'array';
-  }
-
-  // check for instances of RegExp and Date before calling `toString`
-  if (val instanceof RegExp) {
-    return 'regexp';
-  }
-  if (val instanceof Date) {
-    return 'date';
-  }
-
-  // other objects
-  type = toString.call(val);
-
-  if (type === '[object RegExp]') {
-    return 'regexp';
-  }
-  if (type === '[object Date]') {
-    return 'date';
-  }
-  if (type === '[object Arguments]') {
-    return 'arguments';
-  }
-  if (type === '[object Error]') {
-    return 'error';
-  }
-  if (type === '[object Promise]') {
-    return 'promise';
-  }
-
-  // buffer
-  if (isBuffer(val)) {
-    return 'buffer';
-  }
-
-  // es6: Map, WeakMap, Set, WeakSet
-  if (type === '[object Set]') {
-    return 'set';
-  }
-  if (type === '[object WeakSet]') {
-    return 'weakset';
-  }
-  if (type === '[object Map]') {
-    return 'map';
-  }
-  if (type === '[object WeakMap]') {
-    return 'weakmap';
-  }
-  if (type === '[object Symbol]') {
-    return 'symbol';
-  }
-  if (type === '[object Map Iterator]') {
-    return 'mapiterator';
-  }
-  if (type === '[object Set Iterator]') {
-    return 'setiterator';
-  }
-
-  // typed arrays
-  if (type === '[object Int8Array]') {
-    return 'int8array';
-  }
-  if (type === '[object Uint8Array]') {
-    return 'uint8array';
-  }
-  if (type === '[object Uint8ClampedArray]') {
-    return 'uint8clampedarray';
-  }
-  if (type === '[object Int16Array]') {
-    return 'int16array';
-  }
-  if (type === '[object Uint16Array]') {
-    return 'uint16array';
-  }
-  if (type === '[object Int32Array]') {
-    return 'int32array';
-  }
-  if (type === '[object Uint32Array]') {
-    return 'uint32array';
-  }
-  if (type === '[object Float32Array]') {
-    return 'float32array';
-  }
-  if (type === '[object Float64Array]') {
-    return 'float64array';
-  }
-
-  // must be a plain object
-  return 'object';
-};
-
-/**
- * If you need to support Safari 5-7 (8-10 yr-old browser),
- * take a look at https://github.com/feross/is-buffer
- */
-
-function isBuffer(val) {
-  return val.constructor && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
-}
-
-/***/ }),
-/* 309 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-/*!
- * get-value <https://github.com/jonschlinkert/get-value>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License.
- */
-
-module.exports = function (obj, prop, a, b, c) {
-  if (!isObject(obj) || !prop) {
-    return obj;
-  }
-
-  prop = toString(prop);
-
-  // allowing for multiple properties to be passed as
-  // a string or array, but much faster (3-4x) than doing
-  // `[].slice.call(arguments)`
-  if (a) prop += '.' + toString(a);
-  if (b) prop += '.' + toString(b);
-  if (c) prop += '.' + toString(c);
-
-  if (prop in obj) {
-    return obj[prop];
-  }
-
-  var segs = prop.split('.');
-  var len = segs.length;
-  var i = -1;
-
-  while (obj && ++i < len) {
-    var key = segs[i];
-    while (key[key.length - 1] === '\\') {
-      key = key.slice(0, -1) + '.' + segs[++i];
-    }
-    obj = obj[key];
-  }
-  return obj;
-};
-
-function isObject(val) {
-  return val !== null && ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' || typeof val === 'function');
-}
-
-function toString(val) {
-  if (!val) return '';
-  if (Array.isArray(val)) {
-    return val.join('.');
-  }
-  return val;
-}
-
-/***/ }),
-/* 310 */
-/***/ (function(module, exports) {
-
-module.exports = [{"team":"Eagle","jiraName":"sgeorge","name":"Shaheen","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Eagle","jiraName":"jnix","name":"Jacob","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Eagle","jiraName":"Josh.Miller","name":"Josh","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Ashoka_K","name":"Ashoka","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Offshore","jiraName":"aselvaraj","name":"Arun","role":"dev","allocation":"100%","hours":50,"lead":true},{"team":"Offshore","jiraName":"pranali.dedge","name":"Pranali","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"pallavi.bhadange","name":"Pallavi","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"amit.mistry01","name":"Amit","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Chintan_Desai01","name":"Chintan","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"ApurvaMukund_A01","name":"Apurva","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"vaishali.tekale","name":"Vaishali","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Raman_Mittal","name":"Raman","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Tanvi.Chopda","name":"Tanvi","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Akshay_Agrawal04","name":"Akshay","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"Megha_R03","name":"Megha","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"sohan.255312","name":"Sohan","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Offshore","jiraName":"kunal.karmarkar","name":"Kunal","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"dfreireich","name":"Dave","role":"qa","allocation":"100%","hours":50,"lead":true},{"team":"QA","jiraName":"Souvik_Ghosh06","name":"Souvik","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"pranjal.sharma","name":"Pranjal","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"QA","jiraName":"?","name":"?","role":"qa","allocation":"100%","hours":50,"lead":false},{"team":"Design","jiraName":"scornell","name":"Steven","role":"design","allocation":"100%","hours":50,"lead":true},{"team":"Design","jiraName":"asingh","name":"Alekh","role":"design","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"atran","name":"Anh","role":"mgmt","allocation":"100%","hours":50,"lead":true},{"team":"Misc","jiraName":"nsavant","name":"Nikhil","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"wbaeck","name":"Wolfgang","role":"dev","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"SShliakhtsitsau","name":"Stas","role":"mgmt","allocation":"100%","hours":50,"lead":false},{"team":"Misc","jiraName":"MBorden","name":"Mitch","role":"mgmt","allocation":"100%","hours":50,"lead":false}]
-
-/***/ }),
-/* 311 */
-/***/ (function(module, exports) {
-
-module.exports = [{"name":"PTO","date":"2017-11-12","hours":5,"teams":[],"members":["Alekh"]},{"name":"Thanksgiving Day","date":"2017-11-23","hours":8,"teams":["Design","Eagle","Misc","QA"],"members":[]},{"name":"Christmas Eve","date":"2017-12-24","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"Christmas Day","date":"2017-12-25","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"New Year's Eve","date":"2017-12-31","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]},{"name":"New Year's Day","date":"2018-01-01","hours":8,"teams":["Design","Eagle","Misc","Offshore","QA"],"members":[]}]
-
-/***/ }),
-/* 312 */
-/***/ (function(module, exports) {
-
-module.exports = [{"label":"Priority","field":"priority","class":"priority @value","hidden":true,"title":true,"editable":false},{"label":"Epic","field":"epic","class":"nowrap","editable":false},{"label":"Identifier","field":"key","class":"nowrap","link":"https://daymon.atlassian.net/browse/@value","editable":false},{"label":"Description","field":"description","class":"left wide","editable":false},{"label":"Assignee","field":"assignee","class":"left","editable":false},{"label":"Risk","field":"risk","class":"risk","editable":true},{"label":"Debt","field":"debt","class":"debt","editable":true},{"label":"Estimate","field":"estimate","class":"","editable":false},{"label":"Sprint","field":"sprint.current","class":"","editable":false},{"label":"Status","field":"status","class":"status @value","editable":false}]
-
-/***/ }),
-/* 313 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 314 */,
-/* 315 */,
-/* 316 */,
-/* 317 */,
-/* 318 */,
-/* 319 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Parse = __webpack_require__(320);
-
-var _Parse2 = _interopRequireDefault(_Parse);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var markobj = __webpack_require__(304);
-
-var Plan = function () {
-  function Plan() {
-    _classCallCheck(this, Plan);
-
-    this.parse = new _Parse2.default();
-  }
-
-  // Inject Sprints / Phases into Table
-
-
-  _createClass(Plan, [{
-    key: 'renderHeader',
-    value: function renderHeader(sprints, config, aggregates) {
-      var _this = this;
-
-      var th1 = void 0,
-          th2 = void 0,
-          th3 = '';
-      var dates = '';
-      var d1 = void 0,
-          d2 = void 0,
-          current = '';
-      var newRow1 = document.createElement('tr');
-      var newRow2 = document.createElement('tr');
-      var newRow3 = document.createElement('tr');
-      var header = document.querySelector('#release-plan thead');
-      var headRow = header.querySelector('tr');
-      var headers = headRow.querySelectorAll('th');
-
-      var phases = [];
-      var sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
-
-      headers.forEach(function (el) {
-        if (el.innerText === "Status") {
-          newRow1.appendChild(el);
-          sprints.forEach(function (sprint) {
-
-            // Populate Phase labels
-            if (!_this.parse.arrayContains(phases, sprint.phase)) {
-
-              current = '';
-              if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
-                current = 'current';
-              }
-
-              th1 = document.createElement('th');
-              th1.setAttribute('colspan', sprintsPerPhase);
-              th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
-              th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
-            }
-
-            // Populate Sprint labels
-            th2 = document.createElement('th');
-            th2.setAttribute('class', 'sprint nowrap ' + sprint.class);
-            th2.appendChild(document.createTextNode(sprint.label));
-
-            // Populate dates
-            th3 = document.createElement('th');
-            th3.setAttribute('class', 'dates nowrap ' + sprint.class);
-            d1 = new Date(sprint.startDate);
-            d2 = new Date(sprint.endDate);
-            dates = d1.getMonth() + 1 + '/' + d1.getDate();
-            dates += '-' + (d2.getMonth() + 1) + '/' + d2.getDate();
-            th3.appendChild(document.createTextNode(dates));
-
-            // Append rows to the header
-            if (!_this.parse.arrayContains(phases, sprint.phase)) {
-              newRow1.appendChild(th1);
-              phases.push(sprint.phase);
-            }
-            newRow2.appendChild(th2);
-            newRow3.appendChild(th3);
-          });
-        } else {
-          newRow1.appendChild(el);
-        }
-      });
-
-      header.removeChild(headRow);
-      header.appendChild(newRow1);
-      header.appendChild(newRow2);
-      header.appendChild(newRow3);
-    }
-
-    // Renders rows into the table
-
-  }, {
-    key: 'renderTable',
-    value: function renderTable(task, sprints, config, aggregates) {
-      var _this2 = this;
-
-      var tbody = document.querySelector('#release-plan tbody');
-      var td = void 0;
-      var column = '';
-      var value = '';
-
-      var trClass = task.priority.toLowerCase().indexOf('block') > -1 ? 'blocker' : '';
-
-      var tr = markobj('<tr id="' + task.key + '"\n      data-sprint="' + task.sprint.current + '"\n      data-assignee="' + task.assignee + '"\n      class="' + trClass + '"></tr>');
-
-      tbody.appendChild(tr);
-
-      sprints.forEach(function (item, index) {
-
-        column = item.label;
-        value = task[item.field];
-
-        // Parse the value if the field is a multi-node path
-        if (item.field.indexOf('.') > -1) {
-          value = _this2.parse.parseValue(item.field, task);
-        }
-
-        // Create a new cell
-        td = document.createElement('td');
-
-        // Clear "999" from Sprints
-        if (item.field.indexOf('sprint') > -1 && value === 999) {
-          value = '';
-        }
-
-        // Set class of the element
-        if (item.class.indexOf('@value') > -1) {
-          var cls = value.toLowerCase().replace(/(\s){1,}/ig, '-');
-          td.setAttribute('class', cls);
-        } else {
-          if (item.phase && item.class.indexOf('phase') === -1) {
-            item.class += ' phase' + item.phase;
-          }
-
-          td.setAttribute('class', item.class);
-        }
-
-        // Find the value
-        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== "object") {
-
-          if (item.title) {
-            td.setAttribute('title', value);
-          }
-
-          if (item.hidden) {
-
-            td.setAttribute('data-value', value);
-          } else if (item.link && item.link !== '') {
-            var a = _this2.parse.parseLink(value, item.link);
-            td.appendChild(a);
-          } else if (value && value !== '') {
-
-            td.appendChild(document.createTextNode(value));
-
-            if (value === "-") {
-              td.setAttribute('class', item.class + ' pushed');
-              td.setAttribute('title', 'Pushed');
-            } else if (value === "unassigned") {
-              td.setAttribute('class', item.class + ' dimmed');
-            }
-
-            if (task.sprint && task.sprint.current && value !== '-' && column.indexOf('Sprint ') > -1) {
-              td.setAttribute('class', item.class + ' active');
-            }
-          }
-        }
-
-        tr.appendChild(td);
-      });
-    }
-
-    // Renders totals into the grid
-
-  }, {
-    key: 'renderAggregates',
-    value: function renderAggregates(aggregates) {
-
-      var sprints1 = void 0,
-          sprints2 = void 0,
-          sprints3 = void 0,
-          sprints4 = void 0,
-          sprints5 = void 0,
-          sprints6 = void 0,
-          sprints7 = void 0,
-          sprints8 = void 0,
-          blanks = void 0;
-      var table = document.querySelector('table');
-
-      blanks = '<tr><td colspan="10" class="empty label"></td>';
-
-      // Loop through the aggregate values
-      for (var key in aggregates.subtotals) {
-
-        var percentage = aggregates.subtotals[key].tasks / aggregates.totals.project.tasks * 100;
-        var completion = aggregates.subtotals[key].completed / aggregates.totals.project.tasks * 100;
-        var completionClass = completion < 100 ? 'bad' : 'good';
-        var spilledClass = parseInt(aggregates.subtotals[key].spilled, 10) > 0 ? 'warning' : 'white';
-        var phase = 'phase' + aggregates.subtotals[key].phase;
-        var defaultClass = aggregates.subtotals[key].class;
-
-        sprints1 += '<td class="' + defaultClass + ' total">' + aggregates.subtotals[key].estimate + '</td>';
-        sprints2 += '<td class="' + defaultClass + ' subtotal">' + aggregates.subtotals[key].hours.dev + '</td>';
-        sprints3 += '<td class="' + defaultClass + ' subtotal">' + aggregates.subtotals[key].hours.qa + '</td>';
-        sprints4 += '<td class="' + defaultClass + ' ' + spilledClass + ' ' + phase + '">' + aggregates.subtotals[key].spilled + '</td>';
-        sprints5 += '<td class="' + defaultClass + ' subtotal ' + phase + '">' + aggregates.subtotals[key].tasks + '</td>';
-        sprints6 += '<td class="' + defaultClass + ' total ' + phase + '">' + percentage + '%</td>';
-        sprints7 += '<td class="' + defaultClass + ' subtotal ' + phase + '">' + aggregates.subtotals[key].completed + '</td>';
-        sprints8 += '<td class="' + defaultClass + ' subtotal ' + completionClass + '">' + completion + '%</td>';
-
-        blanks += '<td class="' + defaultClass + ' empty ' + phase + '"></td>';
-      }
-
-      blanks += '<td colspan="5" class="empty plain"></td></tr>';
-
-      // Build out the footer
-      var footerRows = markobj('<tfoot>\n      <tr><td colspan="10" class="label">Total story points per Sprint</td>' + sprints1 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total Dev Hours per Sprint</td>' + sprints2 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total QA Hours per Sprint</td>' + sprints3 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Stories Spilled across Sprints</td>' + sprints4 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Total Stories by Sprint</td>' + sprints5 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Target Completion Percentage</td>' + sprints6 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Sprint Stories Completed</td>' + sprints7 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Sprint Completion Percentage</td>' + sprints8 + '<td colspan="5" class="plain"></td></tr>\n    </tfoot>');
-
-      // Append the footer to the table
-      table.appendChild(footerRows);
-    }
-  }]);
-
-  return Plan;
-}();
-
-exports.default = Plan;
-
-/***/ }),
-/* 320 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Parse = function () {
-  function Parse() {
-    _classCallCheck(this, Parse);
-  }
-
-  // Find a value in an array
-
-
-  _createClass(Parse, [{
-    key: 'arrayContains',
-    value: function arrayContains(array, value) {
-      for (var i = 0; i < array.length; i++) {
-        if (array[i] === value) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // Parse links in configured columns
-
-  }, {
-    key: 'parseLink',
-    value: function parseLink(value, link) {
-      var result = link.replace('@value', value);
-      var a = document.createElement('a');
-      a.setAttribute('href', result);
-      a.setAttribute('target', '_blank');
-      a.appendChild(document.createTextNode(value));
-      return a;
-    }
-
-    // Parse a multi-part value
-
-  }, {
-    key: 'parseValue',
-    value: function parseValue(value, data) {
-      var parts = value.split('.');
-      var result = data;
-      parts.forEach(function (part) {
-        if (result && result.hasOwnProperty(part)) {
-          result = result[part];
-        }
-      });
-      return result;
-    }
-
-    // Parse Jira data into data element
-
-  }, {
-    key: 'parseData',
-    value: function parseData(input) {
-      var _this = this;
-
-      var data = [];
-      var row = {};
-      input.issues.forEach(function (task) {
-
-        row = {};
-        row.key = task.key;
-        row.priority = task.fields.priority.name;
-        row.description = task.fields.summary;
-        row.status = task.fields.status.name;
-        row.assignee = !task.fields.assignee ? 'unassigned' : task.fields.assignee.displayName;
-
-        row.numtasks = 1;
-        row.debt = '';
-
-        // Calculate risk
-        row.risk = 0;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.risk = 2;
-        }
-
-        // Calculate numeric priority
-        row.rank = 6;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.rank = 0;
-        } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
-          row.rank = 1;
-        } else if (row.priority.toLowerCase().indexOf('high') > -1) {
-          row.rank = 2;
-        } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
-          row.rank = 3;
-        } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
-          row.rank = 5;
-        } else if (row.priority.toLowerCase().indexOf('low') > -1) {
-          row.rank = 4;
-        }
-
-        // Calculate the estimate field
-        row.estimate = task.fields.aggregatetimeoriginalestimate;
-        row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
-        row.remaining = row.estimate - row.timespent;
-        if (!isNaN(row.estimate)) {
-          row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
-        }
-
-        // Calculate remaining & percentage
-        if (!isNaN(row.remaining)) {
-          row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
-        }
-
-        // Get epic information
-        row.epic = task.fields.customfield_10003;
-        row.epic = _this.getEpic(row.epic, input);
-
-        // Get sprint information
-        row.sprint = task.fields.customfield_10007;
-        if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-          row.sprint = _this.parseSprint(row.sprint);
-        }
-
-        // Populate empty sprint values
-        if (!row.sprint) {
-          row.sprint = { current: 999, history: [] };
-        }
-
-        // Capture Sprint data
-        row.pushed = 0;
-        if (row.sprint && row.sprint.history) {
-          row.sprint.history.forEach(function (sp, index) {
-            if (row.sprint.current === sp) {
-              row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
-              if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-                row['sprint' + sp] = '0';
-              }
-            } else {
-              row['sprint' + sp] = "-";
-              row.pushed++;
-            }
-          });
-        }
-
-        // Add to collection
-        data.push(row);
-      });
-
-      // Sort based on Sprint then Priority / Rank
-      data.sort(function (a, b) {
-        if (a.sprint) {
-          return a.sprint.current - b.sprint.current || a.rank - b.rank;
-        }
-      });
-
-      console.log('----- Data Object -----');
-      console.log(data);
-
-      return data;
-    }
-
-    // Append Sprints to Configuration
-
-  }, {
-    key: 'appendSprints',
-    value: function appendSprints(config, sprints) {
-      var conf = [];
-      config.forEach(function (item) {
-        conf.push(item);
-        if (item.label.indexOf('Status') === 0) {
-          sprints.forEach(function (sprint) {
-            conf.push(sprint);
-          });
-        }
-      });
-      config = conf;
-      return config;
-    }
-
-    // Parses Sprint value from string
-
-  }, {
-    key: 'parseSprint',
-    value: function parseSprint(input) {
-      var sprint = '';
-      var result = {};
-      result.raw = input;
-      result.current = input[input.length - 1];
-      result.history = [];
-
-      // Capture the current Sprint
-      sprint = result.current.match(/(name=[^,]*,)/);
-      if (sprint !== null && Array.isArray(sprint)) {
-        result.current = sprint[sprint.length - 1].replace(/([^0-9]*)/ig, '');
-      }
-
-      // Create a Sprint History log
-      result.raw.forEach(function (item) {
-        var sp = item.match(/(name=[^,]*,)/);
-        sp = sp[sp.length - 1].replace(/([^0-9]*)/ig, '');
-        if (!result.history.includes(sp)) {
-          result.history.push(sp);
-        }
-      });
-
-      return result;
-    }
-
-    // Create an Epic Link
-
-  }, {
-    key: 'getEpic',
-    value: function getEpic(epic, data) {
-      for (var i = 0; i < data.issues.length; i++) {
-        if (data.issues[0].key === epic) {
-          return data.issues[0].fields.summary;
-        }
-      }
-      return epic;
-    }
-  }]);
-
-  return Parse;
-}();
-
-exports.default = Parse;
-
-/***/ }),
-/* 321 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _chart = __webpack_require__(9);
+var _chart = __webpack_require__(10);
 
 var _chart2 = _interopRequireDefault(_chart);
 
@@ -49532,7 +49055,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var charts = __webpack_require__(299);
+var charts = __webpack_require__(309);
 
 var Reports = function () {
   function Reports() {
@@ -49703,6 +49226,360 @@ var Reports = function () {
 }();
 
 exports.default = Reports;
+
+/***/ }),
+/* 309 */
+/***/ (function(module, exports) {
+
+module.exports = [{"name":"spilled","title":"Spilled Stories by Sprint","type":"doughnut","datasets":[{"label":"Stories","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}"}]},{"name":"tasks","title":"Tasks by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Scheduled","stack":"Stack 0","source":"subs","value":"tasks","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Spilled","stack":"Stack 0","source":"subs","value":"spilled","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"estimate2","title":"Estimated Velocity by Sprint","type":"bar","stacked":true,"datasets":[{"label":"Estimated","stack":"Stack 0","source":"subs","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"},{"label":"Remaining","stack":"Stack 0","source":"subs","value":"remaining","text":"Sprint ${sprint.sprint}","colors":"#ec9998"}]},{"name":"committed-vs-available","title":"Committed Hours vs. Available Hours","type":"horizontalBar","stacked":true,"class":"doublewide","datasets":[{"label":"Available","stack":"Stack 0","source":"team","value":"available","text":"Sprint ${sprint.sprint}","colors":"#ec9998"},{"label":"Committed","stack":"Stack 0","source":"team","value":"estimate","text":"Sprint ${sprint.sprint}","colors":"#9ec4ea"}]}]
+
+/***/ }),
+/* 310 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var tiles = __webpack_require__(311);
+var sprints = __webpack_require__(9);
+
+var numeral = __webpack_require__(246);
+var moment = __webpack_require__(0);
+
+/**
+ * Dashboard Class
+ * Defines data and UI elements related to the Dashboard tab in the application
+ *
+ */
+
+var Dashboard = function () {
+  function Dashboard() {
+    _classCallCheck(this, Dashboard);
+  }
+
+  /**
+   * Extract data from the aggregates element based on path
+   * @param path String
+   * @param aggregates Object
+   */
+
+
+  _createClass(Dashboard, [{
+    key: 'getDataFromPath',
+    value: function getDataFromPath(path, aggregates) {
+      // let value = '';
+      var source = aggregates;
+      var obj = void 0;
+      var tree = path.split('.');
+      tree.forEach(function (limb, idx) {
+        try {
+          if (idx > 0) {
+            source = obj;
+          }
+          obj = source[limb];
+        } catch (e) {
+          console.log(path + ' failed at: ' + limb);
+          console.log(e);
+        }
+      });
+      return obj;
+    }
+
+    /**
+     * Return a status from the defined value ranges in the Dashboard config
+     * @param aggregates Object
+     */
+
+  }, {
+    key: 'getDaysRemaining',
+    value: function getDaysRemaining(aggregates) {
+      var currentSprint = aggregates.sprint;
+      var currentPhase = aggregates.phase;
+      var lastDate = moment().format();
+      sprints.forEach(function (sprint) {
+        if (sprint.class.indexOf('current') > -1) {
+          aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
+        }
+        if (parseInt(sprint.phase, 10) === currentPhase) {
+          lastDate = sprint.endDate;
+        }
+      });
+
+      aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
+
+      return aggregates;
+    }
+
+    /**
+     * Return a status from the defined value ranges in the Dashboard config
+     * @param value String
+     * @param title String
+     */
+
+  }, {
+    key: 'getStatusFromValue',
+    value: function getStatusFromValue(value, tile) {
+
+      var scales = tiles.scales;
+      var scale = void 0;
+      var status = '';
+
+      tiles.scales.forEach(function (item) {
+        if (item.name === tile.scale) {
+          scale = item;
+        }
+      });
+
+      for (var key in tile.ranges) {
+        if (tile.ranges[key] === value) {
+          status = key;
+        } else if (Array.isArray(tile.ranges[key]) && tile.ranges[key].includes(value)) {
+          status = key;
+        } else if (Array.isArray(tile.ranges[key]) && value >= tile.ranges[key][0] && value <= tile.ranges[key][1]) {
+          status = key;
+        }
+      }
+
+      return status;
+    }
+
+    /**
+     * Set values for the dashboard from aggregates
+     * @param aggregates Object
+     */
+
+  }, {
+    key: 'setValues',
+    value: function setValues(aggregates) {
+      var _this = this;
+
+      var dash = document.querySelector('#dashboard .wrapper');
+      var div = '';
+      var value = '';
+
+      aggregates = this.getDaysRemaining(aggregates);
+
+      console.log(aggregates);
+
+      tiles.tiles.forEach(function (tile) {
+
+        value = _this.getDataFromPath(tile.source, aggregates) || tile.default || 0;
+        status = _this.getStatusFromValue(value, tile);
+
+        if (tile.format) {
+          if (tile.format.indexOf('%') > -1) {
+            value = value / 100;
+          }
+          value = numeral(value).format(tile.format);
+        }
+
+        div += '<div class="tile ' + tile.tile + ' ' + status + '">\n        <div>' + value + '</div>\n        <h2>' + tile.label + '</h2>\n      </div>';
+      });
+
+      dash.innerHTML = div;
+    }
+  }]);
+
+  return Dashboard;
+}();
+
+exports.default = Dashboard;
+
+/***/ }),
+/* 311 */
+/***/ (function(module, exports) {
+
+module.exports = {"scales":[{"name":"binary","scale":["good","bad"]},{"name":"stoplight","scale":["low","medium","high"]},{"name":"mood","scale":["happy","meh","hmpf","sad"]},{"name":"terror","scale":["lowest","low","medium","high","highest","blocker"]}],"tiles":[{"tile":"mood","label":"Current Mood","source":"mood","default":":)","scale":"mood","ranges":{"happy":":)","meh":":|","hmpf":":/","sad":":("}},{"tile":"project-blockers","label":"Active Blockers","source":"totals.project.blockers","scale":"binary","ranges":{"good":0,"bad":[1,9999]}},{"tile":"project-risk","label":"Risk Level","source":"risk","format":"0%","scale":"terror","ranges":{"lowest":[0,5],"low":[6,10],"medium":[11,15],"high":[16,20],"highest":[21,40],"blocker":[41,100]}},{"tile":"project-phase","label":"Current Phase","source":"phase"},{"tile":"project-phase-days-remaining","label":"Days Remaining in Phase","source":"daysInPhase"},{"tile":"project-target-completion","label":"Target Completion","source":"","format":"0%"},{"tile":"project-completion","label":"Project Completion","source":"totals.project.rate","format":"0%"},{"tile":"sprint-completion","label":"Sprint Completion","source":"totals.sprint.rate","format":"0%","scale":"terror","ranges":{"low":[76,100],"medium":[51,75],"high":[26,50],"highest":[0,25]}},{"tile":"sprint-current","label":"Current Sprint","source":"sprint"},{"tile":"sprint-days-remaining","label":"Days Remaining in Sprint","source":"daysInSprint"},{"tile":"project-debt","label":"Debt Level","source":"debt","format":"0%","scale":"terror","ranges":{"lowest":[-10,-1],"low":[0,10],"medium":[11,25],"high":[26,50],"highest":[51,100],"blocker":[101,999]}},{"tile":"project-tasks-complete","label":"Total Tasks Completed","source":"totals.project.completed"},{"tile":"sprint-tasks-complete","label":"Sprint: Tasks Completed","source":"totals.sprint.completed"},{"tile":"sprint-blockers","label":"Sprint: Blockers","source":"totals.sprint.blockers"},{"tile":"sprint-lost-hours","label":"Sprint: Lost Hours","source":"totals.sprint.lost"},{"tile":"project-mood","label":"Spilled Stories","source":"totals.project.pushed","scale":"terror","ranges":{"lowest":[-10,-1],"low":[0,10],"medium":[11,25],"high":[26,50],"highest":[51,100],"blocker":[101,999]}},{"tile":"project-tasks-total","label":"Total Tasks","source":"totals.project.tasks"},{"tile":"sprint-tasks-total","label":"Sprint: Total Tasks","source":"totals.sprint.tasks"},{"tile":"sprint-pushed-stories","label":"Sprint: Pushed Stories","source":"totals.sprint.pushed"},{"tile":"sprint-incidents","label":"Sprint: Total Incidents","source":"totals.sprint.incidents"}]}
+
+/***/ }),
+/* 312 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Parse = __webpack_require__(8);
+
+/**
+ * Actions
+ * User interaction event handlers such as button clicks, hover actions, etc.
+ *
+ */
+
+var Actions = function () {
+  function Actions() {
+    _classCallCheck(this, Actions);
+  }
+
+  /**
+   * DisplayCurrent
+   * @param sprint Numeric sprint value (e.g.: 1, 2, 3)
+   */
+
+
+  _createClass(Actions, [{
+    key: 'displayCurrent',
+    value: function displayCurrent(sprint) {
+      this.displayNone();
+      var future = document.querySelectorAll('.future');
+      future.forEach(function (el) {
+        el.style.display = 'none';
+      });
+      var mine = document.querySelectorAll('[data-sprint="' + sprint + '"]');
+      mine.forEach(function (el) {
+        el.style.display = 'table-row';
+      });
+    }
+
+    /**
+     * DisplayMe
+     * Limits results to those assigned to the current User
+     * TODO: Remove hard-coded username and read from logged-in properties
+     */
+
+  }, {
+    key: 'displayMe',
+    value: function displayMe() {
+      var me = 'Joshua Miller';
+      var theirs = document.querySelectorAll('table tbody tr');
+      theirs.forEach(function (el) {
+        el.style.display = 'none';
+      });
+      var mine = document.querySelectorAll('[data-assignee="' + me + '"]');
+      mine.forEach(function (el) {
+        el.style.display = 'table-row';
+      });
+    }
+
+    /**
+     * DisplayAll
+     * Display all records in the recordset
+     */
+
+  }, {
+    key: 'displayAll',
+    value: function displayAll() {
+      var rows = document.querySelectorAll('table tbody tr');
+      rows.forEach(function (el) {
+        el.style.display = 'table-row';
+      });
+      var future = document.querySelectorAll('.future');
+      future.forEach(function (el) {
+        el.style.display = 'table-cell';
+      });
+    }
+
+    /**
+     * DisplayNone
+     * Hide all records
+     */
+
+  }, {
+    key: 'displayNone',
+    value: function displayNone() {
+      var rows = document.querySelectorAll('table tbody tr');
+      rows.forEach(function (el) {
+        el.style.display = 'none';
+      });
+    }
+
+    /**
+     * Tabs
+     * Limits results to those assigned to the current User
+     * @param target String value to assign to the current active tab
+     */
+
+  }, {
+    key: 'tabs',
+    value: function tabs(target) {
+      var sections = document.querySelectorAll('section');
+      sections.forEach(function (sec) {
+        sec.classList.remove('active');
+        if (target === sec.getAttribute('id')) {
+          sec.classList.add('active');
+        }
+      });
+    }
+
+    /**
+     * SetMenuStatus
+     * Sets one of the navigation menu items to the active state
+     * @param element target element to which status is applied
+     * @param nav Object containing a navigation element
+     */
+
+  }, {
+    key: 'setMenuStatus',
+    value: function setMenuStatus(element, nav) {
+      nav.forEach(function (el) {
+        el.classList.remove('active');
+      });
+      element.classList.add('active');
+    }
+
+    /**
+     * Navigation
+     * Assign click actions to navigation buttons
+     * @param sprint Numeric sprint value (e.g.: 1, 2, 3)
+     */
+
+  }, {
+    key: 'navigation',
+    value: function navigation(sprint) {
+      var _this = this;
+
+      var nav = document.querySelectorAll('nav ul li a');
+      nav.forEach(function (button) {
+        button.addEventListener('click', function (event) {
+          var element = event.target;
+          var id = element.getAttribute('href').replace('#', '');
+          if (id === 'current') {
+            _this.displayCurrent(sprint);
+          } else if (id === 'me') {
+            _this.displayMe();
+          } else if (id === 'all') {
+            _this.displayAll();
+          } else {
+            _this.tabs(id);
+          }
+          _this.setMenuStatus(element, nav);
+        });
+      });
+    }
+  }]);
+
+  return Actions;
+}();
+
+exports.default = Actions;
+
+/***/ }),
+/* 313 */
+/***/ (function(module, exports) {
+
+module.exports = [{"label":"Priority","field":"priority","class":"priority @value","hidden":true,"title":true,"editable":false},{"label":"Epic","field":"epic","class":"nowrap","editable":false},{"label":"Identifier","field":"key","class":"nowrap","link":"https://daymon.atlassian.net/browse/@value","editable":false},{"label":"Description","field":"description","class":"left wide","editable":false},{"label":"Assignee","field":"assignee","class":"left","editable":false},{"label":"Risk","field":"risk","class":"risk","editable":true},{"label":"Debt","field":"debt","class":"debt","editable":true},{"label":"Estimate","field":"estimate","class":"","editable":false},{"label":"Sprint","field":"sprint.current","class":"","editable":false},{"label":"Status","field":"status","class":"status @value","editable":false}]
+
+/***/ }),
+/* 314 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

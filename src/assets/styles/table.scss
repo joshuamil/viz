@@ -52,7 +52,8 @@ table {
     }
 
     &.current {
-      border-right: 2px solid $grey-70;
+      border-left: 1px solid $grey-70;
+      border-right: 3px solid $grey-70;
     }
 
   }
@@ -279,12 +280,36 @@ table {
       &.sprint {
         border-bottom: 1px solid $grey-10;
         font-size: .9em;
+        &.current {
+          background-color: $blue-dk;
+          border-bottom-color: $blue-md;
+          border-top-color: $blue-dk;
+          color: $grey-70;
+          font-weight: bold;
+
+          &::after {
+            border-bottom: 12px solid transparent;
+            border-left:12px solid $grey-70;
+            border-top: 12px solid transparent;
+            content: '';
+            height: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+          }
+
+        }
       }
       &.dates {
         background-color: $grey-07;
         color: $grey-70;
         font-size: .9em;
+        &.current {
+          background-color: $blue-md;
+        }
       }
+
 
     }
   }

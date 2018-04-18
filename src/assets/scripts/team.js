@@ -10,6 +10,11 @@ let team = require('../data/team.json');
 let sprints = require('../data/sprints.json');
 let holidays = require('../data/holidays.json');
 
+/**
+ * Team Class
+ * Defines data and UI elements related to the Teams tab in the application
+ *
+ */
 export default class Team {
 
   constructor() {
@@ -17,7 +22,8 @@ export default class Team {
 
   /**
    * Subtract holidays from regular schedule
-   *
+   * @param sprint Number
+   * @param member Number indicating the specific team member being targeted
    */
   getHolidays(sprint, member) {
     let hours = 0;
@@ -35,7 +41,6 @@ export default class Team {
 
   /**
    * Parse team member data
-   *
    */
   parseData() {
     const data = {
@@ -110,8 +115,6 @@ export default class Team {
 
     });
 
-    console.log(data);
-
     // Sort by Team, then Name
     arraySort(data.members, 'team', 'name');
 
@@ -121,7 +124,6 @@ export default class Team {
 
   /**
    * Draw the team member table
-   *
    */
   renderTeams() {
 
@@ -187,6 +189,13 @@ export default class Team {
   }
 
 
+  /**
+   * Render Team Name Row
+   * Draws the team name row in the Team chart
+   * @param name String containing the team's name
+   * @param target Object reference to the target element
+   * @param columns Number of columns in the final chart
+   */
   renderTeamNameRow(name, target, columns) {
     const sprintHeaders = markobj(`<tr><td colspan="${(5+columns)}"
       class="title">${name} Team</td></tr>`);
@@ -196,7 +205,6 @@ export default class Team {
 
   /**
    * Renders Sprint Header Row
-   *
    */
   renderSprintHeaderRow() {
     const header = document.querySelector('#team-data table thead tr');
@@ -212,7 +220,8 @@ export default class Team {
 
   /**
    * Renders SubTotal Rows for Each Team
-   *
+   * @param data Object
+   * @param team Number
    */
   renderSubTotalRow(data, team) {
 

@@ -6,7 +6,11 @@ let sprints = require('../data/sprints.json');
 const numeral = require('numeral');
 const moment = require('moment');
 
-
+/**
+ * Dashboard Class
+ * Defines data and UI elements related to the Dashboard tab in the application
+ *
+ */
 export default class Dashboard {
 
   constructor() {
@@ -14,7 +18,8 @@ export default class Dashboard {
 
   /**
    * Extract data from the aggregates element based on path
-   *
+   * @param path String
+   * @param aggregates Object
    */
   getDataFromPath(path, aggregates) {
     // let value = '';
@@ -39,7 +44,7 @@ export default class Dashboard {
 
   /**
    * Return a status from the defined value ranges in the Dashboard config
-   *
+   * @param aggregates Object
    */
   getDaysRemaining(aggregates) {
     const currentSprint = aggregates.sprint;
@@ -62,7 +67,8 @@ export default class Dashboard {
 
   /**
    * Return a status from the defined value ranges in the Dashboard config
-   *
+   * @param value String
+   * @param title String
    */
   getStatusFromValue(value, tile) {
 
@@ -94,7 +100,7 @@ export default class Dashboard {
 
   /**
    * Set values for the dashboard from aggregates
-   *
+   * @param aggregates Object
    */
   setValues(aggregates) {
 
