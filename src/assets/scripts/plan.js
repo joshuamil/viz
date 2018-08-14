@@ -2,12 +2,20 @@
 
 let markobj = require('markobj');
 
-import Parse from './Parse.js';
+import Parser from './Parser.js';
 
 export default class Plan {
 
   constructor() {
-    this.parse = new Parse();
+    this.parse = new Parser();
+  }
+
+  // Removes a specific column from a table
+  hideColumn(n) {
+    const rows = document.querySelectorAll('table tbody tr');
+    rows.forEach( (row) => {
+      row.deleteCell(n);
+    });
   }
 
   // Inject Sprints / Phases into Table
@@ -25,7 +33,11 @@ export default class Plan {
     const phases = [];
     const sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
 
-    headers.forEach( (el) => {
+    headers.forEach( (el, ix) => {
+
+      console.log(ix);
+      console.log(el);
+
       if (el.innerText === "Status") {
         newRow1.appendChild(el);
         sprints.forEach( (sprint) => {

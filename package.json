@@ -18,18 +18,12 @@
   },
   "devDependencies": {
     "array-sort": "^0.1.4",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-preset-es2015": "^6.24.1",
     "chart.js": "^2.7.2",
-    "css-loader": "^0.28.11",
-    "extract-text-webpack-plugin": "^3.0.2",
     "moment": "^2.21.0",
     "mouse-position": "^2.0.1",
-    "node-sass": "^4.8.3",
+    "node-sass": "^4.9.3",
     "numeral": "^2.0.6",
-    "sass-loader": "^6.0.7",
-    "style-loader": "^0.18.2",
-    "webpack": "^3.11.0"
+    "parcel-bundler": "^1.9.7",
+    "posthtml-include": "^1.2.0"
   }
 }

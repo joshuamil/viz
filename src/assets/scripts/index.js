@@ -6,7 +6,7 @@ let styles = require('../styles/base.scss');
 
 import Chart from 'chart.js';
 import Authentication from './Authentication.js';
-import Parse from './Parse.js';
+import Parser from './Parser.js';
 import Aggregates from './Aggregates.js';
 import Plan from './Plan.js';
 import Team from './Team.js';
@@ -18,7 +18,7 @@ import Actions from './Actions.js';
 const init = () => {
 
   const auth = new Authentication();
-  const parse = new Parse();
+  const parse = new Parser();
   const aggregate = new Aggregates();
   const plan = new Plan();
   const team = new Team();
@@ -34,8 +34,7 @@ const init = () => {
   if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
 
     // TODO: Create authentication routine
-    localStorage.setItem('VIZ_AUTH_TOKEN', {
-      token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm'});
+    localStorage.setItem('VIZ_AUTH_TOKEN', { token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
 
   } else {
 
