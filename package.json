@@ -4,12 +4,8 @@
   "description": "Visualizer for Jira data",
   "main": "index.js",
   "scripts": {
-    "dev:server": "webpack-dev-server --hot --inline",
-    "watch": "webpack -w -d",
-    "build": "webpack -p",
-    "lint": "node_modules/.bin/esw webpack.config.* src --color",
-    "lint:watch": "npm run lint -- --watch",
-    "start": "npm run dev:server lint:watch"
+    "dev": "parcel index.html",
+    "build": "parcel build index.html"
   },
   "author": "",
   "license": "ISC",
