@@ -10,7 +10,7 @@
   {
     "label": "Epic",
     "field": "epic",
-    "class": "nowrap",
+    "class": "nowrap wide",
     "editable": false
   },
   {
@@ -24,7 +24,8 @@
     "label": "Description",
     "field": "description",
     "class": "left wide",
-    "editable": false
+    "editable": false,
+    "action": "hideColumn"
   },
   {
     "label": "Assignee",
@@ -47,7 +48,7 @@
   {
     "label": "Estimate",
     "field": "estimate",
-    "class": "",
+    "class": "wide",
     "editable": false
   },
   {

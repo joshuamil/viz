@@ -105,12 +105,17 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   return newRequire;
 })({"src/assets/data/config.json":[function(require,module,exports) {
 module.exports = {
-  "hideFutureSprints": false,
+  "firstSprint": 1,
+  "daysInSprint": 21,
   "sprintsPerPhase": 3,
+  "firstPhase": 1,
+  "numberOfSprints": 12,
   "hoursPerPoint": 3,
+  "startDate": "2018-08-13T09:00:00.001Z",
+  "hideFutureSprints": false,
   "estimate": {
-    "dev": 0.999,
-    "qa": 0.001
+    "dev": 0.67,
+    "qa": 0.33
   },
   "risk": {
     "blocker": 2,
@@ -133,7 +138,7 @@ module.exports = [{
 }, {
   "label": "Epic",
   "field": "epic",
-  "class": "nowrap",
+  "class": "nowrap wide",
   "editable": false
 }, {
   "label": "Identifier",
@@ -145,7 +150,8 @@ module.exports = [{
   "label": "Description",
   "field": "description",
   "class": "left wide",
-  "editable": false
+  "editable": false,
+  "action": "hideColumn"
 }, {
   "label": "Assignee",
   "field": "assignee",
@@ -164,7 +170,7 @@ module.exports = [{
 }, {
   "label": "Estimate",
   "field": "estimate",
-  "class": "",
+  "class": "wide",
   "editable": false
 }, {
   "label": "Sprint",
@@ -177,8 +183,6 @@ module.exports = [{
   "class": "status @value",
   "editable": false
 }];
-},{}],"src/assets/data/sprints.json":[function(require,module,exports) {
-module.exports = [{ "label": "Sprint 1", "field": "sprint1", "startDate": "08/14/2017", "endDate": "08/28/2017", "phase": "1", "class": "current" }, { "label": "Sprint 2", "field": "sprint2", "startDate": "08/29/2017", "endDate": "09/11/2017", "phase": "1", "class": "future" }, { "label": "Sprint 3", "field": "sprint3", "startDate": "09/12/2017", "endDate": "09/25/2017", "phase": "1", "class": "future" }, { "label": "Sprint 4", "field": "sprint4", "startDate": "09/26/2017", "endDate": "10/09/2017", "phase": "2", "class": "future" }, { "label": "Sprint 5", "field": "sprint5", "startDate": "10/10/2017", "endDate": "10/23/2017", "phase": "2", "class": "future" }, { "label": "Sprint 6", "field": "sprint6", "startDate": "10/24/2017", "endDate": "11/06/2017", "phase": "2", "class": "future" }, { "label": "Sprint 7", "field": "sprint7", "startDate": "11/07/2017", "endDate": "11/20/2017", "phase": "3", "class": "future" }, { "label": "Sprint 8", "field": "sprint8", "startDate": "11/21/2017", "endDate": "12/04/2017", "phase": "3", "class": "future" }, { "label": "Sprint 9", "field": "sprint9", "startDate": "12/05/2017", "endDate": "12/18/2017", "phase": "3", "class": "future" }, { "label": "Sprint 10", "field": "sprint10", "startDate": "12/19/2017", "endDate": "01/01/2018", "phase": "4", "class": "future" }, { "label": "Sprint 11", "field": "sprint11", "startDate": "01/02/2018", "endDate": "01/15/2018", "phase": "4", "class": "future" }, { "label": "Sprint 12", "field": "sprint12", "startDate": "01/16/2018", "endDate": "01/29/2018", "phase": "4", "class": "future" }, { "label": "Sprint 13", "field": "sprint13", "startDate": "01/30/2018", "endDate": "02/12/2018", "phase": "5", "class": "future" }, { "label": "Sprint 14", "field": "sprint14", "startDate": "02/13/2018", "endDate": "02/26/2018", "phase": "5", "class": "future" }, { "label": "Sprint 15", "field": "sprint15", "startDate": "02/27/2018", "endDate": "03/12/2018", "phase": "5", "class": "future" }];
 },{}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 function getBundleURLCached() {
@@ -19321,6 +19325,7 @@ var Parser = function () {
       var conf = [];
       config.forEach(function (item) {
         conf.push(item);
+        // TODO: Change the below to use the last column instead of "Status"
         if (item.label.indexOf('Status') === 0) {
           sprints.forEach(function (sprint) {
             conf.push(sprint);
@@ -19755,9 +19760,18 @@ var Plan = function () {
   _createClass(Plan, [{
     key: 'hideColumn',
     value: function hideColumn(n) {
+      var headers = document.querySelectorAll('table thead tr');
+      headers.forEach(function (row) {
+        row.deleteCell(n);
+      });
+
       var rows = document.querySelectorAll('table tbody tr');
       rows.forEach(function (row) {
-        row.deleteCell(n);
+        try {
+          row.deleteCell(n);
+        } catch (error) {
+          console.log(row);
+        }
       });
     }
 
@@ -19787,10 +19801,14 @@ var Plan = function () {
 
       headers.forEach(function (el, ix) {
 
-        console.log(ix);
-        console.log(el);
+        if (el.innerText === "Description") {
 
-        if (el.innerText === "Status") {
+          el.addEventListener('click', function () {
+            _this.hideColumn(ix);
+          });
+
+          newRow1.appendChild(el);
+        } else if (ix === headers.length - 1) {
           newRow1.appendChild(el);
           sprints.forEach(function (sprint) {
 
@@ -19806,6 +19824,11 @@ var Plan = function () {
               th1.setAttribute('colspan', sprintsPerPhase);
               th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
               th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
+              /*
+              th1.addEventListener('click', () => {
+                this.hideColumn(0);
+              });
+              */
             }
 
             // Populate Sprint labels
@@ -21478,6 +21501,8 @@ return numeral;
 
 },{}],"src/assets/data/team.json":[function(require,module,exports) {
 module.exports = [{ "team": "Eagle", "jiraName": "sgeorge", "name": "Shaheen", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Eagle", "jiraName": "jnix", "name": "Jacob", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Eagle", "jiraName": "Josh.Miller", "name": "Josh", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Ashoka_K", "name": "Ashoka", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "aselvaraj", "name": "Arun", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "pranali.dedge", "name": "Pranali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "pallavi.bhadange", "name": "Pallavi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "amit.mistry01", "name": "Amit", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Chintan_Desai01", "name": "Chintan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "ApurvaMukund_A01", "name": "Apurva", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "vaishali.tekale", "name": "Vaishali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Raman_Mittal", "name": "Raman", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Tanvi.Chopda", "name": "Tanvi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Akshay_Agrawal04", "name": "Akshay", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Megha_R03", "name": "Megha", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "sohan.255312", "name": "Sohan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "kunal.karmarkar", "name": "Kunal", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "dfreireich", "name": "Dave", "role": "qa", "allocation": "100%", "hours": 50, "lead": true }, { "team": "QA", "jiraName": "Souvik_Ghosh06", "name": "Souvik", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "pranjal.sharma", "name": "Pranjal", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "?", "name": "?", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Design", "jiraName": "scornell", "name": "Steven", "role": "design", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Design", "jiraName": "asingh", "name": "Alekh", "role": "design", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "atran", "name": "Anh", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Misc", "jiraName": "nsavant", "name": "Nikhil", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "wbaeck", "name": "Wolfgang", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "SShliakhtsitsau", "name": "Stas", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "MBorden", "name": "Mitch", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }];
+},{}],"src/assets/data/sprints.json":[function(require,module,exports) {
+module.exports = [{ "label": "Sprint 1", "field": "sprint1", "startDate": "08/14/2017", "endDate": "08/28/2017", "phase": "1", "class": "current" }, { "label": "Sprint 2", "field": "sprint2", "startDate": "08/29/2017", "endDate": "09/11/2017", "phase": "1", "class": "future" }, { "label": "Sprint 3", "field": "sprint3", "startDate": "09/12/2017", "endDate": "09/25/2017", "phase": "1", "class": "future" }, { "label": "Sprint 4", "field": "sprint4", "startDate": "09/26/2017", "endDate": "10/09/2017", "phase": "2", "class": "future" }, { "label": "Sprint 5", "field": "sprint5", "startDate": "10/10/2017", "endDate": "10/23/2017", "phase": "2", "class": "future" }, { "label": "Sprint 6", "field": "sprint6", "startDate": "10/24/2017", "endDate": "11/06/2017", "phase": "2", "class": "future" }, { "label": "Sprint 7", "field": "sprint7", "startDate": "11/07/2017", "endDate": "11/20/2017", "phase": "3", "class": "future" }, { "label": "Sprint 8", "field": "sprint8", "startDate": "11/21/2017", "endDate": "12/04/2017", "phase": "3", "class": "future" }, { "label": "Sprint 9", "field": "sprint9", "startDate": "12/05/2017", "endDate": "12/18/2017", "phase": "3", "class": "future" }, { "label": "Sprint 10", "field": "sprint10", "startDate": "12/19/2017", "endDate": "01/01/2018", "phase": "4", "class": "future" }, { "label": "Sprint 11", "field": "sprint11", "startDate": "01/02/2018", "endDate": "01/15/2018", "phase": "4", "class": "future" }, { "label": "Sprint 12", "field": "sprint12", "startDate": "01/16/2018", "endDate": "01/29/2018", "phase": "4", "class": "future" }, { "label": "Sprint 13", "field": "sprint13", "startDate": "01/30/2018", "endDate": "02/12/2018", "phase": "5", "class": "future" }, { "label": "Sprint 14", "field": "sprint14", "startDate": "02/13/2018", "endDate": "02/26/2018", "phase": "5", "class": "future" }, { "label": "Sprint 15", "field": "sprint15", "startDate": "02/27/2018", "endDate": "03/12/2018", "phase": "5", "class": "future" }];
 },{}],"src/assets/data/holidays.json":[function(require,module,exports) {
 module.exports = [{
   "name": "PTO",
@@ -22543,7 +22568,100 @@ var Actions = function () {
 }();
 
 exports.default = Actions;
-},{}],"src/assets/scripts/index.js":[function(require,module,exports) {
+},{}],"src/assets/scripts/Sprint.js":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var markobj = require('markobj');
+var arraySort = require('array-sort');
+var moment = require('moment');
+var numeral = require('numeral');
+
+var config = require('../data/config.json');
+var team = require('../data/team.json');
+// let sprints = require('../data/sprints.json');
+var holidays = require('../data/holidays.json');
+
+/**
+ * Sprint Class
+ * Defines data and UI elements related to the Teams tab in the application
+ *
+ */
+
+var Sprint = function () {
+  function Sprint() {
+    _classCallCheck(this, Sprint);
+  }
+
+  /**
+   * Creates a new Sprint object using values from assets/data/config.json
+   *
+   */
+
+
+  _createClass(Sprint, [{
+    key: 'createSprints',
+    value: function createSprints() {
+      var firstSprint = config.firstSprint;
+      var numberOfSprints = config.numberOfSprints;
+      var sprints = [];
+
+      var startDate = config.startDate;
+      var endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
+      var today = moment().toDate();
+      var state = "";
+      var idx = 0;
+      var phase = config.firstPhase - 1;
+
+      for (var i = firstSprint; i < firstSprint + numberOfSprints; i++) {
+
+        // Determine when in relative time this sprint exists
+        if (moment(today).isBetween(startDate, endDate)) {
+          state = "current";
+        } else if (moment(endDate).isBefore(today)) {
+          state = "previous";
+        } else if (moment(startDate).isAfter(today)) {
+          state = "future";
+        }
+
+        // Determine phase for this sprint
+        if (idx % config.sprintsPerPhase === 0) {
+          phase++;
+        }
+
+        // Add to the array of dynamic sprints
+        sprints.push({
+          "label": 'Sprint ' + i,
+          "field": 'sprint' + i,
+          "startDate": '' + startDate,
+          "endDate": '' + endDate,
+          "phase": phase,
+          "class": state
+        });
+
+        // Set the timespan for the next sprint
+        startDate = moment(endDate).add(1, 'd').toDate();
+        endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
+
+        idx++;
+      }
+
+      return sprints;
+    }
+  }]);
+
+  return Sprint;
+}();
+
+exports.default = Sprint;
+},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/scripts/index.js":[function(require,module,exports) {
 'use strict';
 
 var _chart = require('chart.js');
@@ -22582,11 +22700,14 @@ var _Actions = require('./Actions.js');
 
 var _Actions2 = _interopRequireDefault(_Actions);
 
+var _Sprint = require('./Sprint.js');
+
+var _Sprint2 = _interopRequireDefault(_Sprint);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var config = require('../data/config.json');
 var table = require('../data/plan.json');
-var sprints = require('../data/sprints.json');
 
 var styles = require('../styles/base.scss');
 
@@ -22601,6 +22722,7 @@ var init = function init() {
   var reports = new _Reports2.default();
   var dashboard = new _Dashboard2.default();
   var actions = new _Actions2.default();
+  var sprints = new _Sprint2.default();
 
   var resources = [config.baseUrl];
 
@@ -22624,16 +22746,17 @@ var init = function init() {
     Promise.all(resources.map(getContent)).then(function (results) {
 
       var stories = results[0];
+      var sprintData = sprints.createSprints();
 
       // Append Sprint Data to Configuration
-      var settings = parse.appendSprints(table, sprints);
+      var settings = parse.appendSprints(table, sprintData);
 
       // Parse Story Data
       var data = parse.parseData(stories);
-      var aggregates = aggregate.parseAggregates(data, sprints, config);
+      var aggregates = aggregate.parseAggregates(data, sprintData, config);
 
       // Render Header Row
-      plan.renderHeader(sprints, config, aggregates);
+      plan.renderHeader(sprintData, config, aggregates);
 
       // Render Table
       data.forEach(function (task) {
@@ -22660,7 +22783,7 @@ var init = function init() {
 
 // Initialize the app
 init();
-},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","../data/sprints.json":"src/assets/data/sprints.json","../styles/base.scss":"src/assets/styles/base.scss","chart.js":"node_modules/chart.js/src/chart.js","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","../styles/base.scss":"src/assets/styles/base.scss","chart.js":"node_modules/chart.js/src/chart.js","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js","./Sprint.js":"src/assets/scripts/Sprint.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 
@@ -22689,7 +22812,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '49406' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '53976' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

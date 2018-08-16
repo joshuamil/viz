@@ -1,10 +1,15 @@
 {
-  "hideFutureSprints": false,
+  "firstSprint": 1,
+  "daysInSprint": 21,
   "sprintsPerPhase": 3,
+  "firstPhase": 1,
+  "numberOfSprints": 12,
   "hoursPerPoint": 3,
+  "startDate": "2018-08-13T09:00:00.001Z",
+  "hideFutureSprints": false,
   "estimate": {
-    "dev": 0.999,
-    "qa": 0.001
+    "dev": 0.67,
+    "qa": 0.33
   },
   "risk": {
     "blocker": 2,

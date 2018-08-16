@@ -12,9 +12,19 @@ export default class Plan {
 
   // Removes a specific column from a table
   hideColumn(n) {
+    const headers = document.querySelectorAll('table thead tr');
+    headers.forEach( (row) => {
+      row.deleteCell(n);
+    });
+
     const rows = document.querySelectorAll('table tbody tr');
     rows.forEach( (row) => {
-      row.deleteCell(n);
+      try {
+        row.deleteCell(n);
+      }
+      catch(error) {
+        console.log(row);
+      }
     });
   }
 
@@ -35,10 +45,15 @@ export default class Plan {
 
     headers.forEach( (el, ix) => {
 
-      console.log(ix);
-      console.log(el);
+      if (el.innerText === "Description") {
 
-      if (el.innerText === "Status") {
+        el.addEventListener('click', () => {
+          this.hideColumn(ix);
+        });
+
+        newRow1.appendChild(el);
+
+      } else if (ix === (headers.length-1)) {
         newRow1.appendChild(el);
         sprints.forEach( (sprint) => {
 
@@ -54,6 +69,11 @@ export default class Plan {
             th1.setAttribute('colspan', sprintsPerPhase);
             th1.setAttribute('class', `${current} phase phase${sprint.phase} ${sprint.class}`);
             th1.appendChild(document.createTextNode(`Phase ${sprint.phase}`));
+            /*
+            th1.addEventListener('click', () => {
+              this.hideColumn(0);
+            });
+            */
           }
 
           // Populate Sprint labels

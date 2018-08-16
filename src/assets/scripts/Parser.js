@@ -147,6 +147,7 @@ export default class Parser {
     let conf = [];
     config.forEach( (item) => {
       conf.push(item);
+      // TODO: Change the below to use the last column instead of "Status"
       if (item.label.indexOf('Status') === 0) {
         sprints.forEach( (sprint) => {
           conf.push(sprint);

@@ -1,6 +1,5 @@
 let config = require('../data/config.json');
 let table = require('../data/plan.json');
-let sprints = require('../data/sprints.json');
 
 let styles = require('../styles/base.scss');
 
@@ -13,6 +12,7 @@ import Team from './Team.js';
 import Reports from './Reports.js';
 import Dashboard from './Dashboard.js';
 import Actions from './Actions.js';
+import Sprints from './Sprint.js';
 
 // Fetches content
 const init = () => {
@@ -25,6 +25,7 @@ const init = () => {
   const reports = new Reports();
   const dashboard = new Dashboard();
   const actions = new Actions();
+  const sprints = new Sprints();
 
   const resources = [
     config.baseUrl
@@ -49,16 +50,17 @@ const init = () => {
     Promise.all(resources.map(getContent)).then( results => {
 
         const stories = results[0];
+        const sprintData = sprints.createSprints();
 
         // Append Sprint Data to Configuration
-        let settings = parse.appendSprints(table, sprints);
+        let settings = parse.appendSprints(table, sprintData);
 
         // Parse Story Data
         let data = parse.parseData(stories);
-        let aggregates = aggregate.parseAggregates(data, sprints, config);
+        let aggregates = aggregate.parseAggregates(data, sprintData, config);
 
         // Render Header Row
-        plan.renderHeader(sprints, config, aggregates);
+        plan.renderHeader(sprintData, config, aggregates);
 
         // Render Table
         data.forEach( (task) => {
