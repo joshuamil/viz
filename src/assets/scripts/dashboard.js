@@ -1,7 +1,8 @@
 'use strict';
 
+import Sprints from './Sprint.js';
+
 let tiles = require('../data/dashboard.json');
-let sprints = require('../data/sprints.json');
 
 const numeral = require('numeral');
 const moment = require('moment');
@@ -14,6 +15,8 @@ const moment = require('moment');
 export default class Dashboard {
 
   constructor() {
+    const sprints = new Sprints();
+    this.sprintData = sprints.createSprints();
   }
 
   /**
@@ -50,7 +53,7 @@ export default class Dashboard {
     const currentSprint = aggregates.sprint;
     const currentPhase = aggregates.phase;
     let lastDate = moment().format();
-    sprints.forEach( (sprint) => {
+    this.sprintData.forEach( (sprint) => {
       if (sprint.class.indexOf('current') > -1) {
         aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
       }

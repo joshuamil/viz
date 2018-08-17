@@ -5,20 +5,23 @@
     "class": "priority @value",
     "hidden": true,
     "title": true,
-    "editable": false
+    "editable": false,
+    "action": "hideColumn"
   },
   {
     "label": "Epic",
     "field": "epic",
-    "class": "nowrap wide",
-    "editable": false
+    "class": "nowrap",
+    "editable": false,
+    "action": "hideColumn"
   },
   {
     "label": "Identifier",
     "field": "key",
     "class": "nowrap",
     "link": "https://icg360.atlassian.net/browse/@value",
-    "editable": false
+    "editable": false,
+    "action": "hideColumn"
   },
   {
     "label": "Description",
@@ -48,7 +51,7 @@
   {
     "label": "Estimate",
     "field": "estimate",
-    "class": "wide",
+    "class": "",
     "editable": false
   },
   {

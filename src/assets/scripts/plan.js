@@ -10,21 +10,55 @@ export default class Plan {
     this.parse = new Parser();
   }
 
-  // Removes a specific column from a table
-  hideColumn(n) {
-    const headers = document.querySelectorAll('table thead tr');
-    headers.forEach( (row) => {
-      row.deleteCell(n);
-    });
-
+  // Toggles the display of the full detail columns
+  toggleColumns(target) {
+    const headers = document.querySelectorAll('table thead tr th.base');
     const rows = document.querySelectorAll('table tbody tr');
-    rows.forEach( (row) => {
-      try {
-        row.deleteCell(n);
-      }
-      catch(error) {
-        console.log(row);
-      }
+    const table = document.querySelector('table');
+    let removed = 0;
+
+    if (target.classList.contains('collapsed')) {
+
+      removed = headers.length;
+      target.classList.remove('collapsed');
+      table.classList.remove('collapsed');
+      let targets = document.querySelectorAll('table .collapsed');
+      targets.forEach( (el) => {
+        el.classList.remove('collapsed');
+      });
+      this.toggleAggregates(removed, 'add');
+
+    } else {
+
+      target.classList.add('collapsed');
+      table.classList.add('collapsed');
+      headers.forEach( (th, n) => {
+        if (th.classList.contains('full')) {
+          removed++;
+          th.classList.add('collapsed');
+          rows.forEach( (tr) => {
+            tr.querySelectorAll('td').forEach( (td, tx) => {
+              if (tx === n) {
+                td.classList.add('collapsed');
+              }
+            });
+          });
+        }
+      });
+
+      this.toggleAggregates(removed, 'remove');
+
+    }
+
+  }
+
+  // Toggle Aggregate Colspans
+  toggleAggregates(removed, action) {
+    const aggregates = document.querySelectorAll('tfoot td.label');
+    aggregates.forEach( (label) => {
+      let current = parseInt(label.getAttribute('colspan'), 10);
+      const updated = (action === "remove")? (current - removed) : removed;
+      label.setAttribute('colspan', updated);
     });
   }
 
@@ -43,13 +77,14 @@ export default class Plan {
     const phases = [];
     const sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
 
+    // Set button action
+    document.querySelector('button').addEventListener('click', (event) => {
+      this.toggleColumns(event.target);
+    });
+
     headers.forEach( (el, ix) => {
 
-      if (el.innerText === "Description") {
-
-        el.addEventListener('click', () => {
-          this.hideColumn(ix);
-        });
+      if (el.classList.contains('full')) {
 
         newRow1.appendChild(el);
 
@@ -69,11 +104,6 @@ export default class Plan {
             th1.setAttribute('colspan', sprintsPerPhase);
             th1.setAttribute('class', `${current} phase phase${sprint.phase} ${sprint.class}`);
             th1.appendChild(document.createTextNode(`Phase ${sprint.phase}`));
-            /*
-            th1.addEventListener('click', () => {
-              this.hideColumn(0);
-            });
-            */
           }
 
           // Populate Sprint labels

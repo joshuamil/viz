@@ -134,18 +134,21 @@ module.exports = [{
   "class": "priority @value",
   "hidden": true,
   "title": true,
-  "editable": false
+  "editable": false,
+  "action": "hideColumn"
 }, {
   "label": "Epic",
   "field": "epic",
-  "class": "nowrap wide",
-  "editable": false
+  "class": "nowrap",
+  "editable": false,
+  "action": "hideColumn"
 }, {
   "label": "Identifier",
   "field": "key",
   "class": "nowrap",
   "link": "https://icg360.atlassian.net/browse/@value",
-  "editable": false
+  "editable": false,
+  "action": "hideColumn"
 }, {
   "label": "Description",
   "field": "description",
@@ -170,7 +173,7 @@ module.exports = [{
 }, {
   "label": "Estimate",
   "field": "estimate",
-  "class": "wide",
+  "class": "",
   "editable": false
 }, {
   "label": "Sprint",
@@ -183,7 +186,7 @@ module.exports = [{
   "class": "status @value",
   "editable": false
 }];
-},{}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 function getBundleURLCached() {
   if (!bundleURL) {
@@ -213,7 +216,7 @@ function getBaseURL(url) {
 
 exports.getBundleURL = getBundleURLCached;
 exports.getBaseURL = getBaseURL;
-},{}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
 var bundle = require('./bundle-url');
 
 function updateLink(link) {
@@ -244,12 +247,12 @@ function reloadCSS() {
 }
 
 module.exports = reloadCSS;
-},{"./bundle-url":"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"src/assets/styles/base.scss":[function(require,module,exports) {
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"src/assets/styles/base.scss":[function(require,module,exports) {
 
 var reloadCSS = require('_css_loader');
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"node_modules/chart.js/src/helpers/helpers.core.js":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"node_modules/chart.js/src/helpers/helpers.core.js":[function(require,module,exports) {
 'use strict';
 
 /**
@@ -19213,6 +19216,28 @@ var Parser = function () {
       return result;
     }
 
+    // Get a priority based on a numeric ranking
+
+  }, {
+    key: 'getPriorityFromRank',
+    value: function getPriorityFromRank(rank) {
+      var priority = '';
+      if (rank === 0) {
+        priority = "block";
+      } else if (rank === 1) {
+        priority = "highest";
+      } else if (rank === 2) {
+        priority = "high";
+      } else if (rank === 3) {
+        priority = "medium";
+      } else if (rank === 4) {
+        priority = "low";
+      } else if (rank >= 5) {
+        priority = "lowest";
+      }
+      return priority;
+    }
+
     // Parse Jira data into data element
 
   }, {
@@ -19240,21 +19265,51 @@ var Parser = function () {
           row.risk = 2;
         }
 
-        // Calculate numeric priority
-        row.rank = 6;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.rank = 0;
-        } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
-          row.rank = 1;
-        } else if (row.priority.toLowerCase().indexOf('high') > -1) {
-          row.rank = 2;
-        } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
-          row.rank = 3;
-        } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
-          row.rank = 5;
-        } else if (row.priority.toLowerCase().indexOf('low') > -1) {
-          row.rank = 4;
+        // Calculate rank & priority
+        var rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+        if (rankNo > 0) {
+          row.rank = rankNo;
+          row.priority = _this.getPriorityFromRank(rankNo);
+        } else {
+          if (row.priority.toLowerCase().indexOf('block') > -1) {
+            row.rank = 0;
+          } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
+            row.rank = 1;
+          } else if (row.priority.toLowerCase().indexOf('high') > -1) {
+            row.rank = 2;
+          } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
+            row.rank = 3;
+          } else if (row.priority.toLowerCase().indexOf('low') > -1) {
+            row.rank = 4;
+          } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
+            row.rank = 5;
+          }
         }
+
+        // Rank modified by Status
+        row.sort = row.rank * 10;
+        if (row.status.toLowerCase().indexOf('done') >= 0) {
+          row.sort += 90;
+        } else if (row.status.toLowerCase().indexOf('validation') >= 0) {
+          row.sort += 0;
+        } else if (row.status.toLowerCase().indexOf('progress') >= 0) {
+          row.sort += 10;
+        } else if (row.status.toLowerCase().indexOf('ready') >= 0) {
+          row.sort += 20;
+        } else if (row.status.toLowerCase().indexOf('open') >= 0) {
+          row.sort += 30;
+        } else if (row.status.toLowerCase().indexOf('backlog') >= 0) {
+          row.sort += 200;
+        }
+
+        // Lower the sort ranking if an item is unassigned
+        if (row.assignee.toLowerCase().indexOf('unassign') >= 0) {
+          row.sort += 1;
+        }
+
+        // Create a decimal at the end to sort by identifier
+        var decimal = '0000' + row.key.replace(/([^0-9])*/ig, '');
+        row.sort = row.sort + '.' + decimal.slice(-4);
 
         // Calculate the estimate field
         row.estimate = task.fields.aggregatetimeoriginalestimate;
@@ -19307,12 +19362,9 @@ var Parser = function () {
       // Sort based on Sprint then Priority / Rank
       data.sort(function (a, b) {
         if (a.sprint) {
-          return a.sprint.current - b.sprint.current || a.rank - b.rank;
+          return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
         }
       });
-
-      console.log('----- Data Object -----');
-      console.log(data);
 
       return data;
     }
@@ -19754,24 +19806,59 @@ var Plan = function () {
     this.parse = new _Parser2.default();
   }
 
-  // Removes a specific column from a table
+  // Toggles the display of the full detail columns
 
 
   _createClass(Plan, [{
-    key: 'hideColumn',
-    value: function hideColumn(n) {
-      var headers = document.querySelectorAll('table thead tr');
-      headers.forEach(function (row) {
-        row.deleteCell(n);
-      });
-
+    key: 'toggleColumns',
+    value: function toggleColumns(target) {
+      var headers = document.querySelectorAll('table thead tr th.base');
       var rows = document.querySelectorAll('table tbody tr');
-      rows.forEach(function (row) {
-        try {
-          row.deleteCell(n);
-        } catch (error) {
-          console.log(row);
-        }
+      var table = document.querySelector('table');
+      var removed = 0;
+
+      if (target.classList.contains('collapsed')) {
+
+        removed = headers.length;
+        target.classList.remove('collapsed');
+        table.classList.remove('collapsed');
+        var targets = document.querySelectorAll('table .collapsed');
+        targets.forEach(function (el) {
+          el.classList.remove('collapsed');
+        });
+        this.toggleAggregates(removed, 'add');
+      } else {
+
+        target.classList.add('collapsed');
+        table.classList.add('collapsed');
+        headers.forEach(function (th, n) {
+          if (th.classList.contains('full')) {
+            removed++;
+            th.classList.add('collapsed');
+            rows.forEach(function (tr) {
+              tr.querySelectorAll('td').forEach(function (td, tx) {
+                if (tx === n) {
+                  td.classList.add('collapsed');
+                }
+              });
+            });
+          }
+        });
+
+        this.toggleAggregates(removed, 'remove');
+      }
+    }
+
+    // Toggle Aggregate Colspans
+
+  }, {
+    key: 'toggleAggregates',
+    value: function toggleAggregates(removed, action) {
+      var aggregates = document.querySelectorAll('tfoot td.label');
+      aggregates.forEach(function (label) {
+        var current = parseInt(label.getAttribute('colspan'), 10);
+        var updated = action === "remove" ? current - removed : removed;
+        label.setAttribute('colspan', updated);
       });
     }
 
@@ -19799,13 +19886,14 @@ var Plan = function () {
       var phases = [];
       var sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
 
+      // Set button action
+      document.querySelector('button').addEventListener('click', function (event) {
+        _this.toggleColumns(event.target);
+      });
+
       headers.forEach(function (el, ix) {
 
-        if (el.innerText === "Description") {
-
-          el.addEventListener('click', function () {
-            _this.hideColumn(ix);
-          });
+        if (el.classList.contains('full')) {
 
           newRow1.appendChild(el);
         } else if (ix === headers.length - 1) {
@@ -19824,11 +19912,6 @@ var Plan = function () {
               th1.setAttribute('colspan', sprintsPerPhase);
               th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
               th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
-              /*
-              th1.addEventListener('click', () => {
-                this.hideColumn(0);
-              });
-              */
             }
 
             // Populate Sprint labels
@@ -21501,8 +21584,6 @@ return numeral;
 
 },{}],"src/assets/data/team.json":[function(require,module,exports) {
 module.exports = [{ "team": "Eagle", "jiraName": "sgeorge", "name": "Shaheen", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Eagle", "jiraName": "jnix", "name": "Jacob", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Eagle", "jiraName": "Josh.Miller", "name": "Josh", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Ashoka_K", "name": "Ashoka", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "aselvaraj", "name": "Arun", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "pranali.dedge", "name": "Pranali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "pallavi.bhadange", "name": "Pallavi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "amit.mistry01", "name": "Amit", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Chintan_Desai01", "name": "Chintan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "ApurvaMukund_A01", "name": "Apurva", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "vaishali.tekale", "name": "Vaishali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Raman_Mittal", "name": "Raman", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Tanvi.Chopda", "name": "Tanvi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Akshay_Agrawal04", "name": "Akshay", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Megha_R03", "name": "Megha", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "sohan.255312", "name": "Sohan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "kunal.karmarkar", "name": "Kunal", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "dfreireich", "name": "Dave", "role": "qa", "allocation": "100%", "hours": 50, "lead": true }, { "team": "QA", "jiraName": "Souvik_Ghosh06", "name": "Souvik", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "pranjal.sharma", "name": "Pranjal", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "?", "name": "?", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Design", "jiraName": "scornell", "name": "Steven", "role": "design", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Design", "jiraName": "asingh", "name": "Alekh", "role": "design", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "atran", "name": "Anh", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Misc", "jiraName": "nsavant", "name": "Nikhil", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "wbaeck", "name": "Wolfgang", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "SShliakhtsitsau", "name": "Stas", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "MBorden", "name": "Mitch", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }];
-},{}],"src/assets/data/sprints.json":[function(require,module,exports) {
-module.exports = [{ "label": "Sprint 1", "field": "sprint1", "startDate": "08/14/2017", "endDate": "08/28/2017", "phase": "1", "class": "current" }, { "label": "Sprint 2", "field": "sprint2", "startDate": "08/29/2017", "endDate": "09/11/2017", "phase": "1", "class": "future" }, { "label": "Sprint 3", "field": "sprint3", "startDate": "09/12/2017", "endDate": "09/25/2017", "phase": "1", "class": "future" }, { "label": "Sprint 4", "field": "sprint4", "startDate": "09/26/2017", "endDate": "10/09/2017", "phase": "2", "class": "future" }, { "label": "Sprint 5", "field": "sprint5", "startDate": "10/10/2017", "endDate": "10/23/2017", "phase": "2", "class": "future" }, { "label": "Sprint 6", "field": "sprint6", "startDate": "10/24/2017", "endDate": "11/06/2017", "phase": "2", "class": "future" }, { "label": "Sprint 7", "field": "sprint7", "startDate": "11/07/2017", "endDate": "11/20/2017", "phase": "3", "class": "future" }, { "label": "Sprint 8", "field": "sprint8", "startDate": "11/21/2017", "endDate": "12/04/2017", "phase": "3", "class": "future" }, { "label": "Sprint 9", "field": "sprint9", "startDate": "12/05/2017", "endDate": "12/18/2017", "phase": "3", "class": "future" }, { "label": "Sprint 10", "field": "sprint10", "startDate": "12/19/2017", "endDate": "01/01/2018", "phase": "4", "class": "future" }, { "label": "Sprint 11", "field": "sprint11", "startDate": "01/02/2018", "endDate": "01/15/2018", "phase": "4", "class": "future" }, { "label": "Sprint 12", "field": "sprint12", "startDate": "01/16/2018", "endDate": "01/29/2018", "phase": "4", "class": "future" }, { "label": "Sprint 13", "field": "sprint13", "startDate": "01/30/2018", "endDate": "02/12/2018", "phase": "5", "class": "future" }, { "label": "Sprint 14", "field": "sprint14", "startDate": "02/13/2018", "endDate": "02/26/2018", "phase": "5", "class": "future" }, { "label": "Sprint 15", "field": "sprint15", "startDate": "02/27/2018", "endDate": "03/12/2018", "phase": "5", "class": "future" }];
 },{}],"src/assets/data/holidays.json":[function(require,module,exports) {
 module.exports = [{
   "name": "PTO",
@@ -21541,7 +21622,7 @@ module.exports = [{
   "teams": ["Design", "Eagle", "Misc", "Offshore", "QA"],
   "members": []
 }];
-},{}],"src/assets/scripts/Team.js":[function(require,module,exports) {
+},{}],"src/assets/scripts/Sprint.js":[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21559,7 +21640,105 @@ var numeral = require('numeral');
 
 var config = require('../data/config.json');
 var team = require('../data/team.json');
-var sprints = require('../data/sprints.json');
+// let sprints = require('../data/sprints.json');
+var holidays = require('../data/holidays.json');
+
+/**
+ * Sprint Class
+ * Defines data and UI elements related to the Teams tab in the application
+ *
+ */
+
+var Sprint = function () {
+  function Sprint() {
+    _classCallCheck(this, Sprint);
+  }
+
+  /**
+   * Creates a new Sprint object using values from assets/data/config.json
+   *
+   */
+
+
+  _createClass(Sprint, [{
+    key: 'createSprints',
+    value: function createSprints() {
+      var firstSprint = config.firstSprint;
+      var numberOfSprints = config.numberOfSprints;
+      var sprints = [];
+
+      var startDate = config.startDate;
+      var endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
+      var today = moment().toDate();
+      var state = "";
+      var idx = 0;
+      var phase = config.firstPhase - 1;
+
+      for (var i = firstSprint; i < firstSprint + numberOfSprints; i++) {
+
+        // Determine when in relative time this sprint exists
+        if (moment(today).isBetween(startDate, endDate)) {
+          state = "current";
+        } else if (moment(endDate).isBefore(today)) {
+          state = "previous";
+        } else if (moment(startDate).isAfter(today)) {
+          state = "future";
+        }
+
+        // Determine phase for this sprint
+        if (idx % config.sprintsPerPhase === 0) {
+          phase++;
+        }
+
+        // Add to the array of dynamic sprints
+        sprints.push({
+          "label": 'Sprint ' + i,
+          "field": 'sprint' + i,
+          "startDate": '' + startDate,
+          "endDate": '' + endDate,
+          "phase": phase,
+          "class": state
+        });
+
+        // Set the timespan for the next sprint
+        startDate = moment(endDate).add(1, 'd').toDate();
+        endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
+
+        idx++;
+      }
+
+      return sprints;
+    }
+  }]);
+
+  return Sprint;
+}();
+
+exports.default = Sprint;
+},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/scripts/Team.js":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Sprint = require('./Sprint.js');
+
+var _Sprint2 = _interopRequireDefault(_Sprint);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var markobj = require('markobj');
+var arraySort = require('array-sort');
+var moment = require('moment');
+var numeral = require('numeral');
+
+var config = require('../data/config.json');
+var team = require('../data/team.json');
 var holidays = require('../data/holidays.json');
 
 /**
@@ -21571,6 +21750,9 @@ var holidays = require('../data/holidays.json');
 var Team = function () {
   function Team() {
     _classCallCheck(this, Team);
+
+    var sprints = new _Sprint2.default();
+    this.sprintData = sprints.createSprints();
   }
 
   /**
@@ -21640,7 +21822,7 @@ var Team = function () {
         }
 
         // Calculate Sprint Totals
-        sprints.forEach(function (sprint) {
+        _this.sprintData.forEach(function (sprint) {
 
           offset = _this.getHolidays(sprint, member);
           hours = member.hours - offset;
@@ -21818,7 +22000,7 @@ var Team = function () {
 }();
 
 exports.default = Team;
-},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/sprints.json":"src/assets/data/sprints.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/data/charts.json":[function(require,module,exports) {
+},{"./Sprint.js":"src/assets/scripts/Sprint.js","markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/data/charts.json":[function(require,module,exports) {
 module.exports = [{
   "name": "spilled",
   "title": "Spilled Stories by Sprint",
@@ -22257,10 +22439,15 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _Sprint = require('./Sprint.js');
+
+var _Sprint2 = _interopRequireDefault(_Sprint);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var tiles = require('../data/dashboard.json');
-var sprints = require('../data/sprints.json');
 
 var numeral = require('numeral');
 var moment = require('moment');
@@ -22274,6 +22461,9 @@ var moment = require('moment');
 var Dashboard = function () {
   function Dashboard() {
     _classCallCheck(this, Dashboard);
+
+    var sprints = new _Sprint2.default();
+    this.sprintData = sprints.createSprints();
   }
 
   /**
@@ -22315,7 +22505,7 @@ var Dashboard = function () {
       var currentSprint = aggregates.sprint;
       var currentPhase = aggregates.phase;
       var lastDate = moment().format();
-      sprints.forEach(function (sprint) {
+      this.sprintData.forEach(function (sprint) {
         if (sprint.class.indexOf('current') > -1) {
           aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
         }
@@ -22403,7 +22593,7 @@ var Dashboard = function () {
 }();
 
 exports.default = Dashboard;
-},{"../data/dashboard.json":"src/assets/data/dashboard.json","../data/sprints.json":"src/assets/data/sprints.json","numeral":"node_modules/numeral/numeral.js","moment":"node_modules/moment/moment.js"}],"src/assets/scripts/Actions.js":[function(require,module,exports) {
+},{"./Sprint.js":"src/assets/scripts/Sprint.js","../data/dashboard.json":"src/assets/data/dashboard.json","numeral":"node_modules/numeral/numeral.js","moment":"node_modules/moment/moment.js"}],"src/assets/scripts/Actions.js":[function(require,module,exports) {
 'use strict';
 
 // let Parser = require('./Parser.js');
@@ -22568,100 +22758,7 @@ var Actions = function () {
 }();
 
 exports.default = Actions;
-},{}],"src/assets/scripts/Sprint.js":[function(require,module,exports) {
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var markobj = require('markobj');
-var arraySort = require('array-sort');
-var moment = require('moment');
-var numeral = require('numeral');
-
-var config = require('../data/config.json');
-var team = require('../data/team.json');
-// let sprints = require('../data/sprints.json');
-var holidays = require('../data/holidays.json');
-
-/**
- * Sprint Class
- * Defines data and UI elements related to the Teams tab in the application
- *
- */
-
-var Sprint = function () {
-  function Sprint() {
-    _classCallCheck(this, Sprint);
-  }
-
-  /**
-   * Creates a new Sprint object using values from assets/data/config.json
-   *
-   */
-
-
-  _createClass(Sprint, [{
-    key: 'createSprints',
-    value: function createSprints() {
-      var firstSprint = config.firstSprint;
-      var numberOfSprints = config.numberOfSprints;
-      var sprints = [];
-
-      var startDate = config.startDate;
-      var endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
-      var today = moment().toDate();
-      var state = "";
-      var idx = 0;
-      var phase = config.firstPhase - 1;
-
-      for (var i = firstSprint; i < firstSprint + numberOfSprints; i++) {
-
-        // Determine when in relative time this sprint exists
-        if (moment(today).isBetween(startDate, endDate)) {
-          state = "current";
-        } else if (moment(endDate).isBefore(today)) {
-          state = "previous";
-        } else if (moment(startDate).isAfter(today)) {
-          state = "future";
-        }
-
-        // Determine phase for this sprint
-        if (idx % config.sprintsPerPhase === 0) {
-          phase++;
-        }
-
-        // Add to the array of dynamic sprints
-        sprints.push({
-          "label": 'Sprint ' + i,
-          "field": 'sprint' + i,
-          "startDate": '' + startDate,
-          "endDate": '' + endDate,
-          "phase": phase,
-          "class": state
-        });
-
-        // Set the timespan for the next sprint
-        startDate = moment(endDate).add(1, 'd').toDate();
-        endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
-
-        idx++;
-      }
-
-      return sprints;
-    }
-  }]);
-
-  return Sprint;
-}();
-
-exports.default = Sprint;
-},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/scripts/index.js":[function(require,module,exports) {
+},{}],"src/assets/scripts/index.js":[function(require,module,exports) {
 'use strict';
 
 var _chart = require('chart.js');
@@ -22783,7 +22880,7 @@ var init = function init() {
 
 // Initialize the app
 init();
-},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","../styles/base.scss":"src/assets/styles/base.scss","chart.js":"node_modules/chart.js/src/chart.js","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js","./Sprint.js":"src/assets/scripts/Sprint.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","../styles/base.scss":"src/assets/styles/base.scss","chart.js":"node_modules/chart.js/src/chart.js","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js","./Sprint.js":"src/assets/scripts/Sprint.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 
@@ -22812,7 +22909,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '53976' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '64539' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -22953,5 +23050,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","src/assets/scripts/index.js"], null)
+},{}]},{},["node_modules/parcel-bundler/src/builtins/hmr-runtime.js","src/assets/scripts/index.js"], null)
 //# sourceMappingURL=/scripts.c47c253c.map

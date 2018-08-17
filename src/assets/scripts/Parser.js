@@ -41,6 +41,26 @@ export default class Parser {
   }
 
 
+  // Get a priority based on a numeric ranking
+  getPriorityFromRank(rank) {
+    let priority = '';
+    if (rank === 0) {
+      priority = "block";
+    } else if (rank === 1) {
+      priority = "highest";
+    } else if (rank === 2) {
+      priority = "high";
+    } else if (rank === 3) {
+      priority = "medium";
+    } else if (rank === 4) {
+      priority = "low";
+    } else if (rank >= 5) {
+      priority = "lowest";
+    }
+    return priority;
+  }
+
+
   // Parse Jira data into data element
   parseData(input) {
     let data = [];
@@ -63,21 +83,51 @@ export default class Parser {
         row.risk = 2;
       }
 
-      // Calculate numeric priority
-      row.rank = 6;
-      if (row.priority.toLowerCase().indexOf('block') > -1) {
-        row.rank = 0;
-      } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
-        row.rank = 1;
-      } else if (row.priority.toLowerCase().indexOf('high') > -1) {
-        row.rank = 2;
-      } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
-        row.rank = 3;
-      } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
-        row.rank = 5;
-      } else if (row.priority.toLowerCase().indexOf('low') > -1) {
-        row.rank = 4;
+      // Calculate rank & priority
+      const rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+      if (rankNo > 0) {
+        row.rank = rankNo;
+        row.priority = this.getPriorityFromRank(rankNo);
+      } else {
+        if (row.priority.toLowerCase().indexOf('block') > -1) {
+          row.rank = 0;
+        } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
+          row.rank = 1;
+        } else if (row.priority.toLowerCase().indexOf('high') > -1) {
+          row.rank = 2;
+        } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
+          row.rank = 3;
+        } else if (row.priority.toLowerCase().indexOf('low') > -1) {
+          row.rank = 4;
+        } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
+          row.rank = 5;
+        }
       }
+
+      // Rank modified by Status
+      row.sort = (row.rank*10);
+      if (row.status.toLowerCase().indexOf('done') >= 0) {
+        row.sort += 90;
+      } else if (row.status.toLowerCase().indexOf('validation') >= 0) {
+        row.sort += 0;
+      } else if (row.status.toLowerCase().indexOf('progress') >= 0) {
+        row.sort += 10;
+      } else if (row.status.toLowerCase().indexOf('ready') >= 0) {
+        row.sort += 20;
+      } else if (row.status.toLowerCase().indexOf('open') >= 0) {
+        row.sort += 30;
+      } else if (row.status.toLowerCase().indexOf('backlog') >= 0) {
+        row.sort += 200;
+      }
+
+      // Lower the sort ranking if an item is unassigned
+      if (row.assignee.toLowerCase().indexOf('unassign') >= 0) {
+        row.sort += 1;
+      }
+
+      // Create a decimal at the end to sort by identifier
+      let decimal = `0000${row.key.replace(/([^0-9])*/ig,'')}`;
+      row.sort = `${row.sort}.${decimal.slice(-4)}`;
 
       // Calculate the estimate field
       row.estimate = task.fields.aggregatetimeoriginalestimate;
@@ -131,12 +181,9 @@ export default class Parser {
     // Sort based on Sprint then Priority / Rank
     data.sort((a, b) => {
       if (a.sprint) {
-        return a.sprint.current - b.sprint.current || a.rank - b.rank;
+        return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
       }
     });
-
-    console.log('----- Data Object -----');
-    console.log(data);
 
     return data;
   }

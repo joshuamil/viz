@@ -6,8 +6,16 @@ table {
   padding: 0;
   width: 100%;
 
+  &.collapsed {
+    th, td {
+      &.small {
+        width: 100px;
+      }
+    }
+  }
+
   th, td {
-    color: $white;
+    color: $grey-10;
     margin: 0;
     padding: .5em;
     position: relative;
@@ -23,6 +31,14 @@ table {
 
     &.wide {
       width: 20%;
+    }
+
+    &.collapsed {
+      display: none;
+    }
+
+    &.small {
+      width: 100px;
     }
 
     /* Phases */
@@ -56,6 +72,35 @@ table {
       border-right: 3px solid $grey-70;
     }
 
+    button {
+      background-color: $grey-20;
+      border: 0;
+      color: $black;
+      cursor: pointer;
+      font-size: 1.8em;
+      padding: 0 .5em;
+      position: absolute;
+      top: 0;
+      right: -1px;
+
+      &:hover {
+        background-color: $grey-40;
+        color: $grey-10;
+      }
+
+      &::after {
+        content: "\276e";
+      }
+
+      &.toggle {
+        &.collapsed {
+          &::after {
+            content: "\276f";
+          }
+        }
+      }
+    }
+
   }
 
   tbody {
@@ -76,6 +121,8 @@ table {
         cursor: pointer;
 
         td {
+          background-color: $grey-60;
+          color: $white;
 
           a {
             color: $red-dk;
@@ -108,20 +155,34 @@ table {
           &.merged {
             background-color: $blue-dk;
           }
+          &.ready-for-development {
+            background-color: $blue-dk;
+            color: $grey-70;
+          }
           &.in-progress {
             background-color: $orange-dk;
+            color: $grey-70;
           }
-          &.to-do {
+          &.to-do,
+          &.open {
             background-color: $red-dk;
+            color: $white;
           }
           &.done {
             background-color: $green-dk;
+            color: $white;
           }
-          &.in-review {
+          &.in-review,
+          &.validation  {
             background-color: $gold-dk;
+            color: $grey-70;
           }
           &.ready-for-test {
             background-color: $blue-dk;
+          }
+          &.backlog {
+            background-color: $grey-40;
+            color: $grey-90;
           }
         }
 
@@ -138,25 +199,29 @@ table {
           background-color: $merged;
           color: $grey-70;
         }
-        &.in-progress {
-          background-color: $inprogress;
-          color: $grey-70;
+        &.ready-for-development {
+          color: $blue-lt;
         }
-        &.to-do {
-          background-color: $todo;
-          color: $grey-70;
+        &.in-progress {
+          color: $inprogress;
+        }
+        &.to-do,
+        &.open {
+          color: $todo;
         }
         &.done {
-          background-color: $done;
-          color: $grey-70;
+          color: $done;
         }
-        &.in-review {
-          background-color: $inreview;
-          color: $grey-70;
+        &.in-review,
+        &.validation {
+          color: $inreview;
         }
         &.ready-for-test {
           background-color: $readyfortest;
           color: $grey-70;
+        }
+        &.backlog {
+          color: $grey-30;
         }
 
         /* Priorities */

@@ -1,5 +1,7 @@
 'use strict';
 
+import Sprints from './Sprint.js';
+
 const markobj = require('markobj');
 const arraySort = require('array-sort');
 const moment = require('moment');
@@ -7,7 +9,6 @@ const numeral = require('numeral');
 
 let config = require('../data/config.json');
 let team = require('../data/team.json');
-let sprints = require('../data/sprints.json');
 let holidays = require('../data/holidays.json');
 
 /**
@@ -18,6 +19,8 @@ let holidays = require('../data/holidays.json');
 export default class Team {
 
   constructor() {
+    const sprints = new Sprints();
+    this.sprintData = sprints.createSprints();
   }
 
   /**
@@ -78,7 +81,7 @@ export default class Team {
       }
 
       // Calculate Sprint Totals
-      sprints.forEach( (sprint) => {
+      this.sprintData.forEach( (sprint) => {
 
         offset = this.getHolidays(sprint, member);
         hours = (member.hours - offset);
