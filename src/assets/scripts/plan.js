@@ -161,17 +161,18 @@ export default class Plan {
 
     sprints.forEach( (item, index) => {
 
+      // Create a new cell
+      td = document.createElement('td');
+    
+      // Defaults
       column = item.label;
       value = task[item.field];
 
       // Parse the value if the field is a multi-node path
       if (item.field.indexOf('.') > -1) {
-        value = this.parse.parseValue(item.field,task);
+        value = this.parse.parseValue(item.field, task);
       }
-
-      // Create a new cell
-      td = document.createElement('td');
-
+      
       // Clear "999" from Sprints
       if (item.field.indexOf('sprint') > -1 && value === 999) {
         value = '';
@@ -185,41 +186,64 @@ export default class Plan {
         if (item.phase && item.class.indexOf('phase') === -1) {
           item.class += ` phase${item.phase}`;
         }
-
         td.setAttribute('class', item.class);
       }
 
       // Find the value
       if (typeof value !== "object") {
 
+        // Inject a title if 
         if (item.title) {
-          td.setAttribute('title', value);
+          td.setAttribute('title', item.title);
         }
 
-        if (item.hidden) {
+        // Populate Current Sprint Column
+        if (item.field === `sprint${task.sprint.current}`) {
+          
+          // Populate Sprint Columns
+          td.appendChild(document.createTextNode(task.estimate));
+          td.classList.add('scheduled');
+          
+        } else if (
+          item.class.indexOf('future') > -1
+          && item.field === `sprint${task.sprint.current}`
+        ) {
+          
+          // Populate Sprint Columns
+          td.appendChild(document.createTextNode(task.estimate));
+          
+        } else if (item.hidden) {
 
+          // Hidden item value
           td.setAttribute('data-value', value);
 
         } else if (item.link && item.link !== '') {
+          
+          // Link node
           let a = this.parse.parseLink(value, item.link);
           td.appendChild(a);
 
         } else if (value && value !== '') {
 
-          td.appendChild(document.createTextNode(value));
-
+          // Basic values
           if (value === "-") {
             td.setAttribute('class', `${item.class} pushed`);
             td.setAttribute('title', `Pushed`);
           } else if (value === "unassigned") {
             td.setAttribute('class', `${item.class} dimmed`);
           }
+          
+          // Insert text nodes
+          td.appendChild(document.createTextNode(value));
 
+          // Sprint column
           if (task.sprint && task.sprint.current && value !== '-' && column.indexOf('Sprint ') > -1) {
             td.setAttribute('class', `${item.class} active`);
           }
 
         }
+        
+        
 
       }
 
@@ -240,8 +264,8 @@ export default class Plan {
     // Loop through the aggregate values
     for (let key in aggregates.subtotals) {
 
-      let percentage = ((aggregates.subtotals[key].tasks / aggregates.totals.project.tasks) * 100);
-      let completion = ((aggregates.subtotals[key].completed / aggregates.totals.project.tasks) * 100);
+      let percentage = ((aggregates.subtotals[key].tasks / aggregates.totals.project.tasks) * 100).toFixed('1');
+      let completion = ((aggregates.subtotals[key].completed / aggregates.totals.project.tasks) * 100).toFixed('1');
       let completionClass = (completion < 100) ? 'bad' : 'good';
       let spilledClass = (parseInt(aggregates.subtotals[key].spilled, 10) > 0) ? 'warning' : 'white';
       let phase = `phase${aggregates.subtotals[key].phase}`;

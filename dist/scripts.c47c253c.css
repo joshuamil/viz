@@ -88,6 +88,8 @@ table {
       display: none; }
     table th.small, table td.small {
       width: 100px; }
+    table th.tiny, table td.tiny {
+      width: 50px; }
     table th.phase, table td.phase {
       border-bottom: 1px solid #cccccc;
       color: #333333; }
@@ -109,6 +111,18 @@ table {
     table th.current, table td.current {
       border-left: 1px solid #333333;
       border-right: 3px solid #333333; }
+    table th.scheduled, table td.scheduled {
+      background-color: #9ec4ea;
+      color: #ffffff;
+      position: relative; }
+      table th.scheduled::after, table td.scheduled::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.1); }
     table th button, table td button {
       background-color: #888888;
       border: 0;

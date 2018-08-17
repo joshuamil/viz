@@ -7,7 +7,6 @@ const numeral = require('numeral');
 
 let config = require('../data/config.json');
 let team = require('../data/team.json');
-// let sprints = require('../data/sprints.json');
 let holidays = require('../data/holidays.json');
 
 /**

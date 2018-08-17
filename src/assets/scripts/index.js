@@ -3,7 +3,6 @@ let table = require('../data/plan.json');
 
 let styles = require('../styles/base.scss');
 
-import Chart from 'chart.js';
 import Authentication from './Authentication.js';
 import Parser from './Parser.js';
 import Aggregates from './Aggregates.js';
@@ -57,6 +56,7 @@ const init = () => {
 
         // Parse Story Data
         let data = parse.parseData(stories);
+        
         let aggregates = aggregate.parseAggregates(data, sprintData, config);
 
         // Render Header Row

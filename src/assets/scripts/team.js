@@ -212,7 +212,7 @@ export default class Team {
   renderSprintHeaderRow() {
     const header = document.querySelector('#team-data table thead tr');
     let sprintHeaders = '';
-    sprints.forEach( (sprint) => {
+    this.sprintData.forEach( (sprint) => {
       sprintHeaders = markobj(`<th>${sprint.label}</th>`);
       header.appendChild(sprintHeaders);
     });

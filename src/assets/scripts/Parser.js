@@ -1,5 +1,7 @@
 'use strict';
 
+let config = require('../data/config.json');
+
 export default class Parser {
 
   constructor() {
@@ -130,11 +132,13 @@ export default class Parser {
       row.sort = `${row.sort}.${decimal.slice(-4)}`;
 
       // Calculate the estimate field
-      row.estimate = task.fields.aggregatetimeoriginalestimate;
+      row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
       row.timespent = (task.fields.aggregatetimespent) ? task.fields.aggregatetimespent : 0;
       row.remaining = row.estimate-row.timespent;
       if (!isNaN(row.estimate)) {
         row.estimate = parseInt((parseInt(row.estimate, 10)/3600),10);
+      } else {
+        row.estimate = 0;
       }
 
       // Calculate remaining & percentage
@@ -143,11 +147,11 @@ export default class Parser {
       }
 
       // Get epic information
-      row.epic = task.fields.customfield_10003;
+      row.epic = task.fields[config.jiraConfig.epicField];
       row.epic = this.getEpic(row.epic, input);
 
       // Get sprint information
-      row.sprint = task.fields.customfield_10007;
+      row.sprint = task.fields[config.jiraConfig.sprintField];
       if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
         row.sprint = this.parseSprint(row.sprint);
       }
@@ -159,8 +163,9 @@ export default class Parser {
 
       // Capture Sprint data
       row.pushed = 0;
+      
       if (row.sprint && row.sprint.history) {
-        row.sprint.history.forEach( (sp, index) => {
+        row.sprint.history.forEach( (sp, index) => {          
           if (row.sprint.current === sp) {
             row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
             if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
@@ -201,8 +206,7 @@ export default class Parser {
         });
       }
     });
-    config = conf;
-    return config;
+    return conf;
   }
 
 
@@ -210,14 +214,22 @@ export default class Parser {
   parseSprint(input) {
     let sprint = '';
     let result = {};
+    
     result.raw = input;
     result.current = input[input.length-1];
     result.history = [];
 
     // Capture the current Sprint
-    sprint = result.current.match(/(name=[^,]*,)/);
-    if (sprint !== null && Array.isArray(sprint)) {
-      result.current = sprint[sprint.length-1].replace(/([^0-9]*)/ig, '');
+    if (result.current) {
+      sprint = result.current.match(/(name=[^,]*,)/);
+      if (sprint !== null && Array.isArray(sprint)) {
+        result.current = sprint[sprint.length-1].replace(/([^0-9]*)/ig, '');
+      }
+    }
+    
+    // Set a default Sprint
+    if (!result.current) {
+      result.current = 999;
     }
 
     // Create a Sprint History log

@@ -1,7 +1,5 @@
 'use strict';
 
-// let Parser = require('./Parser.js');
-
 /**
  * Actions
  * User interaction event handlers such as button clicks, hover actions, etc.

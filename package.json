@@ -17,6 +17,7 @@
     "chart.js": "^2.7.2",
     "moment": "^2.21.0",
     "mouse-position": "^2.0.1",
+    "node-fetch": "^2.2.0",
     "node-sass": "^4.9.3",
     "numeral": "^2.0.6",
     "parcel-bundler": "^1.9.7",
