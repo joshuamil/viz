@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "markobj": "0.0.3"
+    "markobj": "0.0.3",
+    "nano-sql": "^1.7.6"
   },
   "devDependencies": {
     "array-sort": "^0.1.4",

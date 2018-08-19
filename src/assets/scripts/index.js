@@ -34,7 +34,8 @@ const init = () => {
   if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
 
     // TODO: Create authentication routine
-    localStorage.setItem('VIZ_AUTH_TOKEN', { token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
+    localStorage
+      .setItem('VIZ_AUTH_TOKEN', { token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
 
   } else {
 
@@ -46,43 +47,52 @@ const init = () => {
       });
 
     // Use content, parse data and render
-    Promise.all(resources.map(getContent)).then( results => {
+    Promise
+      .all(resources.map(getContent))
+      .then( results => {
 
+        /* Build Data Objects */
         const stories = results[0];
         const sprintData = sprints.createSprints();
 
-        // Append Sprint Data to Configuration
-        let settings = parse.appendSprints(table, sprintData);
+          // Append Sprint Data to Configuration
+          const settings = parse.appendSprints(table, sprintData);
 
-        // Parse Story Data
-        let data = parse.parseData(stories);
-        
-        let aggregates = aggregate.parseAggregates(data, sprintData, config);
+          // Parse Story Data
+          const data = parse.parseData(stories);
 
-        // Render Header Row
-        plan.renderHeader(sprintData, config, aggregates);
+          // Build Aggregate Data
+          const aggregates = aggregate.parseAggregates(data, sprintData, config);
 
-        // Render Table
-        data.forEach( (task) => {
-          plan.renderTable(task, settings, config, aggregates);
-        });
 
-        // Render the Aggregate Values
-        plan.renderAggregates(aggregates);
-
-        // Assign Actions
-        actions.navigation(aggregates.sprint);
-
-        // Assign values to dashboard
+        /* Render the Dashboard */
         dashboard.setValues(aggregates);
 
-        // Render Charts
+
+        /* Render the Release Plan */
+
+          // Render Header Row
+          plan.renderHeader(sprintData, config, aggregates);
+
+          // Render Table
+          data.forEach( (task) => {
+            plan.renderTable(task, settings, config, aggregates);
+          });
+
+          // Render the Aggregate Values
+          plan.renderAggregates(aggregates);
+
+          // Assign Actions
+          actions.navigation(aggregates.sprint);
+
+
+        /* Render Charts */
         reports.renderCharts(aggregates);
 
-        // Render Teams
+        /* Render Teams */
         team.renderTeams();
 
-    });
+      });
 
   }
 

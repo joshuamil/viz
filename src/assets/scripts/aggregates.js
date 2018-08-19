@@ -1,8 +1,49 @@
 'use strict';
 
+import { nSQL } from 'nano-sql';
+
 export default class Aggregates {
 
+  parseDashboard(data) {
+
+    let dashboard = {};
+
+    // Use NanoSQL
+    nSQL(data)
+      .query("select")
+      .where(["status","=","In Progress"],"AND",["sprint","=","1"])
+      .exec()
+      .then((rows) => {
+        dashboard.inprogress = rows.length;
+      })
+      .then(() => {
+        nSQL(data)
+        .query("select")
+        .where(["status","=","Done"],"AND",["sprint","<=","1"])
+        .exec()
+        .then((rows) => {
+          dashboard.completed = rows.length;
+        })
+      })
+      .then(() => {
+        nSQL(data)
+        .query("select")
+        .where(["priority","=","Blocker","AND",["sprint","=","1"]])
+        .exec()
+        .then((rows) => {
+          dashboard.blockers = rows.length;
+        })
+      })
+      .finally(() => {
+        console.log(dashboard);
+        return dashboard;
+      });
+
+  }
+
   parseAggregates(data, sprints, config) {
+
+    const foo = this.parseDashboard(data);
 
     const aggregates = {
       phase: 0,
@@ -107,7 +148,7 @@ export default class Aggregates {
       }
 
       // Calculate story-based totals
-      if (row.numtasks && row.numtasks > 0) {
+      if (row.numtasks && row.numtasks > 0 && row.sprint <= aggregates.sprint) {
         aggregates.totals.project.tasks++;
         if (row.status === "Done") {
           aggregates.totals.project.completed++;
@@ -132,7 +173,7 @@ export default class Aggregates {
 
         }
 
-        // Get Sprint totals
+        // Get Sprint subtotals
         if (row.sprint && row.sprint.current) {
           if (aggregates.subtotals.hasOwnProperty('sprint' + row.sprint.current)) {
             aggregates.subtotals['sprint' + row.sprint.current].tasks++;
@@ -149,7 +190,7 @@ export default class Aggregates {
           }
         }
 
-        // Get Sprint-totals
+        // Get Sprint totals
         sprints.forEach( (sprint) => {
           if (row.hasOwnProperty(sprint.field) && row[sprint.field] === '-') {
 
@@ -177,8 +218,8 @@ export default class Aggregates {
     });
 
     // Final totals
-    aggregates.totals.project.rate = (aggregates.totals.project.completed / aggregates.totals.project.tasks * 100).toFixed(2);
-    aggregates.totals.sprint.rate = (aggregates.totals.sprint.completed / aggregates.totals.sprint.tasks * 100).toFixed(2);
+    aggregates.totals.project.rate = ((aggregates.totals.project.completed / aggregates.totals.project.tasks) * 100).toFixed(2);
+    aggregates.totals.sprint.rate = ((aggregates.totals.sprint.completed / aggregates.totals.sprint.tasks) * 100).toFixed(2);
 
     aggregates.mood = this.getCurrentMood(aggregates);
 
@@ -192,7 +233,7 @@ export default class Aggregates {
   getCurrentSprint(data) {
     let sprint = 0;
     data.forEach( (row) => {
-      if (row.class && row.class === "current") {
+      if (row.class && row.class.indexOf("current") > -1) {
         sprint = row.label.replace('Sprint ','');
       }
     });
@@ -212,13 +253,6 @@ export default class Aggregates {
   getCurrentMood(aggregates) {
     let rating = 0;
     let mood = ':|';
-
-    /*
-    aggregages.risk
-    aggregates.debt
-    aggregates.totals.sprint.blockers
-    aggregates.totals.sprint.rate
-    */
 
     // Risk Ranking
     if (aggregates.risk > 10) {

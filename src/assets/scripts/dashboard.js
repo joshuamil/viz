@@ -113,8 +113,6 @@ export default class Dashboard {
 
     aggregates = this.getDaysRemaining(aggregates);
 
-    console.log(aggregates);
-
     tiles.tiles.forEach( (tile) => {
 
       value = this.getDataFromPath(tile.source, aggregates) || (tile.default || 0);

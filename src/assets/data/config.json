@@ -1,11 +1,11 @@
 {
   "firstSprint": 1,
   "daysInSprint": 21,
-  "sprintsPerPhase": 3,
+  "sprintsPerPhase": [1,2,2,1],
   "firstPhase": 1,
-  "numberOfSprints": 12,
+  "numberOfSprints": 6,
   "hoursPerPoint": 3,
-  "startDate": "2018-08-13T09:00:00.001Z",
+  "startDate": "2018-08-13",
   "hideFutureSprints": false,
   "estimate": {
     "dev": 0.67,

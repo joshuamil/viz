@@ -74,8 +74,9 @@ export default class Plan {
     const headRow = header.querySelector('tr');
     const headers = headRow.querySelectorAll('th');
 
+
     const phases = [];
-    const sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
+    const sprintsPerPhase = config.sprintsPerPhase;
 
     // Set button action
     document.querySelector('button').addEventListener('click', (event) => {
@@ -101,7 +102,7 @@ export default class Plan {
             }
 
             th1 = document.createElement('th');
-            th1.setAttribute('colspan', sprintsPerPhase);
+            th1.setAttribute('colspan', sprintsPerPhase[sprint.phase-1]);
             th1.setAttribute('class', `${current} phase phase${sprint.phase} ${sprint.class}`);
             th1.appendChild(document.createTextNode(`Phase ${sprint.phase}`));
           }
@@ -163,7 +164,7 @@ export default class Plan {
 
       // Create a new cell
       td = document.createElement('td');
-    
+
       // Defaults
       column = item.label;
       value = task[item.field];
@@ -172,7 +173,7 @@ export default class Plan {
       if (item.field.indexOf('.') > -1) {
         value = this.parse.parseValue(item.field, task);
       }
-      
+
       // Clear "999" from Sprints
       if (item.field.indexOf('sprint') > -1 && value === 999) {
         value = '';
@@ -192,33 +193,33 @@ export default class Plan {
       // Find the value
       if (typeof value !== "object") {
 
-        // Inject a title if 
+        // Inject a title if
         if (item.title) {
           td.setAttribute('title', item.title);
         }
 
         // Populate Current Sprint Column
         if (item.field === `sprint${task.sprint.current}`) {
-          
+
           // Populate Sprint Columns
           td.appendChild(document.createTextNode(task.estimate));
           td.classList.add('scheduled');
-          
+
         } else if (
           item.class.indexOf('future') > -1
           && item.field === `sprint${task.sprint.current}`
         ) {
-          
+
           // Populate Sprint Columns
           td.appendChild(document.createTextNode(task.estimate));
-          
+
         } else if (item.hidden) {
 
           // Hidden item value
           td.setAttribute('data-value', value);
 
         } else if (item.link && item.link !== '') {
-          
+
           // Link node
           let a = this.parse.parseLink(value, item.link);
           td.appendChild(a);
@@ -232,7 +233,7 @@ export default class Plan {
           } else if (value === "unassigned") {
             td.setAttribute('class', `${item.class} dimmed`);
           }
-          
+
           // Insert text nodes
           td.appendChild(document.createTextNode(value));
 
@@ -242,8 +243,8 @@ export default class Plan {
           }
 
         }
-        
-        
+
+
 
       }
 

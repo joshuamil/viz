@@ -107,11 +107,11 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 module.exports = {
   "firstSprint": 1,
   "daysInSprint": 21,
-  "sprintsPerPhase": 3,
+  "sprintsPerPhase": [1, 2, 2, 1],
   "firstPhase": 1,
-  "numberOfSprints": 12,
+  "numberOfSprints": 6,
   "hoursPerPoint": 3,
-  "startDate": "2018-08-13T09:00:00.001Z",
+  "startDate": "2018-08-13",
   "hideFutureSprints": false,
   "estimate": {
     "dev": 0.67,
@@ -570,7 +570,9927 @@ var Parser = function () {
 }();
 
 exports.default = Parser;
-},{"../data/config.json":"src/assets/data/config.json"}],"src/assets/scripts/Aggregates.js":[function(require,module,exports) {
+},{"../data/config.json":"src/assets/data/config.json"}],"node_modules/lie-ts/index.js":[function(require,module,exports) {
+var global = arguments[3];
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// stolen from https://github.com/Octane/setImmediate
+// convertd to NodeJS friendly syntax
+var uid = 0;
+var storage = {};
+var slice = Array.prototype.slice;
+var message = 'setMsg';
+var canPost = typeof window !== 'undefined' && window.postMessage && window.addEventListener;
+var fastApply = function (args) {
+    return args[0].apply(null, slice.call(args, 1));
+};
+var callback = function (event) {
+    var key = event.data;
+    var data;
+    if (typeof key == 'string' && key.indexOf(message) === 0) {
+        data = storage[key];
+        if (data) {
+            delete storage[key];
+            fastApply(data);
+        }
+    }
+};
+if (canPost) {
+    window.addEventListener('message', callback);
+}
+var setImmediatePolyfill = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    var id = uid++;
+    var key = message + id;
+    storage[key] = args;
+    window.postMessage(key, '*');
+    return id;
+};
+exports.setFast = (function () {
+    return canPost ? setImmediatePolyfill : // built in window messaging (pretty fast, not bad)
+        function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            setTimeout(function () {
+                fastApply(args);
+            }, 0);
+        };
+})();
+var _INTERNAL = function () { };
+var _REJECTED = ['R'];
+var _FULFILLED = ['F'];
+var _PENDING = ['P'];
+var Promise = /** @class */ (function () {
+    function Promise(resolver) {
+        this._state = _PENDING;
+        this._queue = [];
+        this._outcome = void 0;
+        if (resolver !== _INTERNAL) {
+            _safelyResolveThenable(this, resolver);
+        }
+    }
+    Promise.doPolyFill = function () {
+        if (typeof global !== "undefined") {
+            if (!global["Promise"]) {
+                global["Promise"] = this;
+            }
+        }
+        if (typeof window !== "undefined") {
+            if (!window["Promise"]) {
+                window["Promise"] = this;
+            }
+        }
+    };
+    Promise.prototype.catch = function (onRejected) {
+        return this.then(function () { }, onRejected);
+    };
+    Promise.prototype.then = function (onFulfilled, onRejected) {
+        if (typeof onFulfilled !== 'function' && this._state === _FULFILLED ||
+            typeof onRejected !== 'function' && this._state === _REJECTED) {
+            return this;
+        }
+        var promise = new Promise(_INTERNAL);
+        if (this._state !== _PENDING) {
+            var resolver = this._state === _FULFILLED ? onFulfilled : onRejected;
+            _unwrap(promise, resolver, this._outcome);
+        }
+        else {
+            this._queue.push(new _QueueItem(promise, onFulfilled, onRejected));
+        }
+        return promise;
+    };
+    /**
+     *
+     * @static
+     * @param {any} value
+     * @returns
+     *
+     * @memberOf Promise
+     */
+    Promise.resolve = function (value) {
+        if (value instanceof this)
+            return value;
+        return _handlers._resolve(new Promise(_INTERNAL), value);
+    };
+    /**
+     *
+     * @static
+     * @param {any} reason
+     * @returns
+     *
+     * @memberOf Promise
+     */
+    Promise.reject = function (reason) {
+        return _handlers._reject(new Promise(_INTERNAL), reason);
+    };
+    Promise.all = function (iterable) {
+        var t = this;
+        return new Promise(function (resolve, reject) {
+            var results = [];
+            if (!iterable.length) {
+                resolve([]);
+                return;
+            }
+            var maybeReturn = function (index, success, failure) {
+                if (failure !== undefined) {
+                    results.push(failure);
+                }
+                else {
+                    results.push(success);
+                }
+                if (results.length == iterable.length) {
+                    resolve(results);
+                }
+            };
+            var _loop_1 = function (i) {
+                iterable[i].then(function (res) {
+                    maybeReturn(i, res, undefined);
+                }).catch(function (e) {
+                    maybeReturn(i, undefined, e);
+                });
+            };
+            for (var i = 0; i < iterable.length; i++) {
+                _loop_1(i);
+            }
+        });
+    };
+    Promise.race = function (iterable) {
+        var self = this;
+        var len = iterable.length;
+        var called = false;
+        var i = -1;
+        var promise = new Promise(_INTERNAL);
+        if (Array.isArray(iterable) !== false) {
+            return this.reject(new TypeError());
+        }
+        function resolver(value) {
+            self.resolve(value).then(function (response) {
+                if (!called) {
+                    called = true;
+                    _handlers._resolve(promise, response);
+                }
+            }, function (error) {
+                if (!called) {
+                    called = true;
+                    _handlers._reject(promise, error);
+                }
+            });
+        }
+        if (!len) {
+            return this.resolve([]);
+        }
+        while (++i < len) {
+            resolver(iterable[i]);
+        }
+        return promise;
+    };
+    return Promise;
+}());
+exports.Promise = Promise;
+/**
+ * @internal
+ *
+ * @export
+ * @class _QueueItem
+ */
+var _QueueItem = /** @class */ (function () {
+    function _QueueItem(promise, onFulfilled, onRejected) {
+        this._promise = promise;
+        if (typeof onFulfilled === 'function') {
+            this._onFulfilled = onFulfilled;
+            this._callFulfilled = this._otherCallFulfilled;
+        }
+        if (typeof onRejected === 'function') {
+            this._onRejected = onRejected;
+            this._callRejected = this._otherCallRejected;
+        }
+    }
+    _QueueItem.prototype._callFulfilled = function (value) {
+        _handlers._resolve(this._promise, value);
+    };
+    ;
+    _QueueItem.prototype._otherCallFulfilled = function (value) {
+        _unwrap(this._promise, this._onFulfilled, value);
+    };
+    ;
+    _QueueItem.prototype._callRejected = function (value) {
+        _handlers._reject(this._promise, value);
+    };
+    ;
+    _QueueItem.prototype._otherCallRejected = function (value) {
+        _unwrap(this._promise, this._onRejected, value);
+    };
+    ;
+    return _QueueItem;
+}());
+exports._QueueItem = _QueueItem;
+/**
+ *
+ * @internal
+ * @param {any} promise
+ * @param {any} func
+ * @param {any} value
+ */
+function _unwrap(promise, func, value) {
+    exports.setFast(function () {
+        var returnValue;
+        try {
+            returnValue = func.apply(null, value);
+        }
+        catch (e) {
+            return _handlers._reject(promise, e);
+        }
+        if (returnValue === promise) {
+            _handlers._reject(promise, new TypeError());
+        }
+        else {
+            _handlers._resolve(promise, returnValue);
+        }
+        return null;
+    });
+}
+/**
+ *
+ * @internal
+ * @class _handlers
+ */
+var _handlers = /** @class */ (function () {
+    function _handlers() {
+    }
+    _handlers._resolve = function (self, value) {
+        var result = _tryCatch(_getThen, value);
+        var thenable = result._value;
+        var i = -1;
+        var len = self._queue.length;
+        if (result._status === 'error') {
+            return _handlers._reject(self, result._value);
+        }
+        if (thenable) {
+            _safelyResolveThenable(self, thenable);
+        }
+        else {
+            self._state = _FULFILLED;
+            self._outcome = value;
+            while (++i < len) {
+                self._queue[i]._callFulfilled(value);
+            }
+        }
+        return self;
+    };
+    ;
+    _handlers._reject = function (self, error) {
+        self._state = _REJECTED;
+        self._outcome = error;
+        var i = -1;
+        var len = self._queue.length;
+        while (++i < len) {
+            self._queue[i]._callRejected(error);
+        }
+        return self;
+    };
+    ;
+    return _handlers;
+}());
+/**
+ *
+ * @internal
+ * @param {any} obj
+ * @returns
+ */
+function _getThen(obj) {
+    // Make sure we only access the accessor once as required by the spec
+    var then = obj && obj.then;
+    if (obj && (typeof obj === 'object' || typeof obj === 'function') && typeof then === 'function') {
+        return function appyThen() {
+            then.apply(obj, arguments);
+        };
+    }
+    else {
+        return null;
+    }
+}
+/**
+ *
+ * @internal
+ * @param {Promise<any>} self
+ * @param {(onSuccess:(...T) => void, onFail:(...T) => void) => void} thenable
+ */
+function _safelyResolveThenable(self, thenable) {
+    // Either fulfill, reject or reject with error
+    var called = false;
+    function onError() {
+        var value = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            value[_i] = arguments[_i];
+        }
+        if (called) {
+            return;
+        }
+        called = true;
+        _handlers._reject(self, value);
+    }
+    function onSuccess() {
+        var value = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            value[_i] = arguments[_i];
+        }
+        if (called) {
+            return;
+        }
+        called = true;
+        _handlers._resolve(self, value);
+    }
+    function tryToUnwrap() {
+        thenable(onSuccess, onError);
+    }
+    var result = _tryCatch(tryToUnwrap);
+    if (result._status === 'error') {
+        onError(result._value);
+    }
+}
+/**
+ *
+ * @internal
+ * @param {any} func
+ * @param {*} [values]
+ * @returns
+ */
+function _tryCatch(func, values) {
+    var out = { _status: null, _value: null };
+    try {
+        out._value = func(values);
+        out._status = 'success';
+    }
+    catch (e) {
+        out._status = 'error';
+        out._value = e;
+    }
+    return out;
+}
+
+},{}],"node_modules/metaphone/index.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = metaphone;
+
+var SH = 'X';
+var TH = '0';
+
+/* Get the phonetics according to the original Metaphone
+ * algorithm from a value. */
+function metaphone(value) {
+  var phonized = '';
+  var index = 0;
+  var skip;
+  var next;
+  var current;
+  var prev;
+
+  /* Add `characters` to `phonized`. */
+  function phonize(characters) {
+    phonized += characters;
+  }
+
+  /* Get the character offset by `offset` from the
+   * current character. */
+  function at(offset) {
+    return value.charAt(index + offset).toUpperCase();
+  }
+
+  /* Create an `at` function with a bound `offset`. */
+  function atFactory(offset) {
+    return function () {
+      return at(offset);
+    };
+  }
+
+  value = String(value || '');
+
+  if (!value) {
+    return '';
+  }
+
+  next = atFactory(1);
+  current = atFactory(0);
+  prev = atFactory(-1);
+
+  /* Find our first letter */
+  while (!alpha(current())) {
+    if (!current()) {
+      return '';
+    }
+
+    index++;
+  }
+
+  switch (current()) {
+    case 'A':
+      /* AE becomes E */
+      if (next() === 'E') {
+        phonize('E');
+        index += 2;
+      } else {
+        /* Remember, preserve vowels at the beginning */
+        phonize('A');
+        index++;
+      }
+
+      break;
+    /* [GKP]N becomes N */
+    case 'G':
+    case 'K':
+    case 'P':
+      if (next() === 'N') {
+        phonize('N');
+        index += 2;
+      }
+
+      break;
+
+    /* WH becomes H,
+       WR becomes R
+       W if followed by a vowel */
+    case 'W':
+      if (next() === 'R') {
+        phonize(next());
+        index += 2;
+      } else if (next() === 'H') {
+        phonize(current());
+        index += 2;
+      } else if (vowel(next())) {
+        phonize('W');
+        index += 2;
+      }
+      /* Else ignore */
+      break;
+    /* X becomes S */
+    case 'X':
+      phonize('S');
+      index++;
+
+      break;
+    /* Vowels are kept */
+    /* We did A already
+    case 'A':
+    case 'a': */
+    case 'E':
+    case 'I':
+    case 'O':
+    case 'U':
+      phonize(current());
+      index++;
+      break;
+    default:
+      /* Do nothing */
+      break;
+  }
+
+  /* On to the metaphoning */
+  while (current()) {
+    /* How many letters to skip because an eariler encoding handled
+     * multiple letters */
+    skip = 1;
+
+    /* Ignore non-alphas */
+    if (!alpha(current()) || (current() === prev() && current() !== 'C')) {
+      index += skip;
+      continue;
+    }
+
+    // eslint-disable-next-line default-case
+    switch (current()) {
+      /* B -> B unless in MB */
+      case 'B':
+        if (prev() !== 'M') {
+          phonize('B');
+        }
+
+        break;
+      /* 'sh' if -CIA- or -CH, but not SCH, except SCHW.
+       * (SCHW is handled in S)
+       *  S if -CI-, -CE- or -CY-
+       *  dropped if -SCI-, SCE-, -SCY- (handed in S)
+       *  else K */
+      case 'C':
+        if (soft(next())) {
+          /* C[IEY] */
+          if (next() === 'I' && at(2) === 'A') {
+            /* CIA */
+            phonize(SH);
+          } else if (prev() !== 'S') {
+            phonize('S');
+          }
+        } else if (next() === 'H') {
+          phonize(SH);
+          skip++;
+        } else {
+          /* C */
+          phonize('K');
+        }
+
+        break;
+      /* J if in -DGE-, -DGI- or -DGY-
+       * else T. */
+      case 'D':
+        if (next() === 'G' && soft(at(2))) {
+          phonize('J');
+          skip++;
+        } else {
+          phonize('T');
+        }
+
+        break;
+      /* F if in -GH and not B--GH, D--GH, -H--GH, -H---GH
+       * else dropped if -GNED, -GN,
+       * else dropped if -DGE-, -DGI- or -DGY- (handled in D)
+       * else J if in -GE-, -GI, -GY and not GG
+       * else K. */
+      case 'G':
+        if (next() === 'H') {
+          if (!(noGHToF(at(-3)) || at(-4) === 'H')) {
+            phonize('F');
+            skip++;
+          }
+        } else if (next() === 'N') {
+          if (!(!alpha(at(2)) || (at(2) === 'E' && at(3) === 'D'))) {
+            phonize('K');
+          }
+        } else if (soft(next()) && prev() !== 'G') {
+          phonize('J');
+        } else {
+          phonize('K');
+        }
+
+        break;
+
+      /* H if before a vowel and not after C,G,P,S,T */
+      case 'H':
+        if (vowel(next()) && !dipthongH(prev())) {
+          phonize('H');
+        }
+
+        break;
+      /* Dropped if after C
+       * else K. */
+      case 'K':
+        if (prev() !== 'C') {
+          phonize('K');
+        }
+
+        break;
+      /* F if before H
+       * else P. */
+      case 'P':
+        if (next() === 'H') {
+          phonize('F');
+        } else {
+          phonize('P');
+        }
+
+        break;
+      /* K */
+      case 'Q':
+        phonize('K');
+        break;
+      /* 'sh' in -SH-, -SIO- or -SIA- or -SCHW-
+       * else S */
+      case 'S':
+        if (next() === 'I' && (at(2) === 'O' || at(2) === 'A')) {
+          phonize(SH);
+        } else if (next() === 'H') {
+          phonize(SH);
+          skip++;
+        } else {
+          phonize('S');
+        }
+
+        break;
+      /* 'sh' in -TIA- or -TIO-
+       * else 'th' before H
+       * else T. */
+      case 'T':
+        if (next() === 'I' && (at(2) === 'O' || at(2) === 'A')) {
+          phonize(SH);
+        } else if (next() === 'H') {
+          phonize(TH);
+          skip++;
+        } else if (!(next() === 'C' && at(2) === 'H')) {
+          phonize('T');
+        }
+
+        break;
+      /* F */
+      case 'V':
+        phonize('F');
+        break;
+      case 'W':
+        if (vowel(next())) {
+          phonize('W');
+        }
+
+        break;
+      /* KS */
+      case 'X':
+        phonize('KS');
+        break;
+      /* Y if followed by a vowel */
+      case 'Y':
+        if (vowel(next())) {
+          phonize('Y');
+        }
+
+        break;
+      /* S */
+      case 'Z':
+        phonize('S');
+        break;
+      /* No transformation */
+      case 'F':
+      case 'J':
+      case 'L':
+      case 'M':
+      case 'N':
+      case 'R':
+        phonize(current());
+        break;
+    }
+
+    index += skip;
+  }
+
+  return phonized;
+}
+
+/* Check whether `character` would make `'GH'` an `'F'`. */
+function noGHToF(character) {
+  character = char(character);
+
+  return character === 'B' ||
+    character === 'D' ||
+    character === 'H';
+}
+
+/* Check whether `character` would make a `'C'` or `'G'`
+ * soft. */
+function soft(character) {
+  character = char(character);
+  return character === 'E' || character === 'I' || character === 'Y';
+}
+
+/* Check whether `character` is a vowel. */
+function vowel(character) {
+  character = char(character);
+
+  return character === 'A' ||
+    character === 'E' ||
+    character === 'I' ||
+    character === 'O' ||
+    character === 'U';
+}
+
+/* Check whether `character` forms a dipthong when
+ * preceding H. */
+function dipthongH(character) {
+  character = char(character);
+
+  return character === 'C' ||
+    character === 'G' ||
+    character === 'P' ||
+    character === 'S' ||
+    character === 'T';
+}
+
+/* Check whether `character` is in the alphabet. */
+function alpha(character) {
+  var code = charCode(character);
+  return code >= 65 && code <= 90;
+}
+
+/* Get the upper-case character code of the first character
+ * in `character`. */
+function charCode(character) {
+  return char(character).charCodeAt(0);
+}
+
+/* Turn `character` into a single, upper-case character. */
+function char(character) {
+  return String(character).charAt(0).toUpperCase();
+}
+
+},{}],"node_modules/stemmer/index.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = stemmer;
+
+/* Character code for `y`. */
+var CC_Y = 'y'.charCodeAt(0);
+
+/* Standard suffix manipulations. */
+var step2list = {
+  ational: 'ate',
+  tional: 'tion',
+  enci: 'ence',
+  anci: 'ance',
+  izer: 'ize',
+  bli: 'ble',
+  alli: 'al',
+  entli: 'ent',
+  eli: 'e',
+  ousli: 'ous',
+  ization: 'ize',
+  ation: 'ate',
+  ator: 'ate',
+  alism: 'al',
+  iveness: 'ive',
+  fulness: 'ful',
+  ousness: 'ous',
+  aliti: 'al',
+  iviti: 'ive',
+  biliti: 'ble',
+  logi: 'log'
+};
+
+var step3list = {
+  icate: 'ic',
+  ative: '',
+  alize: 'al',
+  iciti: 'ic',
+  ical: 'ic',
+  ful: '',
+  ness: ''
+};
+
+/* Consonant-vowel sequences. */
+var consonant = '[^aeiou]';
+var vowel = '[aeiouy]';
+var consonantSequence = '(' + consonant + '[^aeiouy]*)';
+var vowelSequence = '(' + vowel + '[aeiou]*)';
+
+var MEASURE_GT_0 = new RegExp(
+  '^' + consonantSequence + '?' + vowelSequence + consonantSequence
+);
+
+var MEASURE_EQ_1 = new RegExp(
+  '^' + consonantSequence + '?' + vowelSequence + consonantSequence +
+  vowelSequence + '?$'
+);
+
+var MEASURE_GT_1 = new RegExp(
+  '^' + consonantSequence + '?' +
+  '(' + vowelSequence + consonantSequence + '){2,}'
+);
+
+var VOWEL_IN_STEM = new RegExp(
+  '^' + consonantSequence + '?' + vowel
+);
+
+var CONSONANT_LIKE = new RegExp(
+  '^' + consonantSequence + vowel + '[^aeiouwxy]$'
+);
+
+/* Exception expressions. */
+var SUFFIX_LL = /ll$/;
+var SUFFIX_E = /^(.+?)e$/;
+var SUFFIX_Y = /^(.+?)y$/;
+var SUFFIX_ION = /^(.+?(s|t))(ion)$/;
+var SUFFIX_ED_OR_ING = /^(.+?)(ed|ing)$/;
+var SUFFIX_AT_OR_BL_OR_IZ = /(at|bl|iz)$/;
+var SUFFIX_EED = /^(.+?)eed$/;
+var SUFFIX_S = /^.+?[^s]s$/;
+var SUFFIX_SSES_OR_IES = /^.+?(ss|i)es$/;
+var SUFFIX_MULTI_CONSONANT_LIKE = /([^aeiouylsz])\1$/;
+var STEP_2 = new RegExp(
+  '^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|' +
+  'ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|' +
+  'biliti|logi)$'
+);
+var STEP_3 = /^(.+?)(icate|ative|alize|iciti|ical|ful|ness)$/;
+var STEP_4 = new RegExp(
+  '^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|' +
+  'iti|ous|ive|ize)$'
+);
+
+/* Stem `value`. */
+function stemmer(value) {
+  var firstCharacterWasLowerCaseY;
+  var match;
+
+  value = String(value).toLowerCase();
+
+  /* Exit early. */
+  if (value.length < 3) {
+    return value;
+  }
+
+  /* Detect initial `y`, make sure it never matches. */
+  if (value.charCodeAt(0) === CC_Y) {
+    firstCharacterWasLowerCaseY = true;
+    value = 'Y' + value.substr(1);
+  }
+
+  /* Step 1a. */
+  if (SUFFIX_SSES_OR_IES.test(value)) {
+    /* Remove last two characters. */
+    value = value.substr(0, value.length - 2);
+  } else if (SUFFIX_S.test(value)) {
+    /* Remove last character. */
+    value = value.substr(0, value.length - 1);
+  }
+
+  /* Step 1b. */
+  if (match = SUFFIX_EED.exec(value)) {
+    if (MEASURE_GT_0.test(match[1])) {
+      /* Remove last character. */
+      value = value.substr(0, value.length - 1);
+    }
+  } else if ((match = SUFFIX_ED_OR_ING.exec(value)) && VOWEL_IN_STEM.test(match[1])) {
+    value = match[1];
+
+    if (SUFFIX_AT_OR_BL_OR_IZ.test(value)) {
+      /* Append `e`. */
+      value += 'e';
+    } else if (SUFFIX_MULTI_CONSONANT_LIKE.test(value)) {
+      /* Remove last character. */
+      value = value.substr(0, value.length - 1);
+    } else if (CONSONANT_LIKE.test(value)) {
+      /* Append `e`. */
+      value += 'e';
+    }
+  }
+
+  /* Step 1c. */
+  if ((match = SUFFIX_Y.exec(value)) && VOWEL_IN_STEM.test(match[1])) {
+    /* Remove suffixing `y` and append `i`. */
+    value = match[1] + 'i';
+  }
+
+  /* Step 2. */
+  if ((match = STEP_2.exec(value)) && MEASURE_GT_0.test(match[1])) {
+    value = match[1] + step2list[match[2]];
+  }
+
+  /* Step 3. */
+  if ((match = STEP_3.exec(value)) && MEASURE_GT_0.test(match[1])) {
+    value = match[1] + step3list[match[2]];
+  }
+
+  /* Step 4. */
+  if (match = STEP_4.exec(value)) {
+    if (MEASURE_GT_1.test(match[1])) {
+      value = match[1];
+    }
+  } else if ((match = SUFFIX_ION.exec(value)) && MEASURE_GT_1.test(match[1])) {
+    value = match[1];
+  }
+
+  /* Step 5. */
+  if (
+    (match = SUFFIX_E.exec(value)) &&
+    (MEASURE_GT_1.test(match[1]) || (MEASURE_EQ_1.test(match[1]) && !CONSONANT_LIKE.test(match[1])))
+  ) {
+    value = match[1];
+  }
+
+  if (SUFFIX_LL.test(value) && MEASURE_GT_1.test(value)) {
+    value = value.substr(0, value.length - 1);
+  }
+
+  /* Turn initial `Y` back to `y`. */
+  if (firstCharacterWasLowerCaseY) {
+    value = 'y' + value.substr(1);
+  }
+
+  return value;
+}
+
+},{}],"node_modules/nano-sql/lib/utilities.js":[function(require,module,exports) {
+var global = arguments[3];
+Object.defineProperty(exports, "__esModule", { value: true });
+var metaphone = require("metaphone");
+var stemmer = require("stemmer");
+var lie_ts_1 = require("lie-ts");
+lie_ts_1.Promise.doPolyFill();
+exports.stopWords = [
+    "a", "about", "after", "all", "also", "am", "an", "and", "andor", "another", "any",
+    "are", "as", "at", "be", "because", "been", "before", "being", "between",
+    "both", "but", "by", "came", "can", "come", "could", "did", "do", "each",
+    "for", "from", "get", "got", "had", "has", "have", "he", "her", "here",
+    "him", "himself", "his", "how", "i", "if", "in", "into", "is", "it", "like",
+    "make", "many", "me", "might", "more", "most", "much", "must", "my", "never",
+    "now", "of", "on", "only", "or", "other", "our", "out", "over", "said", "same",
+    "see", "should", "since", "some", "still", "such", "take", "than", "that", "the",
+    "their", "them", "then", "there", "these", "they", "this", "those", "through",
+    "to", "too", "under", "up", "very", "was", "way", "we", "well", "were", "what",
+    "where", "which", "while", "who", "with", "would", "you", "your"
+];
+/**
+ * Object.assign, but faster.
+ *
+ * @param {*} obj
+ * @returns
+ */
+exports._assign = function (obj) {
+    return obj ? JSON.parse(JSON.stringify(obj)) : null;
+};
+/**
+ * Quickly and efficiently fire asyncrounous operations in sequence, returns once all operations complete.
+ *
+ * @param {any[]} items
+ * @param {(item: any, i: number, next: (result?: any) => void) => void} callback
+ * @returns {Promise<any[]>}
+ */
+exports.fastCHAIN = function (items, callback) {
+    return new Promise(function (res, rej) {
+        if (!items || !items.length) {
+            res([]);
+            return;
+        }
+        var results = [];
+        var hasError = false;
+        var step = function () {
+            if (results.length < items.length) {
+                callback(items[results.length], results.length, function (result) {
+                    results.push(result);
+                    results.length % 100 === 0 ? exports.setFast(step) : step();
+                }, function (err) {
+                    hasError = true;
+                    rej(err);
+                });
+            }
+            else {
+                if (hasError)
+                    return;
+                res(results);
+            }
+        };
+        step();
+    });
+};
+/**
+ * Quickly and efficiently fire asyncrounous operations in parallel, returns once first operation completes.
+ *
+ * @param {any[]} items
+ * @param {(item: any, i: number, next: (result?: any) => void) => void} callback
+ * @returns {Promise<any[]>}
+ */
+exports.fastRACE = function (items, callback) {
+    return new Promise(function (res, rej) {
+        if (!items || !items.length) {
+            res([]);
+            return;
+        }
+        var resolved = false;
+        var counter = 0;
+        var step = function () {
+            if (counter < items.length) {
+                callback(items[counter], counter, function (result) {
+                    if (!resolved) {
+                        resolved = true;
+                        res([result]);
+                    }
+                }, function (err) {
+                    if (!resolved) {
+                        resolved = true;
+                        rej(err);
+                    }
+                });
+                counter++;
+                step();
+            }
+        };
+        step();
+    });
+};
+/**
+ * Quickly and efficiently fire asyncrounous operations in parallel, returns once all operations are complete.
+ *
+ * @param {any[]} items
+ * @param {(item: any, i: number, done: (result?: any) => void) => void} callback
+ * @returns {Promise<any[]>}
+ */
+exports.fastALL = function (items, callback) {
+    return Promise.all((items || []).map(function (item, i) {
+        return new Promise(function (res, rej) {
+            callback(item, i, res, rej);
+        });
+    }));
+};
+var ua = typeof window === "undefined" ? "" : (navigator.userAgent || "");
+// Detects iOS device OR Safari running on desktop
+exports.isSafari = ua.length === 0 ? false : (/^((?!chrome|android).)*safari/i.test(ua)) || (/iPad|iPhone|iPod/.test(ua) && !window["MSStream"]);
+// Detect Edge or Internet Explorer
+exports.isMSBrowser = ua.length === 0 ? false : ua.indexOf("MSIE ") > 0 || ua.indexOf("Trident/") > 0 || ua.indexOf("Edge/") > 0;
+// Detect Android Device
+exports.isAndroid = /Android/.test(ua);
+/**
+ * Generate a random 16 bit number using strongest entropy/crypto available.
+ *
+ * @returns {number}
+ */
+exports.random16Bits = function () {
+    if (typeof crypto === "undefined") {
+        return Math.round(Math.random() * Math.pow(2, 16)); // Less random fallback.
+    }
+    else {
+        if (crypto.getRandomValues) { // Browser crypto
+            var buf = new Uint16Array(1);
+            crypto.getRandomValues(buf);
+            return buf[0];
+        }
+        else if (typeof global !== "undefined" && global._crypto.randomBytes) { // NodeJS crypto
+            return global._crypto.randomBytes(2).reduce(function (prev, cur) { return cur * prev; });
+        }
+        else {
+            return Math.round(Math.random() * Math.pow(2, 16)); // Less random fallback.
+        }
+    }
+};
+/**
+ * nanoSQL's default tokenizer, handles a few different cases for the english language.
+ *
+ * @param {string} table
+ * @param {string} column
+ * @param {string[]} args
+ * @param {string} value
+ * @returns {{
+ *     o: string; // original string
+ *     w: string; // tokenized output
+ *     i: number; // location of string
+ * }[]}
+ */
+exports.tokenizer = function (table, column, args, value, fractionFixed) {
+    var isStopWord = function (word) {
+        return !word ? true : // is this word falsey? (ie no length, undefined, etc);
+            String(word).length === 1 ? true : // is this word 1 length long?
+                exports.stopWords.indexOf(word) !== -1; // does word match something in the stop word list?
+    };
+    // Step 1, Clean up and normalize the text
+    var words = (value || "")
+        // everything to lowercase
+        .toLowerCase()
+        // normalize fractions and numbers (1/4 => 0.2500, 1,000,235 => 100235.0000)
+        .replace(/(\d+)\/(\d+)|(?:\d+(?:,\d+)*|\d+)(?:\.\d+)?/gmi, function (all, top, bottom) { return top || bottom ? (parseInt(top) / parseInt(bottom)).toFixed(fractionFixed || 4) : (parseFloat(all.replace(/\,/gmi, ""))).toFixed(fractionFixed || 4); })
+        // replace dashes, underscores, anything like parantheses, slashes, newlines and tabs with a single whitespace
+        .replace(/\-|\_|\[|\]|\(|\)|\{|\}|\r?\n|\r|\t/gmi, " ")
+        // remove anything but letters, numbers and decimals inside numbers with nothing.
+        .replace(/[^\w\s]|(\d\.)/gmi, "$1")
+        // remove white spaces larger than 1 with 1 white space.
+        .replace(/\s+/g, " ")
+        .split(" ");
+    // Step 2, stem away!
+    switch (args[1]) {
+        case "english": return words.map(function (w, i) { return ({
+            i: i,
+            o: w,
+            w: isNaN(w) ? (isStopWord(w) ? "" : metaphone(stemmer(w))) : w
+        }); });
+        case "english-stem": return words.map(function (w, i) { return ({
+            i: i,
+            o: w,
+            w: isNaN(w) ? (isStopWord(w) ? "" : stemmer(w)) : w
+        }); });
+        case "english-meta": return words.map(function (w, i) { return ({
+            i: i,
+            o: w,
+            w: isNaN(w) ? (isStopWord(w) ? "" : metaphone(w)) : w
+        }); });
+    }
+    // 2,684 words/ms
+    return words.map(function (w, i) { return ({ o: w, w: w, i: i }); });
+};
+/**
+ * Generate a TimeID for use in the database.
+ *
+ * @param {boolean} [ms]
+ * @returns {string}
+ */
+exports.timeid = function (ms) {
+    var time = Math.round((new Date().getTime()) / (ms ? 1 : 1000)).toString();
+    while (time.length < (ms ? 13 : 10)) {
+        time = "0" + time;
+    }
+    return time + "-" + (exports.random16Bits() + exports.random16Bits()).toString(16);
+};
+/**
+ * See if two arrays intersect.
+ *
+ * @param {any[]} arr1
+ * @param {any[]} arr2
+ * @returns {boolean}
+ */
+exports.intersect = function (arr1, arr2) {
+    if (!arr1 || !arr2)
+        return false;
+    if (!arr1.length || !arr2.length)
+        return false;
+    return (arr1 || []).filter(function (item) { return (arr2 || []).indexOf(item) !== -1; }).length > 0;
+};
+/**
+ * Generates a valid V4 UUID using the strongest crypto available.
+ *
+ * @returns {string}
+ */
+exports.uuid = function () {
+    var r, s, b = "";
+    return [b, b, b, b, b, b, b, b].reduce(function (prev, cur, i) {
+        r = exports.random16Bits();
+        s = (i === 3 ? 4 : (i === 4 ? (r % 16 & 0x3 | 0x8).toString(16) : b));
+        r = r.toString(16);
+        while (r.length < 4)
+            r = "0" + r;
+        return prev + ([2, 3, 4, 5].indexOf(i) > -1 ? "-" : b) + (s + r).slice(0, 4);
+    }, b);
+};
+/**
+ * A quick and dirty hashing function, turns a string into a md5 style hash.
+ * Stolen from https://github.com/darkskyapp/string-hash
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+exports.hash = function (str) {
+    var hash = 5381, i = str.length;
+    while (i) {
+        hash = (hash * 33) ^ str.charCodeAt(--i);
+    }
+    return (hash >>> 0).toString(16);
+};
+var idTypes = {
+    "int": function (value) { return value; },
+    "uuid": exports.uuid,
+    "timeId": function () { return exports.timeid(); },
+    "timeIdms": function () { return exports.timeid(true); }
+};
+/**
+ * Generate a row ID given the primary key type.
+ *
+ * @param {string} primaryKeyType
+ * @param {number} [incrimentValue]
+ * @returns {*}
+ */
+exports.generateID = function (primaryKeyType, incrimentValue) {
+    return idTypes[primaryKeyType] ? idTypes[primaryKeyType](incrimentValue || 1) : "";
+};
+/**
+ * Clean the arguments from an object given an array of arguments and their types.
+ *
+ * @param {string[]} argDeclarations
+ * @param {StdObject<any>} args
+ * @returns {StdObject<any>}
+ */
+exports.cleanArgs = function (argDeclarations, args) {
+    var a = {};
+    var i = argDeclarations.length;
+    while (i--) {
+        var k2 = argDeclarations[i].split(":");
+        if (k2.length > 1) {
+            a[k2[0]] = exports.cast(k2[1], args[k2[0]] || undefined);
+        }
+        else {
+            a[k2[0]] = args[k2[0]] || undefined;
+        }
+    }
+    return a;
+};
+/**
+ * Determine if a given value is a javascript object or not. Exludes Arrays, Functions, Null, Undefined, etc.
+ *
+ * @param {*} val
+ * @returns {boolean}
+ */
+exports.isObject = function (val) {
+    return Object.prototype.toString.call(val) === "[object Object]";
+};
+/**
+ * Cast a javascript variable to a given type. Supports typescript primitives and more specific types.
+ *
+ * @param {string} type
+ * @param {*} [val]
+ * @returns {*}
+ */
+exports.cast = function (type, val) {
+    if (type === "any" || type === "blob")
+        return val;
+    var t = typeof val;
+    if (t === "undefined" || val === null) {
+        return val;
+    }
+    var entityMap = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
+        "/": "&#x2F;",
+        "`": "&#x60;",
+        "=": "&#x3D;"
+    };
+    var types = function (type, val) {
+        switch (type) {
+            case "safestr": return types("string", val).replace(/[&<>"'`=\/]/gmi, function (s) { return entityMap[s]; });
+            case "int": return (t !== "number" || val % 1 !== 0) ? parseInt(val || 0) : val;
+            case "number":
+            case "float": return t !== "number" ? parseFloat(val || 0) : val;
+            case "any[]":
+            case "array": return Array.isArray(val) ? val : [];
+            case "uuid":
+            case "timeId":
+            case "timeIdms":
+            case "string": return t !== "string" ? String(val) : val;
+            case "object":
+            case "obj":
+            case "map": return exports.isObject(val) ? val : {};
+            case "boolean":
+            case "bool": return val === true;
+        }
+        return val;
+    };
+    var newVal = types(String(type || "").toLowerCase(), val);
+    if (type.indexOf("[]") !== -1) {
+        var arrayOf_1 = type.slice(0, type.lastIndexOf("[]"));
+        return (val || []).map(function (v) {
+            return exports.cast(arrayOf_1, v);
+        });
+    }
+    else if (newVal !== undefined) {
+        if (["int", "float", "number"].indexOf(type) > -1) {
+            return isNaN(newVal) ? 0 : newVal;
+        }
+        else {
+            return newVal;
+        }
+    }
+    return undefined;
+};
+/**
+ * Given a sorted array and a value, find where that value fits into the array.
+ *
+ * @param {any[]} arr
+ * @param {*} value
+ * @param {number} [startVal]
+ * @param {number} [endVal]
+ * @returns {number}
+ */
+exports.binarySearch = function (arr, value, startVal, endVal) {
+    var start = startVal || 0;
+    var end = endVal || arr.length;
+    if (arr[start] > value)
+        return start;
+    if (arr[end] < value)
+        return end + 1;
+    var m = Math.floor((start + end) / 2);
+    if (value === arr[m])
+        return m;
+    if (end - 1 === start)
+        return end;
+    if (value > arr[m])
+        return exports.binarySearch(arr, value, m, end);
+    if (value < arr[m])
+        return exports.binarySearch(arr, value, start, m);
+    return end;
+};
+/**
+ * Recursively freeze a javascript object to prevent it from being modified.
+ *
+ * @param {*} obj
+ * @returns
+ */
+exports.deepFreeze = function (obj) {
+    Object.getOwnPropertyNames(obj || {}).forEach(function (name) {
+        var prop = obj[name];
+        if (typeof prop === "object" && prop !== null) {
+            obj[name] = exports.deepFreeze(prop);
+        }
+    });
+    // Freeze self (no-op if already frozen)
+    return Object.freeze(obj);
+};
+/**
+ * "As the crow flies" or Haversine formula, used to calculate the distance between two points on a sphere.
+ *
+ * The unit used for the radius will determine the unit of the answer.  If the radius is in km, distance provided will be in km.
+ *
+ * The radius is in km by default.
+ *
+ * @param {number} lat1
+ * @param {number} lon1
+ * @param {number} lat2
+ * @param {number} lon2
+ * @param {number} radius
+ * @returns {number}
+ */
+exports.crowDistance = function (lat1, lon1, lat2, lon2, radius) {
+    if (radius === void 0) { radius = 6371; }
+    var deg2rad = function (deg) {
+        return deg * (Math.PI / 180);
+    };
+    var dLat = deg2rad(lat2 - lat1);
+    var dLon = deg2rad(lon2 - lon1);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return radius * c;
+};
+var objectPathCache = {};
+/**
+ * Take an object and a string describing a path like "value.length" or "val[length]" and safely get that value in the object.
+ *
+ * objQuery("hello", {hello: 2}, false) => 2
+ * objQuery("hello.length", {hello: [0]}, false) => 1
+ * objQuery("hello[0]", {hello: ["there"]}, false) => "there"
+ * objQuery("hello[0].length", {hello: ["there"]}, false) => 5
+ * objQuery("hello.color.length", {"hello.color": "blue"}, true) => 4
+ * objQuery("hello.color.length", {hello: {color: "blue"}}, false) => 4
+ *
+ * @param {string} pathQuery
+ * @param {*} object
+ * @param {boolean} [ignoreFirstPath]
+ * @returns {*}
+ */
+exports.objQuery = function (pathQuery, object, ignoreFirstPath) {
+    var val;
+    var safeGet = function (getPath, pathIdx, object) {
+        if (!getPath[pathIdx] || !object)
+            return object;
+        return safeGet(getPath, pathIdx + 1, object[getPath[pathIdx]]);
+    };
+    var cacheKey = pathQuery + (ignoreFirstPath ? "1" : "0");
+    // cached path arrays, skips subsequent identical path requests.
+    if (objectPathCache[cacheKey]) {
+        return safeGet(objectPathCache[cacheKey], 0, object);
+    }
+    var path = [];
+    // need to turn path into array of strings, ie value[hey][there].length => [value, hey, there, length];
+    path = pathQuery.indexOf("[") > -1 ?
+        // handle complex mix of dots and brackets like "users.value[meta][value].length"
+        [].concat.apply([], pathQuery.split(".").map(function (v) { return v.match(/([^\[]+)|\[([^\]]+)\]\[/gmi) || v; })).map(function (v) { return v.replace(/\[|\]/gmi, ""); }) :
+        // handle simple dot paths like "users.meta.value.length"
+        pathQuery.split(".");
+    // handle joins where each row is defined as table.column
+    if (ignoreFirstPath) {
+        var firstPath = path.shift() + "." + path.shift();
+        path.unshift(firstPath);
+    }
+    objectPathCache[cacheKey] = path;
+    return safeGet(objectPathCache[cacheKey], 0, object);
+};
+var uid = 0;
+var storage = {};
+var slice = Array.prototype.slice;
+var message = "setMsg";
+var canPost = typeof window !== "undefined" && window.postMessage && window.addEventListener;
+var fastApply = function (args) {
+    return args[0].apply(null, slice.call(args, 1));
+};
+var callback = function (event) {
+    var key = event.data;
+    var data;
+    if (typeof key === "string" && key.indexOf(message) === 0) {
+        data = storage[key];
+        if (data) {
+            delete storage[key];
+            fastApply(data);
+        }
+    }
+};
+if (canPost) {
+    window.addEventListener("message", callback);
+}
+var setImmediatePolyfill = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    var id = uid++;
+    var key = message + id;
+    storage[key] = args;
+    window.postMessage(key, "*");
+    return id;
+};
+exports.setFast = (function () {
+    return canPost ? setImmediatePolyfill : // built in window messaging (pretty fast, not bad)
+        function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            setTimeout(function () {
+                fastApply(args);
+            }, 0);
+        };
+})();
+//# sourceMappingURL=utilities.js.map
+},{"metaphone":"node_modules/metaphone/index.js","stemmer":"node_modules/stemmer/index.js","lie-ts":"node_modules/lie-ts/index.js"}],"node_modules/nano-sql/lib/query/std-query.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var utilities_1 = require("../utilities");
+var blankRow = { affectedRowPKS: [], affectedRows: [] };
+var runQuery = function (self, complete, error) {
+    if (self._query.state === "pending") {
+        self._query.state = "executing";
+    }
+    else {
+        error(new Error("nSQL: Can't call query twice!"));
+        return;
+    }
+    if (self._db.plugins.length === 1 && !self._db.hasAnyEvents && !self._query.ttl) {
+        // fast query path, only used if there's a single plugin, no event listeners and no ttl
+        self._db.plugins[0].doExec(self._query, function (newQ) {
+            self._query = newQ;
+            if (self._db.hasPK[self._query.table]) {
+                complete(self._query.result);
+            }
+            else {
+                complete(self._query.result.map(function (r) { return (__assign({}, r, { _id_: undefined })); }));
+            }
+        }, error);
+    }
+    else {
+        utilities_1.fastCHAIN(self._db.plugins, function (p, i, nextP, pluginErr) {
+            if (p.doExec) {
+                p.doExec(self._query, function (newQ) {
+                    self._query = newQ || self._query;
+                    nextP();
+                }, pluginErr);
+            }
+            else {
+                nextP();
+            }
+        }).then(function () {
+            if (self._db.hasPK[self._query.table]) {
+                complete(self._query.result);
+            }
+            else {
+                complete(self._query.result.map(function (r) { return (__assign({}, r, { _id_: undefined })); }));
+            }
+            if (self._db.hasAnyEvents || self._db.pluginHasDidExec || self._query.ttl) {
+                var eventTypes = (function () {
+                    switch (self._query.action) {
+                        case "select": return [self._query.action];
+                        case "delete":
+                        case "upsert":
+                        case "drop": return [self._query.action, "change"];
+                        default: return [];
+                    }
+                })();
+                var hasLength = self._query.result && self._query.result.length;
+                var event_1 = {
+                    table: self._query.table,
+                    query: self._query,
+                    time: Date.now(),
+                    result: self._query.result,
+                    notes: [],
+                    types: eventTypes,
+                    actionOrView: self._AV,
+                    transactionID: self._query.transaction ? self._query.queryID : undefined,
+                    affectedRowPKS: hasLength ? (self._query.result[0] || blankRow).affectedRowPKS : [],
+                    affectedRows: hasLength ? (self._query.result[0] || blankRow).affectedRows : [],
+                };
+                if ((event_1.affectedRowPKS || []).length && self._query.ttl) {
+                    var TTL_1 = Date.now() + ((self._query.ttl || 0) * 1000);
+                    utilities_1.fastCHAIN(event_1.affectedRowPKS || [], function (pk, i, next) {
+                        self._db.query("upsert", {
+                            key: self._query.table + "." + pk,
+                            table: self._query.table,
+                            cols: self._query.ttlCols,
+                            date: TTL_1
+                        }).manualExec({ table: "_ttl" }).then(next);
+                    }).then(function () {
+                        self._db._checkTTL();
+                    });
+                }
+                utilities_1.fastCHAIN(self._db.plugins, function (p, i, nextP) {
+                    if (p.didExec) {
+                        p.didExec(event_1, function (newE) {
+                            event_1 = newE;
+                            nextP();
+                        });
+                    }
+                    else {
+                        nextP();
+                    }
+                }).then(function () {
+                    if (!self._query.transaction) {
+                        self._db.triggerEvent(event_1);
+                    }
+                });
+            }
+        }).catch(error);
+    }
+};
+var debounceTimers = {};
+// tslint:disable-next-line
+var _NanoSQLQuery = /** @class */ (function () {
+    function _NanoSQLQuery(db, table, queryAction, queryArgs, actionOrView) {
+        this._db = db;
+        this._AV = actionOrView || "";
+        this._query = {
+            table: table,
+            comments: [],
+            state: "pending",
+            queryID: Date.now() + "." + this._db.fastRand().toString(16),
+            action: queryAction,
+            actionArgs: queryArgs,
+            result: []
+        };
+    }
+    /**
+     * Used to select specific rows based on a set of conditions.
+     * You can pass in a single array with a conditional statement or an array of arrays seperated by "and", "or" for compound selects.
+     * A single where statement has the column name on the left, an operator in the middle, then a comparison on the right.
+     *
+     * Where Examples:
+     *
+     * ```ts
+     * .where(['username','=','billy'])
+     * .where(['balance','>',20])
+     * .where(['catgory','IN',['jeans','shirts']])
+     * .where([['name','=','scott'],'and',['balance','>',200]])
+     * .where([['id','>',50],'or',['postIDs','IN',[12,20,30]],'and',['name','LIKE','Billy']])
+     * ```
+     *
+     * @param {(Array<any|Array<any>>)} args
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.where = function (args) {
+        this._query.where = args;
+        return this;
+    };
+    /**
+     * Query to get a specific range of rows very efficiently.
+     *
+     * @param {number} limit
+     * @param {number} offset
+     * @returns
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.range = function (limit, offset) {
+        this._query.range = [limit, offset];
+        return this;
+    };
+    /**
+     * When using "from" features specific what primary keys to update.
+     *
+     * @param {any[]} primaryKeys
+     * @returns {_NanoSQLQuery}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.on = function (primaryKeys) {
+        this._query.on = primaryKeys;
+        return this;
+    };
+    /**
+     * Debounce aggregate function calls.
+     *
+     * @param {number} ammt
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.debounce = function (ms) {
+        this._query.debounce = ms || 250;
+        return this;
+    };
+    /**
+     * Trigge ORM queries for all result rows.
+     *
+     * @param {((string|ORMArgs)[])} [ormArgs]
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.orm = function (ormArgs) {
+        this._query.orm = ormArgs;
+        return this;
+    };
+    /**
+     * Order the results by a given column or columns.
+     *
+     * Examples:
+     *
+     * ```ts
+     * .orderBy({username:"asc"}) // order by username column, ascending
+     * .orderBy({balance:"desc",lastName:"asc"}) // order by balance descending, then lastName ascending.
+     * ```
+     *
+     * @param {Object} args
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.orderBy = function (args) {
+        this._query.orderBy = args;
+        return this;
+    };
+    /**
+     * Group By command, typically used with an aggregate function.
+     *
+     * Example:
+     *
+     * ```ts
+     * nSQL("users").query("select",["favoriteColor","count(*)"]).groupBy({"favoriteColor":"asc"}).exec();
+     * ```
+     *
+     * This will provide a list of all favorite colors and how many each of them are in the db.
+     *
+     * @param {({[key: string]:"asc"|"desc"})} columns
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.groupBy = function (columns) {
+        this._query.groupBy = columns;
+        return this;
+    };
+    /**
+     * Having statement, used to filter Group BY statements. Syntax is identical to where statements.
+     *
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.having = function (args) {
+        if (!args.length || !Array.isArray(args)) {
+            this._error = "Having condition requires an array!";
+        }
+        this._query.having = args;
+        return this;
+    };
+    /**
+     * Join command.
+     *
+     * Example:
+     *
+     * ```ts
+     *  nSQL("orders")
+     *  .query("select", ["orders.id","orders.title","users.name"])
+     *  .where(["orders.status","=","complete"])
+     *  .orderBy({"orders.date":"asc"})
+     *  .join({
+     *      type:"inner",
+     *      table:"users",
+     *      where:["orders.customerID","=","user.id"]
+     *  }).exec();
+     *```
+     * A few notes on the join command:
+     * 1. You muse use dot notation with the table names in all "where", "select", "orderby", and "groupby" arguments.
+     * 2. Possible join types are `inner`, `left`, `right`, and `outer`.
+     * 3. The "table" argument lets you determine the data on the right side of the join.
+     * 4. The "where" argument lets you set what conditions the tables are joined on.
+     *
+     *
+     *
+     * @param {JoinArgs} args
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.join = function (args) {
+        var _this = this;
+        if (Array.isArray(this._query.table)) {
+            throw new Error("Can't JOIN with instance table!");
+        }
+        var err = "Join commands requires table and type arguments!";
+        if (Array.isArray(args)) {
+            args.forEach(function (arg) {
+                if (!arg.table || !arg.type) {
+                    _this._error = err;
+                }
+            });
+        }
+        else {
+            if (!args.table || !args.type) {
+                this._error = err;
+            }
+        }
+        this._query.join = args;
+        return this;
+    };
+    /**
+     * Limits the result to a specific amount.  Example:
+     *
+     * ```ts
+     * .limit(20) // Limit to the first 20 results
+     * ```
+     *
+     * @param {number} args
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.limit = function (args) {
+        this._query.limit = args;
+        return this;
+    };
+    /**
+     * Perform a trie search on a trie column.
+     *
+     * @param {string} stringToSearch
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.trieSearch = function (column, stringToSearch) {
+        this._query.trie = { column: column, search: stringToSearch };
+        return this;
+    };
+    /**
+     * Pass comments along with the query.
+     * These comments will be emitted along with the other query datay by the event system, useful for tracking queries.
+     *
+     * @param {string} comment
+     * @returns {_NanoSQLQuery}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.comment = function (comment) {
+        this._query.comments.push(comment);
+        return this;
+    };
+    /**
+     * Perform custom actions supported by plugins.
+     *
+     * @param {...any[]} args
+     * @returns {_NanoSQLQuery}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.extend = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        this._query.extend = args;
+        return this;
+    };
+    /**
+     * Offsets the results by a specific amount from the beginning.  Example:
+     *
+     * ```ts
+     * .offset(10) // Skip the first 10 results.
+     * ```
+     *
+     * @param {number} args
+     * @returns {_NanoSQLQuery}
+     *
+     * @memberOf _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.offset = function (args) {
+        this._query.offset = args;
+        return this;
+    };
+    /**
+     * Export the built query object.
+     *
+     * @returns {IdbQueryExec}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.emit = function () {
+        return this._query;
+    };
+    /**
+     * Delete inserted/updated row after a given time.
+     *
+     * Provide array of column names to just clear specific columns.
+     * Leave array empty to delete entire row
+     *
+     * @param {number} [seconds=60]
+     * @returns {_NanoSQLQuery}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.ttl = function (seconds, cols) {
+        if (seconds === void 0) { seconds = 60; }
+        if (this._query.action !== "upsert") {
+            throw new Error("nSQL: Can only do ttl on upsert queries!");
+        }
+        this._query.ttl = seconds;
+        this._query.ttlCols = cols || [];
+        return this;
+    };
+    /**
+     * Export the current query to a CSV file, use in place of "exec()";
+     *
+     * Example:
+     * nSQL("users").query("select").toCSV(true).then(function(csv, db) {
+     *   console.log(csv);
+     *   // Returns something like:
+     *   id,name,pass,postIDs
+     *   1,"scott","1234","[1,2,3,4]"
+     *   2,"jeb","5678","[5,6,7,8]"
+     * });
+     *
+     * @param {boolean} [headers]
+     * @returns {Promise<string>}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    _NanoSQLQuery.prototype.toCSV = function (headers) {
+        var _this = this;
+        var t = this;
+        return new Promise(function (res, rej) {
+            t.exec().then(function (json) {
+                var useHeaders = typeof _this._query.table === "string" ? _this._db.dataModels[_this._query.table].map(function (k) { return k.key; }) : undefined;
+                res(t._db.JSONtoCSV(json, headers || false, useHeaders));
+            });
+        });
+    };
+    /**
+     * Pass in a query object to manually execute a query against the system.
+     *
+     * @param {IdbQuery} query
+     * @param {(err: any, result: any[]) => void} [complete]
+     * @returns {Promise<any>}
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.manualExec = function (query) {
+        this._query = __assign({}, this._query, query);
+        return this.exec();
+    };
+    /**
+     * Handle denormalization requests.
+     *
+     * @param {string} action
+     * @returns
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.denormalizationQuery = function (action) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            switch (action) {
+                case "tocolumn":
+                    var fnsToRun_1 = {};
+                    if (_this._query.actionArgs && _this._query.actionArgs.length) {
+                        Object.keys(_this._db.toColRules[_this._query.table]).filter(function (c) { return _this._query.actionArgs.indexOf(c) !== -1; }).forEach(function (col) {
+                            fnsToRun_1[col] = _this._db.toColRules[_this._query.table][col];
+                        });
+                    }
+                    else {
+                        fnsToRun_1 = _this._db.toColRules[_this._query.table];
+                    }
+                    _this._query.action = "select";
+                    _this._query.actionArgs = undefined;
+                    var columns_1 = Object.keys(fnsToRun_1);
+                    runQuery(_this, function (rows) {
+                        utilities_1.fastCHAIN(rows, function (row, i, done) {
+                            if (Object.isFrozen(row)) {
+                                row = utilities_1._assign(row);
+                            }
+                            utilities_1.fastALL(columns_1, function (col, i, next) {
+                                var fn = _this._db.toColFns[_this._query.table][fnsToRun_1[col][0]];
+                                if (!fn) {
+                                    next();
+                                    return;
+                                }
+                                fn.apply(null, [row[col], function (newValue) {
+                                        row[col] = newValue;
+                                        next();
+                                    }].concat(fnsToRun_1[col].filter(function (v, i) { return i > 0; }).map(function (c) { return row[c]; })));
+                            }).then(function () {
+                                _this._db.query("upsert", row).manualExec({ table: _this._query.table }).then(done).catch(done);
+                            });
+                        }).then(function () {
+                            res([{ msg: rows.length + " rows modified" }]);
+                        });
+                    }, rej);
+                    break;
+                case "torow":
+                    var fnKey = (_this._query.actionArgs || "").replace("()", "");
+                    if (_this._db.toRowFns[_this._query.table] && _this._db.toRowFns[_this._query.table][fnKey]) {
+                        var fn_1 = _this._db.toRowFns[_this._query.table][fnKey];
+                        var PK_1 = _this._db._tablePKs[_this._query.table];
+                        if (_this._query.on && _this._query.on.length) {
+                            utilities_1.fastALL(_this._query.on, function (pk, i, done) {
+                                fn_1(pk, {}, function (newRow) {
+                                    newRow[PK_1] = pk;
+                                    _this._db.query("upsert", newRow).manualExec({ table: _this._query.table }).then(done).catch(done);
+                                });
+                            }).then(function () {
+                                res([{ msg: (_this._query.on || []).length + " rows modified or added." }]);
+                            });
+                            return;
+                        }
+                        _this._query.action = "select";
+                        _this._query.actionArgs = undefined;
+                        runQuery(_this, function (rows) {
+                            utilities_1.fastALL(rows, function (row, i, done) {
+                                if (Object.isFrozen(row)) {
+                                    row = utilities_1._assign(row);
+                                }
+                                fn_1(row[PK_1], row, function (newRow) {
+                                    newRow[PK_1] = row[PK_1];
+                                    _this._db.query("upsert", newRow).manualExec({ table: _this._query.table }).then(done).catch(done);
+                                });
+                            }).then(function () {
+                                res([{ msg: rows.length + " rows modified" }]);
+                            });
+                        }, rej);
+                    }
+                    else {
+                        rej("No function " + _this._query.actionArgs + " found to perform updates!");
+                        return;
+                    }
+                    break;
+            }
+        });
+    };
+    /**
+     * Pagination via cursor
+     *
+     * @param {number} [pageSize=20]
+     * @returns
+     * @memberof _NanoSQLQuery
+     */
+    _NanoSQLQuery.prototype.getCursor = function (pageSize) {
+        var _this = this;
+        if (pageSize === void 0) { pageSize = 20; }
+        return new Promise(function (res, rej) {
+            if (_this._query.offset || _this._query.limit || _this._query.range) {
+                rej("nSQL: Can't use limit/offset with getCursor!");
+                return;
+            }
+            var idx = -1;
+            res(function () {
+                idx++;
+                return _this.manualExec(__assign({}, _this._query, { range: [pageSize, pageSize * idx] }));
+            });
+        });
+    };
+    /**
+     * Executes the current pending query to the db engine, returns a promise with the rows as objects in an array.
+     *
+     * Example:
+     * nSQL("users").query("select").exec().then(function(rows) {
+     *     console.log(rows) // <= [{id:1,username:"Scott",password:"1234"},{id:2,username:"Jeb",password:"1234"}]
+     *     return nSQL().query("upsert",{password:"something more secure"}).where(["id","=",1]).exec();
+     * }).then(function(rows) {
+     *  ...
+     * })...
+     *
+     * @returns {(Promise<Array<Object>>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    _NanoSQLQuery.prototype.exec = function () {
+        var _this = this;
+        // handle instance queries
+        if (Array.isArray(this._query.table)) {
+            return new Promise(function (res, rej) {
+                if (_this._db.iB.doExec) {
+                    _this._db.iB.doExec(_this._query, function (q) {
+                        res(q.result);
+                    }, rej);
+                }
+            });
+        }
+        if (this._query.table === "*")
+            return Promise.resolve([]);
+        var t = this;
+        var a = (this._query.action || "").toLowerCase().trim();
+        if (["tocolumn", "torow"].indexOf(a) > -1) {
+            if (this._query.debounce) {
+                var denormalizationKey_1 = utilities_1.hash(JSON.stringify([this._query.table, a, this._query.actionArgs, this._query.on, this._query.where].filter(function (r) { return r; })));
+                return new Promise(function (res, rej) {
+                    if (debounceTimers[denormalizationKey_1]) {
+                        clearTimeout(debounceTimers[denormalizationKey_1]);
+                    }
+                    debounceTimers[denormalizationKey_1] = setTimeout(function () {
+                        _this.denormalizationQuery(a).then(res).catch(rej);
+                    }, _this._query.debounce);
+                });
+            }
+            return this.denormalizationQuery(a);
+        }
+        if (["select", "upsert", "delete", "drop", "show tables", "describe"].indexOf(a) > -1) {
+            var newArgs = this._query.actionArgs || (a === "select" ? [] : {});
+            var setArgs_1 = [];
+            if (a === "upsert") {
+                if (Array.isArray(newArgs)) {
+                    setArgs_1 = newArgs;
+                }
+                else {
+                    setArgs_1 = [newArgs];
+                }
+                setArgs_1.forEach(function (nArgs, i) {
+                    // Do Row Filter
+                    if (_this._db.rowFilters[_this._query.table]) {
+                        setArgs_1[i] = _this._db.rowFilters[_this._query.table](setArgs_1[i]);
+                    }
+                    // Cast row types and remove columns that don't exist in the data model
+                    var inputArgs = {};
+                    var models = _this._db.dataModels[_this._query.table];
+                    var k = 0;
+                    while (k < models.length) {
+                        if (setArgs_1[i][models[k].key] !== undefined) {
+                            inputArgs[models[k].key] = utilities_1.cast(models[k].type, setArgs_1[i][models[k].key]);
+                        }
+                        k++;
+                    }
+                    // insert wildcard columns
+                    if (_this._db.skipPurge[_this._query.table]) {
+                        var modelColumns_1 = models.map(function (m) { return m.key; });
+                        var columns = Object.keys(setArgs_1[i]).filter(function (c) { return modelColumns_1.indexOf(c) === -1; }); // wildcard columns
+                        columns.forEach(function (col) {
+                            inputArgs[col] = setArgs_1[i][col];
+                        });
+                    }
+                    setArgs_1[i] = inputArgs;
+                });
+            }
+            else {
+                setArgs_1 = this._query.actionArgs;
+            }
+            this._query.action = a;
+            this._query.actionArgs = this._query.actionArgs ? setArgs_1 : undefined;
+        }
+        else {
+            return Promise.reject(new Error("nSQL: No valid database action!"));
+        }
+        return new Promise(function (res, rej) {
+            var runExec = function () {
+                if (!t._db.plugins.length) {
+                    t._error = "nSQL: No plugins, nothing to do!";
+                }
+                if (t._error) {
+                    rej(t._error);
+                    return;
+                }
+                if (_this._db.queryMod) {
+                    var pr = _this._db.queryMod(_this._query, function (newQ) {
+                        _this._query = newQ;
+                        runQuery(_this, res, rej);
+                    });
+                    if (typeof pr !== "undefined") {
+                        pr.then(function (_query) {
+                            _this._query = _query;
+                            runQuery(_this, res, rej);
+                        })
+                            .catch(rej);
+                    }
+                }
+                else {
+                    runQuery(_this, res, rej);
+                }
+            };
+            if (_this._db.isConnected || _this._query.table.indexOf("_") === 0) {
+                runExec();
+            }
+            else {
+                _this._db.onConnected(runExec);
+            }
+        });
+    };
+    return _NanoSQLQuery;
+}());
+exports._NanoSQLQuery = _NanoSQLQuery;
+//# sourceMappingURL=std-query.js.map
+},{"../utilities":"node_modules/nano-sql/lib/utilities.js"}],"node_modules/nano-sql/lib/query/transaction.js":[function(require,module,exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+// tslint:disable-next-line
+var _NanoSQLTransactionQuery = /** @class */ (function () {
+    function _NanoSQLTransactionQuery(action, args, table, queries, transactionID) {
+        this.thisQ = {
+            state: "pending",
+            table: table,
+            action: action,
+            actionArgs: args,
+            queryID: transactionID,
+            transaction: true,
+            result: [],
+            comments: []
+        };
+        this._queries = queries;
+    }
+    _NanoSQLTransactionQuery.prototype.where = function (args) {
+        this.thisQ.where = args;
+        return this;
+    };
+    _NanoSQLTransactionQuery.prototype.exec = function () {
+        this._queries.push(this.thisQ);
+    };
+    return _NanoSQLTransactionQuery;
+}());
+exports._NanoSQLTransactionQuery = _NanoSQLTransactionQuery;
+//# sourceMappingURL=transaction.js.map
+},{}],"node_modules/really-small-events/src/index.js":[function(require,module,exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var ReallySmallEvents = (function () {
+    function ReallySmallEvents() {
+        this.eventListeners = {};
+    }
+    ReallySmallEvents.prototype.on = function (event, callback) {
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        this.eventListeners[event].push(callback);
+    };
+    ReallySmallEvents.prototype.off = function (event, callback) {
+        var _this = this;
+        if (this.eventListeners[event] && this.eventListeners[event].length) {
+            this.eventListeners[event].forEach(function (cb, idx) {
+                if (cb === callback) {
+                    _this.eventListeners[event].splice(idx, 1);
+                }
+            });
+        }
+    };
+    ReallySmallEvents.prototype.trigger = function (event) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        if (this.eventListeners[event]) {
+            this.eventListeners[event].forEach(function (cb) { return cb.apply(void 0, args); });
+        }
+    };
+    return ReallySmallEvents;
+}());
+exports.ReallySmallEvents = ReallySmallEvents;
+exports.RSE = new ReallySmallEvents();
+
+},{}],"node_modules/fuzzysearch/index.js":[function(require,module,exports) {
+'use strict';
+
+function fuzzysearch (needle, haystack) {
+  var tlen = haystack.length;
+  var qlen = needle.length;
+  if (qlen > tlen) {
+    return false;
+  }
+  if (qlen === tlen) {
+    return needle === haystack;
+  }
+  outer: for (var i = 0, j = 0; i < qlen; i++) {
+    var nch = needle.charCodeAt(i);
+    while (j < tlen) {
+      if (haystack.charCodeAt(j++) === nch) {
+        continue outer;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+module.exports = fuzzysearch;
+
+},{}],"node_modules/levenshtein-edit-distance/index.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = levenshtein;
+
+/* eslint-disable no-nested-ternary */
+
+var cache = [];
+var codes = [];
+
+function levenshtein(value, other, insensitive) {
+  var length;
+  var lengthOther;
+  var code;
+  var result;
+  var distance;
+  var distanceOther;
+  var index;
+  var indexOther;
+
+  if (value === other) {
+    return 0;
+  }
+
+  length = value.length;
+  lengthOther = other.length;
+
+  if (length === 0) {
+    return lengthOther;
+  }
+
+  if (lengthOther === 0) {
+    return length;
+  }
+
+  if (insensitive) {
+    value = value.toLowerCase();
+    other = other.toLowerCase();
+  }
+
+  index = 0;
+
+  while (index < length) {
+    codes[index] = value.charCodeAt(index);
+    cache[index] = ++index;
+  }
+
+  indexOther = 0;
+
+  while (indexOther < lengthOther) {
+    code = other.charCodeAt(indexOther);
+    result = distance = indexOther++;
+    index = -1;
+
+    while (++index < length) {
+      distanceOther = code === codes[index] ? distance : distance + 1;
+      distance = cache[index];
+      cache[index] = result = distance > result ?
+        distanceOther > result ? result + 1 : distanceOther :
+        distanceOther > distance ? distance + 1 : distanceOther;
+    }
+  }
+
+  return result;
+}
+
+},{}],"node_modules/nano-sql/lib/database/query.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var index_1 = require("../index");
+var utilities_1 = require("../utilities");
+var fuzzy = require("fuzzysearch");
+var levenshtein = require("levenshtein-edit-distance");
+var queryObj = {
+    select: function (self, next, error) {
+        self._select(next, error);
+    },
+    upsert: function (self, next, error) {
+        if (self._store._doCache) {
+            self._upsert(next, error);
+        }
+        else {
+            self._store.queue.add(self._query.table, function (done) {
+                self._upsert(function () {
+                    done();
+                    next(self._query);
+                }, error);
+            });
+        }
+    },
+    delete: function (self, next, error) {
+        if (self._store._doCache) {
+            self._delete(next, error);
+        }
+        else {
+            self._store.queue.add(self._query.table, function (done) {
+                self._delete(function () {
+                    done();
+                    next(self._query);
+                }, error);
+            });
+        }
+    },
+    drop: function (self, next, error) {
+        if (self._store._doCache) {
+            self._drop(next, error);
+        }
+        else {
+            self._store.queue.add(self._query.table, function (done) {
+                self._drop(function () {
+                    done();
+                    next(self._query);
+                }, error);
+            });
+        }
+    },
+    "show tables": function (self, next, error) {
+        self._query.result = Object.keys(self._store.tableInfo);
+        next(self._query);
+    },
+    describe: function (self, next, error) {
+        if (typeof self._query.table !== "string") {
+            next(self._query);
+            return;
+        }
+        self._query.result = self._store.models[self._query.table] ? utilities_1._assign(self._store.models[self._query.table]) : [{ error: "Table does not exist" }];
+        next(self._query);
+    },
+};
+/**
+ * A new Storage Query class is inilitized for every query, performing the actions
+ * against the storage class itself to get the desired outcome.
+ *
+ * @export
+ * @class _NanoSQLStorageQuery
+ */
+// tslint:disable-next-line
+var _NanoSQLStorageQuery = /** @class */ (function () {
+    function _NanoSQLStorageQuery(_store) {
+        this._store = _store;
+    }
+    /**
+     * Execute the query against this class.
+     *
+     * @param {IdbQuery} query
+     * @param {(q: IdbQuery) => void} next
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype.doQuery = function (query, next, error) {
+        this._query = query;
+        this._isInstanceTable = Array.isArray(query.table);
+        queryObj[query.action](this, next, error);
+    };
+    /**
+     * Retreive the selected rows for this query, works for instance tables and standard ones.
+     *
+     * @internal
+     * @param {(rows: DBRow[]) => void} complete
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._getRows = function (onRows, error) {
+        if (this._isInstanceTable) {
+            new InstanceSelection(this._query, this._store._nsql).getRows(onRows, error);
+        }
+        else {
+            new _RowSelection(this, this._query, this._store, function (rows) {
+                onRows(rows.filter(function (r) { return r; }));
+            }, error);
+        }
+    };
+    /**
+     * Initilze a SELECT query.
+     *
+     * @internal
+     * @param {(q: IdbQuery) => void} next
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._select = function (next, error) {
+        var _this = this;
+        this._hash = JSON.stringify(__assign({}, this._query, { queryID: null }));
+        var canCache = !this._query.join && !this._query.orm && this._store._doCache && !Array.isArray(this._query.table);
+        // Query cache
+        if (canCache && this._store._cache[this._query.table][this._hash]) {
+            if (this._store._cache[this._query.table][this._hash].time < this._store._cacheTime[this._query.table]) {
+                this._query.result = this._store._cache[this._query.table][this._hash].rows;
+                next(this._query);
+                return;
+            }
+        }
+        this._getRows(function (rows) {
+            // No query arguments, we can skip the whole mutation selection class
+            if (!["having", "orderBy", "offset", "limit", "actionArgs", "groupBy", "orm", "join"].filter(function (k) { return _this._query[k]; }).length) {
+                if (canCache)
+                    _this._store._cache[_this._query.table][_this._hash] = { rows: rows, time: Date.now() };
+                _this._query.result = rows;
+                next(_this._query);
+            }
+            else {
+                new _MutateSelection(_this._query, _this._store)._executeQueryArguments(rows, function (resultRows) {
+                    if (canCache)
+                        _this._store._cache[_this._query.table][_this._hash] = { rows: resultRows, time: Date.now() };
+                    _this._query.result = resultRows;
+                    next(_this._query);
+                }, error);
+            }
+        }, error);
+    };
+    _NanoSQLStorageQuery.prototype._updateORMRows = function (relation, fromPKs, add, primaryKey, complete) {
+        var _this = this;
+        var fromPk = this._store.tableInfo[relation._fromTable]._pk;
+        this._store._read(relation._fromTable, fromPKs, function (rows) {
+            utilities_1.fastALL(rows, function (row, i, rowDone) {
+                var newRow = Object.isFrozen(row) ? utilities_1._assign(row) : row;
+                if (relation._fromType === "array") {
+                    newRow[relation._fromColumn] = newRow[relation._fromColumn] || [];
+                    var idxOf = newRow[relation._fromColumn].indexOf(primaryKey);
+                    if (add) { // add
+                        if (idxOf === -1) {
+                            newRow[relation._fromColumn].push(primaryKey);
+                        }
+                        else {
+                            rowDone();
+                        }
+                    }
+                    else { // remove
+                        if (idxOf !== -1) {
+                            newRow[relation._fromColumn].splice(idxOf, 1);
+                        }
+                        else {
+                            rowDone();
+                        }
+                    }
+                    newRow[relation._fromColumn].sort();
+                }
+                else {
+                    if (add) { // add
+                        newRow[relation._fromColumn] = primaryKey;
+                    }
+                    else { // remove
+                        newRow[relation._fromColumn] = null;
+                    }
+                }
+                _this._store._nsql.query("upsert", newRow).comment("_orm_skip").manualExec({ table: relation._fromTable }).then(rowDone);
+            }).then(complete);
+        });
+    };
+    _NanoSQLStorageQuery.prototype._syncORM = function (type, oldRows, newRows, complete) {
+        var _this = this;
+        if (!this._store._hasORM) {
+            complete();
+            return;
+        }
+        var useRelations = this._store._relToTable[this._query.table];
+        if (this._query.comments.indexOf("_orm_skip") !== -1) {
+            complete();
+            return;
+        }
+        if (!useRelations || !useRelations.length) {
+            complete();
+            return;
+        }
+        // go over every relation and every changed row to make the needed updates.
+        var cnt = Math.max(oldRows.length, newRows.length);
+        var arra = [];
+        while (cnt--)
+            arra.push(" ");
+        utilities_1.fastCHAIN(arra, function (v, idx, rowDone) {
+            utilities_1.fastALL(useRelations, function (relation, k, relationDone) {
+                var equals = function (val1, val2) {
+                    if (Array.isArray(val1) && Array.isArray(val2)) {
+                        if (val1.length !== val2.length) {
+                            return false;
+                        }
+                        return val1.filter(function (v, i) { return v !== val2[i]; }).length > 0;
+                    }
+                    else {
+                        return val1 === val2;
+                    }
+                };
+                switch (type) {
+                    case "del":
+                        var delPrimarykey = oldRows[idx][_this._store.tableInfo[_this._query.table]._pk];
+                        var updateIDs = relation._thisType === "array" ? (oldRows[idx][relation._thisColumn] || []) : ([oldRows[idx][relation._thisColumn]].filter(function (v) { return v; }));
+                        _this._updateORMRows(relation, updateIDs, false, delPrimarykey, relationDone);
+                        break;
+                    case "add":
+                        var primaryKey_1 = newRows[idx][_this._store.tableInfo[_this._query.table]._pk];
+                        // possibly update existing relation
+                        // if adding oldRows[idx] is possibly undefined (if theres no previouse row record)
+                        if (oldRows[idx]) {
+                            // previouse record exists
+                            if (equals(oldRows[idx][relation._thisColumn], newRows[idx][relation._thisColumn])) {
+                                // no update needed
+                                relationDone();
+                            }
+                            else {
+                                if (relation._thisType === "array") {
+                                    var addIds = (newRows[idx][relation._thisColumn] || []).filter(function (v) { return (oldRows[idx][relation._thisColumn] || []).indexOf(v) === -1; });
+                                    var removeIds = (oldRows[idx][relation._thisColumn] || []).filter(function (v) { return (newRows[idx][relation._thisColumn] || []).indexOf(v) === -1; });
+                                    utilities_1.fastALL([addIds, removeIds], function (list, i, done) {
+                                        _this._updateORMRows(relation, list, i === 0, primaryKey_1, done);
+                                    }).then(relationDone);
+                                }
+                                else {
+                                    var addRelation = function () {
+                                        // add new relation
+                                        if (newRows[idx][relation._thisColumn] !== null && newRows[idx][relation._thisColumn] !== undefined) {
+                                            _this._updateORMRows(relation, [newRows[idx][relation._thisColumn]], true, primaryKey_1, relationDone);
+                                        }
+                                        else {
+                                            // no new relation
+                                            relationDone();
+                                        }
+                                    };
+                                    // remove old connection
+                                    if (oldRows[idx][relation._thisColumn] !== null && oldRows[idx][relation._thisColumn] !== undefined) {
+                                        _this._updateORMRows(relation, [oldRows[idx][relation._thisColumn]], false, primaryKey_1, addRelation);
+                                    }
+                                    else {
+                                        // no old connection, just add the new one
+                                        addRelation();
+                                    }
+                                }
+                            }
+                        }
+                        else { // new relation
+                            var valuesToAdd = relation._thisType === "array" ? (newRows[idx][relation._thisColumn] || []) : ([newRows[idx][relation._thisColumn]].filter(function (v) { return v; }));
+                            if (valuesToAdd && valuesToAdd.length) {
+                                _this._updateORMRows(relation, valuesToAdd, true, primaryKey_1, relationDone);
+                            }
+                            else {
+                                relationDone();
+                            }
+                        }
+                        break;
+                }
+            }).then(rowDone);
+        }).then(complete);
+    };
+    _NanoSQLStorageQuery.prototype._tokenizer = function (column, value) {
+        var args = this._store.tableInfo[this._query.table]._searchColumns[column];
+        if (!args) {
+            return [];
+        }
+        var userTokenizer = this._store._nsql.getConfig().tokenizer;
+        if (userTokenizer) {
+            var tokens = userTokenizer(this._query.table, column, args, value);
+            if (tokens !== false)
+                return tokens;
+        }
+        return utilities_1.tokenizer(this._query.table, column, args, value);
+    };
+    _NanoSQLStorageQuery.prototype._clearFromSearchIndex = function (pk, rowData, complete) {
+        var _this = this;
+        var table = this._query.table;
+        var columns = Object.keys(this._store.tableInfo[table]._searchColumns);
+        // No search indexes on this table OR
+        // update doesn't include indexed columns
+        if (columns.length === 0) {
+            complete();
+            return;
+        }
+        var tokenTable = "_" + table + "_search_tokens_";
+        // const searchTable = "_" + table + "_search_";
+        utilities_1.fastALL(columns, function (col, i, next, colError) {
+            var tokens = _this._tokenizer(col, rowData[col]);
+            var wordCache = {};
+            tokens.forEach(function (t) {
+                wordCache[t.w] = t.o;
+            });
+            // get token cache for this row and column
+            _this._store.adapterRead(tokenTable + col, pk, function (row) {
+                if (!row) {
+                    next();
+                    return;
+                }
+                utilities_1.fastALL(["_search_", "_search_fuzzy_"], function (tableSection, l, next, err) {
+                    // reduce to a list of words to remove
+                    var wordsToRemove = {};
+                    row.tokens.forEach(function (token) {
+                        if (!wordsToRemove[token.w]) {
+                            if (l === 0)
+                                wordsToRemove[token.w] = true;
+                            if (l === 1)
+                                wordsToRemove[wordCache[token.w]] = true;
+                        }
+                    });
+                    // query those words and remove this row from them
+                    utilities_1.fastALL(Object.keys(wordsToRemove), function (word, j, done, error) {
+                        if (!word) {
+                            done();
+                            return;
+                        }
+                        _this._store.adapterRead("_" + table + tableSection + col, word, function (wRow) {
+                            if (!wRow) {
+                                done();
+                                return;
+                            }
+                            if (Object.isFrozen(wRow)) {
+                                wRow = utilities_1._assign(wRow);
+                            }
+                            wRow.rows = wRow.rows.filter(function (r) { return r.id !== pk; });
+                            _this._store.adapterWrite("_" + table + tableSection + col, word, wRow, done, error);
+                        }, true);
+                    }).then(next).catch(err);
+                }).then(function () {
+                    // remove row hash and token cache
+                    _this._store.adapters[0].adapter.delete(tokenTable + col, pk, next);
+                }).catch(colError);
+            }, true);
+        }).then(complete);
+    };
+    _NanoSQLStorageQuery.prototype._updateSearchIndex = function (pk, newRowData, complete) {
+        var _this = this;
+        var table = this._query.table;
+        var columns = Object.keys(this._store.tableInfo[table]._searchColumns);
+        // No search indexes on this table OR
+        // update doesn't include indexed columns
+        if (columns.length === 0 || !utilities_1.intersect(Object.keys(newRowData), columns)) {
+            complete();
+            return;
+        }
+        var tokenTable = "_" + table + "_search_tokens_";
+        utilities_1.fastALL(columns, function (col, i, next, colError) {
+            if ([undefined, null, ""].indexOf(newRowData[col]) !== -1) { // columns doesn't contain indexable value
+                next();
+                return;
+            }
+            // get token cache and hash for this row/column
+            _this._store.adapterRead(tokenTable + col, pk, function (row) {
+                var existing = row || { id: pk, hash: "1505", tokens: [] };
+                var thisHash = utilities_1.hash(newRowData[col]);
+                if (thisHash === existing.hash) { // indexed/hashed value hasn't changed, no updates needed
+                    next();
+                    return;
+                }
+                var wordCache = {};
+                var newTokens = _this._tokenizer(col, newRowData[col]); // tokenize the new string
+                // next 5 lines or so are used to find what words
+                // have changed so we have to perform the smallest number of index updates.
+                var oldTokenIdx = existing.tokens.map(function (t) { return t.i + "-" + t.w; }).filter(function (t) { return t.split("-")[1]; });
+                var newTokenIdx = newTokens.map(function (t) { return t.i + "-" + t.w; }).filter(function (t) { return t.split("-")[1]; });
+                var addTokens = newTokenIdx.filter(function (i) { return oldTokenIdx.indexOf(i) === -1; }); // tokens that need to be added to index
+                var removeTokens = oldTokenIdx.filter(function (i) { return newTokenIdx.indexOf(i) === -1; }); // tokens to remove from the index
+                newTokens.forEach(function (token) {
+                    wordCache[token.w] = token.o;
+                });
+                utilities_1.fastCHAIN([removeTokens, addTokens], function (tokens, j, nextTokens, tokenErr) {
+                    // find the total number of words that need to be updated (each word is a single index entry)
+                    var reduceWords = {};
+                    tokens.forEach(function (token) {
+                        var sToken = token.split(/-(.+)/);
+                        var wToken = { w: sToken[1], i: parseInt(sToken[0]) };
+                        if (!reduceWords[wToken.w]) {
+                            reduceWords[wToken.w] = [];
+                        }
+                        reduceWords[wToken.w].push(wToken);
+                    });
+                    // Update all words in the index
+                    utilities_1.fastALL(Object.keys(reduceWords), function (word, k, nextWord) {
+                        // Update token index and standard index
+                        // _search_ = tokenized index
+                        // _search_fuzzy_ = non tokenized index
+                        utilities_1.fastALL(["_search_", "_search_fuzzy_"], function (tableSection, l, next, error) {
+                            var indexWord = l === 0 ? word : wordCache[word];
+                            if (!indexWord) { // if the word/token is falsey no need to index it.
+                                next();
+                                return;
+                            }
+                            _this._store.adapterRead("_" + table + tableSection + col, indexWord, function (colRow) {
+                                var searchIndex = colRow || { wrd: word, rows: [] };
+                                if (Object.isFrozen(searchIndex)) {
+                                    searchIndex = utilities_1._assign(searchIndex);
+                                }
+                                switch (j) {
+                                    case 0: // remove
+                                        var idx = searchIndex.rows.length;
+                                        while (idx--) {
+                                            if (searchIndex.rows[idx].id === pk) {
+                                                searchIndex.rows.splice(idx, 1);
+                                            }
+                                        }
+                                        break;
+                                    case 1: // add
+                                        searchIndex.rows.push({
+                                            id: pk,
+                                            i: reduceWords[word].map(function (w) { return w.i; }),
+                                            l: newTokens.length
+                                        });
+                                        break;
+                                }
+                                _this._store.adapterWrite("_" + table + tableSection + col, l === 0 ? word : wordCache[word], searchIndex, next, error);
+                            }, true);
+                        }).then(nextWord);
+                    }).then(nextTokens);
+                }).then(function () {
+                    _this._store.adapterWrite(tokenTable + col, pk, {
+                        id: pk,
+                        hash: thisHash,
+                        tokens: newTokens.map(function (o) { return ({ w: o.w, i: o.i }); })
+                    }, next, colError);
+                });
+            }, true);
+        }).then(complete);
+    };
+    /**
+     * For each updated row, update view columns from remote records that are related.
+     *
+     * @private
+     * @param {any[]} rows
+     * @param {() => void} complete
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._updateRowViews = function (newRowData, existingRow, complete) {
+        var _this = this;
+        if (!this._store._hasViews) {
+            complete(newRowData);
+            return;
+        }
+        // nothing to update
+        if (newRowData === null || newRowData === undefined) {
+            complete(newRowData || {});
+            return;
+        }
+        utilities_1.fastALL(Object.keys(this._store.tableInfo[this._query.table]._views), function (table, i, done) {
+            var pk = _this._store.tableInfo[_this._query.table]._views[table].pkColumn;
+            // reference/pk column isn't being updated.
+            if (newRowData[pk] === undefined) {
+                done();
+                return;
+            }
+            // no changes in reference, skip query and upate
+            if (newRowData[pk] === existingRow[pk]) {
+                done();
+                return;
+            }
+            // remove reference
+            if (newRowData[pk] === null) {
+                _this._store.tableInfo[_this._query.table]._views[table].columns.forEach(function (col) {
+                    newRowData[col.thisColumn] = null;
+                });
+                done();
+                return;
+            }
+            // get reference record and copy everything over
+            _this._store.adapterRead(table, newRowData[pk], function (refRows) {
+                // record doesn't exist
+                if (!refRows.length && _this._store.tableInfo[_this._query.table]._views[table].mode === "LIVE") {
+                    _this._store.tableInfo[_this._query.table]._views[table].columns.forEach(function (col) {
+                        newRowData[col.thisColumn] = null;
+                    });
+                    done();
+                    return;
+                }
+                // record exists, copy over data
+                _this._store.tableInfo[_this._query.table]._views[table].columns.forEach(function (col) {
+                    newRowData[col.thisColumn] = refRows[0][col.otherColumn];
+                });
+                done();
+            }, true);
+        }).then(function () {
+            complete(newRowData);
+        });
+    };
+    /**
+     * Go to tables that have views pointing to this one, and update their records.
+     *
+     * @private
+     * @param {any[]} updatedRows
+     * @param {() => void} complete
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._updateRemoteViews = function (updatedRows, doDel, complete) {
+        var _this = this;
+        var pk = this._store.tableInfo[this._query.table]._pk;
+        // for every updated row
+        utilities_1.fastALL(updatedRows, function (row, i, done) {
+            // scan all related tables for records attached
+            utilities_1.fastALL(_this._store.tableInfo[_this._query.table]._viewTables, function (view, i, rowDone) {
+                // delete with echo mode, skip removing records
+                if (doDel && _this._store.tableInfo[view.table]._views[_this._query.table].mode === "GHOST") {
+                    rowDone();
+                    return;
+                }
+                _this._store._secondaryIndexRead(view.table, "=", view.column, row[pk], function (relatedRows) {
+                    // nothing to update
+                    if (!relatedRows.length) {
+                        rowDone();
+                        return;
+                    }
+                    var columns = _this._store.tableInfo[view.table]._views[_this._query.table].columns;
+                    var relPK = _this._store.tableInfo[view.table]._views[_this._query.table].pkColumn;
+                    // update the records
+                    utilities_1.fastALL(relatedRows, function (rRow, j, rDone, rError) {
+                        var i = columns.length;
+                        var doUpdate = false;
+                        if (doDel) {
+                            if (_this._store.tableInfo[view.table]._views[_this._query.table].mode === "LIVE") {
+                                doUpdate = true;
+                                rRow[relPK] = null;
+                                while (i--) {
+                                    rRow[columns[i].otherColumn] = null;
+                                }
+                            }
+                        }
+                        else {
+                            while (i--) {
+                                if (rRow[columns[i].otherColumn] !== row[columns[i].thisColumn]) {
+                                    rRow[columns[i].otherColumn] = row[columns[i].thisColumn];
+                                    doUpdate = true;
+                                }
+                            }
+                        }
+                        if (!doUpdate) {
+                            rDone();
+                            return;
+                        }
+                        var rPk = _this._store.tableInfo[view.table]._pk;
+                        _this._store.adapterWrite(view.table, rRow[rPk], rRow, rDone, rError);
+                    }).then(rowDone);
+                });
+            }).then(done);
+        }).then(complete);
+    };
+    _NanoSQLStorageQuery.prototype._doAfterQuery = function (newRows, doDel, next) {
+        var _this = this;
+        // no views at all OR this table doesn't have any views pointing to it.
+        if (!this._store._hasViews || !this._store.tableInfo[this._query.table]._viewTables.length) {
+            next(this._query);
+            return;
+        }
+        this._updateRemoteViews(newRows, doDel, function () {
+            next(_this._query);
+        });
+    };
+    _NanoSQLStorageQuery.prototype._uniqueColCheck = function (updatingRow, inputData, err) {
+        var _this = this;
+        return function (col, i, nextCol) {
+            if (updatingRow && updatingRow[col] === inputData[col]) { // data isn't being changed, no check needed
+                nextCol();
+                return;
+            }
+            var pk = _this._store.tableInfo[_this._query.table]._pk;
+            var e = function (r) {
+                err(new Error("nSQL: Unique row violation on table \"" + _this._query.table + "\", row " + r[pk] + " already contains value " + JSON.stringify(inputData[col])));
+            };
+            _this._store._secondaryIndexRead(_this._query.table, "=", col, inputData[col], function (rows) {
+                if (rows.length) { // existing value in database
+                    if (!updatingRow) {
+                        e(rows[0]);
+                        return;
+                    }
+                    if (rows[0][pk] === updatingRow[pk]) { // unique value matches row being modified
+                        nextCol();
+                    }
+                    else {
+                        e(rows[0]);
+                    }
+                }
+                else { // value doesn't have a row yet
+                    nextCol();
+                }
+            });
+        };
+    };
+    /**
+     * Initilize an UPSERT query.
+     *
+     * @internal
+     * @param {(q: IdbQuery) => void} next
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._upsert = function (next, error) {
+        var _this = this;
+        var pk = this._store.tableInfo[this._query.table]._pk;
+        if (this._isInstanceTable) {
+            this._getRows(function (rows) {
+                _this._query.result = _this._query.table.map(function (r) {
+                    if (rows.indexOf(r) === -1) {
+                        return r;
+                    }
+                    return __assign({}, _this._query.actionArgs, r);
+                });
+                next(_this._query);
+            }, error);
+            return;
+        }
+        var hasError = false;
+        if (this._query.where) { // has where statement, select rows then modify them
+            var newRows_1 = [];
+            var num_1 = 0;
+            this._getRows(function (rows) {
+                if (rows.length) {
+                    // any changes to this table invalidates the cache
+                    _this._store._cache[_this._query.table] = {};
+                    _this._store._cacheTime[_this._query.table] = Date.now();
+                    utilities_1.fastCHAIN(_this._query.actionArgs, function (inputData, k, nextRow, actionErr) {
+                        utilities_1.fastCHAIN(rows, function (row, i, rowDone, rowError) {
+                            var uniqeCols = Object.keys(inputData).filter(function (col) { return _this._store.tableInfo[_this._query.table]._uniqueColumns.indexOf(col) !== -1; });
+                            utilities_1.fastCHAIN(uniqeCols, _this._uniqueColCheck(row, inputData, error)).then(function () {
+                                _this._updateSearchIndex(row[pk], row, function () {
+                                    _this._updateRowViews(inputData || {}, row, function (updatedRowData) {
+                                        if (_this._store.tableInfo[_this._query.table]._hasDefaults) {
+                                            Object.keys(_this._store.tableInfo[_this._query.table]._defaults).forEach(function (col) {
+                                                if (row[col] === undefined && updatedRowData[col] === undefined) {
+                                                    updatedRowData[col] = _this._store.tableInfo[_this._query.table]._defaults[col];
+                                                }
+                                            });
+                                        }
+                                        _this._store._write(_this._query.table, row[pk], row, updatedRowData, rowDone, function (err) {
+                                            hasError = true;
+                                            rowError(err);
+                                        });
+                                    });
+                                });
+                            });
+                        }).then(function (nRows) {
+                            if (hasError)
+                                return;
+                            newRows_1 = nRows;
+                            var pks = newRows_1.map(function (r) { return r[pk]; });
+                            _this._query.result = [{ msg: num_1 + " row(s) modfied.", affectedRowPKS: pks, affectedRows: newRows_1 }];
+                            nextRow();
+                        }).catch(actionErr);
+                    }).then(function () {
+                        if (hasError)
+                            return;
+                        _this._syncORM("add", rows, newRows_1, function () {
+                            _this._doAfterQuery(newRows_1, false, next);
+                        });
+                    }).catch(error);
+                }
+                else {
+                    if (hasError)
+                        return;
+                    _this._query.result = [{ msg: "0 row(s) modfied.", affectedRowPKS: [], affectedRows: [] }];
+                    next(_this._query);
+                }
+            }, error);
+        }
+        else { // no where statement, perform direct upsert
+            var newRows = this._query.actionArgs || [];
+            this._store._cacheTime[this._query.table] = Date.now();
+            this._store._cache[this._query.table] = {};
+            var oldRows_1 = [];
+            var addedRows_1 = [];
+            utilities_1.fastCHAIN(newRows, function (newRowData, k, nextRow, rowError) {
+                var write = function (oldRow) {
+                    var uniqeCols = Object.keys(newRowData).filter(function (col) { return _this._store.tableInfo[_this._query.table]._uniqueColumns.indexOf(col) !== -1; });
+                    utilities_1.fastCHAIN(uniqeCols, _this._uniqueColCheck(oldRow, newRowData, error)).then(function () {
+                        _this._updateRowViews(newRowData, oldRow, function (updatedRowData) {
+                            if (_this._store.tableInfo[_this._query.table]._hasDefaults) {
+                                Object.keys(_this._store.tableInfo[_this._query.table]._defaults).forEach(function (col) {
+                                    if ((oldRow || {})[col] === undefined && updatedRowData[col] === undefined) {
+                                        updatedRowData[col] = _this._store.tableInfo[_this._query.table]._defaults[col];
+                                    }
+                                });
+                            }
+                            _this._store._write(_this._query.table, newRowData[pk], oldRow, updatedRowData, function (result) {
+                                _this._updateSearchIndex(result[pk], result, function () {
+                                    oldRows_1.push(oldRow || {});
+                                    addedRows_1.push(result);
+                                    nextRow();
+                                });
+                            }, function (err) {
+                                hasError = true;
+                                rowError(err);
+                            });
+                        });
+                    });
+                };
+                if (newRowData[pk] !== undefined && _this._query.comments.indexOf("_rebuild_search_index_") === -1) {
+                    _this._store._read(_this._query.table, [newRowData[pk]], function (rows) {
+                        if (rows.length) {
+                            write(rows[0]);
+                        }
+                        else {
+                            write(null);
+                        }
+                    });
+                }
+                else {
+                    write(null);
+                }
+            }).then(function () {
+                if (hasError)
+                    return;
+                _this._query.result = [{ msg: addedRows_1.length + " row(s) inserted.", affectedRowPKS: addedRows_1.map(function (r) { return r[pk]; }), affectedRows: addedRows_1 }];
+                if (_this._store._hasORM) {
+                    _this._syncORM("add", oldRows_1, addedRows_1, function () {
+                        _this._doAfterQuery(addedRows_1, false, next);
+                    });
+                }
+                else {
+                    _this._doAfterQuery(addedRows_1, false, next);
+                }
+            }).catch(error);
+        }
+    };
+    /**
+     * Initilize a DELETE query.
+     *
+     * @internal
+     * @param {(q: IdbQuery) => void} next
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._delete = function (next, error) {
+        var _this = this;
+        if (this._isInstanceTable) {
+            if (this._query.where) {
+                this._getRows(function (rows) {
+                    _this._query.result = _this._query.table.filter(function (row) {
+                        return rows.indexOf(row) === -1;
+                    });
+                    next(_this._query);
+                }, error);
+            }
+            else {
+                this._query.result = [];
+                next(this._query);
+            }
+            return;
+        }
+        if (this._query.where) { // has where statement, select rows then delete them
+            var aRows_1 = [];
+            var num_2 = 0;
+            this._getRows(function (rows) {
+                rows = rows.filter(function (r) { return r; });
+                if (rows.length) {
+                    utilities_1.fastALL(rows, function (r, i, done) {
+                        _this._clearFromSearchIndex(r[_this._store.tableInfo[_this._query.table]._pk], r, function () {
+                            _this._store._delete(_this._query.table, r[_this._store.tableInfo[_this._query.table]._pk], done);
+                        });
+                    }).then(function (affectedRows) {
+                        aRows_1 = rows;
+                        num_2 += rows.length;
+                        // any changes to this table invalidate the cache
+                        _this._store._cacheTime[_this._query.table] = Date.now();
+                        _this._store._cache[_this._query.table] = {};
+                        var pks = aRows_1.map(function (r) { return r[_this._store.tableInfo[_this._query.table]._pk]; });
+                        _this._query.result = [{ msg: num_2 + " row(s) deleted.", affectedRowPKS: pks, affectedRows: aRows_1 }];
+                        _this._syncORM("del", rows, [], function () {
+                            _this._doAfterQuery(rows, true, next);
+                        });
+                    });
+                }
+                else {
+                    _this._query.result = [{ msg: "0 row(s) deleted.", affectedRowPKS: [], affectedRows: [] }];
+                    aRows_1 = [];
+                    next(_this._query);
+                }
+            }, error);
+        }
+        else { // no where statement, perform drop
+            this._drop(next, error);
+        }
+    };
+    /**
+     * Initilize a DROP query.
+     *
+     * @internal
+     * @param {(q: IdbQuery) => void} next
+     * @returns
+     * @memberof _NanoSQLStorageQuery
+     */
+    _NanoSQLStorageQuery.prototype._drop = function (next, error) {
+        var _this = this;
+        if (this._isInstanceTable) {
+            this._query.result = [];
+            next(this._query);
+            return;
+        }
+        this._store._rangeRead(this._query.table, undefined, undefined, false, function (rows) {
+            _this._store._cacheTime[_this._query.table] = Date.now();
+            _this._store._cache[_this._query.table] = {};
+            var table = _this._query.table;
+            _this._store._drop(_this._query.table, function () {
+                _this._query.result = [{ msg: "'" + _this._query.table + "' table dropped.", affectedRowPKS: rows.map(function (r) { return r[_this._store.tableInfo[_this._query.table]._pk]; }), affectedRows: rows }];
+                _this._syncORM("del", rows, [], function () {
+                    _this._doAfterQuery(rows, true, next);
+                });
+            });
+        });
+    };
+    return _NanoSQLStorageQuery;
+}());
+exports._NanoSQLStorageQuery = _NanoSQLStorageQuery;
+/**
+ * Takes a selection of rows and applys modifiers like orderBy, join and others to the rows.
+ * Returns the affected rows updated in the way the query specified.
+ *
+ * @export
+ * @class MutateSelection
+ */
+// tslint:disable-next-line
+var _MutateSelection = /** @class */ (function () {
+    function _MutateSelection(q, s) {
+        this.q = q;
+        this.s = s;
+        this._groupByColumns = [];
+    }
+    /**
+     * Peform a join command.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @param {(rows: DBRow[]) => void} complete
+     * @returns {void}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._join = function (rows, complete, error) {
+        var _this = this;
+        if (!this.q.join) {
+            complete(rows);
+            return;
+        }
+        var joinData = Array.isArray(this.q.join) ? this.q.join : [this.q.join];
+        var leftTablePK = this.q.table + "." + this.s.tableInfo[this.q.table]._pk;
+        utilities_1.fastCHAIN(joinData, function (join, ji, next) {
+            if (join.where && join.where[0].indexOf(_this.q.table + ".") === -1) {
+                error(new Error("nSQL: Where commands in a join must use the first table on the left side of the where query."));
+                return;
+            }
+            var joinConditions = {};
+            if (join.type !== "cross" && join.where) {
+                joinConditions = {
+                    _left: join.where[0],
+                    _check: join.where[1],
+                    _right: join.where[2]
+                };
+            }
+            var leftTable = _this.q.table;
+            var rightTable = join.table;
+            _this._doJoin(join.type, leftTable, rightTable, joinConditions, function (joinedRows) {
+                next(joinedRows);
+            });
+        }).then(function (result) {
+            // handle bringing the multiple joins into a single result set.
+            // we're essentially doing a left outer join on the results.
+            var i = 1;
+            while (i < result.length) {
+                result[i].forEach(function (row) {
+                    var found = false;
+                    if ([undefined, null].indexOf(row[leftTablePK]) === -1) {
+                        result[0].forEach(function (row2, j) {
+                            if (row2[leftTablePK] && row[leftTablePK] === row2[leftTablePK]) {
+                                found = true;
+                                Object.keys(row).forEach(function (key) {
+                                    if (result[0][j][key] === undefined) {
+                                        result[0][j][key] = row[key];
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    if (!found) {
+                        result[0].push(row);
+                    }
+                });
+                i++;
+            }
+            if (_this.q.where) { // apply where statement to join
+                complete(result[0].filter(function (row, idx) {
+                    return Array.isArray(_this.q.where) ? _where(row, _this.q.where || [], idx, true) : _this.q.where(row, idx);
+                }));
+            }
+            else if (_this.q.range) { // apply range statement to join
+                complete(result[0].filter(function (row, idx) {
+                    return _this.q.range && _this.q.range[0] >= idx && (_this.q.range[0] + _this.q.range[1]) - 1 <= idx;
+                }));
+            }
+            else { // send the whole result
+                complete(result[0]);
+            }
+        });
+    };
+    /**
+     * Generate a unique group by key given a group by object and a row.
+     *
+     * @internal
+     * @param {string[]} columns
+     * @param {*} row
+     * @returns {string}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._groupByKey = function (columns, row) {
+        return columns.reduce(function (p, c) {
+            // handle ".length"
+            if (c.indexOf(".length") !== -1) {
+                return p + "." + String((row[c.replace(".length", "")] || []).length);
+            }
+            else {
+                return p + "." + String(row[c]);
+            }
+        }, "").slice(1);
+    };
+    /**
+     * Perform the Group By mutation.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @returns {any[]}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._groupBy = function (rows) {
+        var _this = this;
+        var columns = this.q.groupBy || {};
+        var sortedRows = rows.sort(function (a, b) {
+            return _this._sortObj(a, b, columns, true);
+        });
+        sortedRows.forEach(function (val, idx) {
+            var groupByKey = Object.keys(columns).map(function (k) { return String(val[k]) || ""; }).join(".");
+            if (!_this._sortGroups) {
+                _this._sortGroups = {};
+            }
+            if (!_this._sortGroups[groupByKey]) {
+                _this._sortGroups[groupByKey] = [];
+            }
+            _this._sortGroups[groupByKey].push(idx);
+        });
+        return sortedRows;
+    };
+    /**
+     * Perform HAVING mutation.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @returns {any[]}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._having = function (rows) {
+        var _this = this;
+        return rows.filter(function (row, idx) {
+            return Array.isArray(_this.q.having) ? _where(row, _this.q.having || [], idx, true) : _this.q.having(row, idx);
+        });
+    };
+    /**
+     * Perform the orderBy mutation.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @returns {any[]}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._orderBy = function (rows) {
+        var _this = this;
+        return rows.sort(function (a, b) {
+            return _this._sortObj(a, b, _this.q.orderBy || {}, false);
+        });
+    };
+    /**
+     * Perform the Offset mutation.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @returns {any[]}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._offset = function (rows) {
+        return rows.slice(this.q.offset);
+    };
+    /**
+     * Perform the limit mutation.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @returns {any[]}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._limit = function (rows) {
+        return rows.slice(0, this.q.limit);
+    };
+    /**
+     * Add ORM values to rows based on query.
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @param {(rows: DBRow[]) => void} complete
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._orm = function (rows, complete) {
+        var _this = this;
+        var ormQueries = this.q.orm ? this.q.orm.map(function (o) {
+            if (typeof o === "string") {
+                return {
+                    key: o,
+                    limit: 5
+                };
+            }
+            return o;
+        }) : [];
+        utilities_1.fastALL(rows, function (row, i, rowResult) {
+            row = Object.isFrozen(row) ? utilities_1._assign(row) : row;
+            utilities_1.fastALL(ormQueries, function (orm, k, ormResult) {
+                if (typeof row[orm.key] === "undefined") {
+                    ormResult();
+                    return;
+                }
+                var relateData = _this.s._columnsAreTables[_this.q.table][orm.key];
+                if (relateData) {
+                    _this.s._nsql.query("select").where([_this.s.tableInfo[relateData._toTable]._pk, relateData._thisType === "array" ? "IN" : "=", row[orm.key]]).manualExec({ table: relateData._toTable }).then(function (rows) {
+                        var q = index_1.nSQL().query("select", orm.select);
+                        if (orm.where) {
+                            q.where(orm.where);
+                        }
+                        if (orm.limit !== undefined) {
+                            q.limit(orm.limit);
+                        }
+                        if (orm.offset !== undefined) {
+                            q.offset(orm.offset);
+                        }
+                        if (orm.orderBy) {
+                            q.orderBy(orm.orderBy);
+                        }
+                        if (orm.groupBy) {
+                            q.groupBy(orm.groupBy);
+                        }
+                        q.manualExec({ table: rows }).then(function (result) {
+                            if (!rows.filter(function (r) { return r; }).length) {
+                                row[orm.key] = relateData._thisType === "array" ? [] : undefined;
+                            }
+                            else {
+                                row[orm.key] = relateData._thisType === "array" ? result : result[0];
+                            }
+                            ormResult();
+                        });
+                    });
+                }
+                else {
+                    ormResult();
+                }
+            }).then(function () {
+                rowResult(row);
+            });
+        }).then(complete);
+    };
+    /**
+     * Performs the actual JOIN mutation, including the O^2 select query to check all rows against every other row.
+     *
+     * @internal
+     * @param {("left" | "inner" | "right" | "cross" | "outer")} type
+     * @param {string} leftTable
+     * @param {string} rightTable
+     * @param {(null | { _left: string, _check: string, _right: string })} joinConditions
+     * @param {(rows: DBRow[]) => void} complete
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._doJoin = function (type, leftTable, rightTable, joinConditions, complete) {
+        var L = "left";
+        var R = "right";
+        var O = "outer";
+        var C = "cross";
+        var t = this;
+        var firstTableData = t.s.tableInfo[type === R ? rightTable : leftTable];
+        var seconTableData = t.s.tableInfo[type === R ? leftTable : rightTable];
+        var doJoinRows = function (leftRow, rightRow) {
+            return [firstTableData, seconTableData].reduce(function (prev, cur, i) {
+                cur._keys.forEach(function (k) {
+                    prev[cur._name + "." + k] = ((i === 0 ? leftRow : rightRow) || {})[k];
+                });
+                return prev;
+            }, {});
+        };
+        var joinTable = [];
+        var rightKey = joinConditions && joinConditions._right ? joinConditions._right.split(".").pop() || "" : "";
+        var usedSecondTableRows = {};
+        var secondRowCache = [];
+        // O^2, YAY!
+        t.s._read(firstTableData._name, function (firstRow, idx, keep) {
+            var hasOneRelation = false;
+            t.s._read(seconTableData._name, function (secondRow, idx2, keep2) {
+                var _a;
+                if (!joinConditions || type === C) { // no conditional to check OR cross join, always add
+                    joinTable.push(doJoinRows(firstRow, secondRow));
+                    hasOneRelation = true;
+                }
+                else { // check conditional statement to possibly join
+                    var willJoinRows = _where((_a = {},
+                        _a[firstTableData._name] = firstRow,
+                        _a[seconTableData._name] = secondRow,
+                        _a), [joinConditions._left, joinConditions._check, type === R ? firstRow[rightKey] : secondRow[rightKey]], 0, false);
+                    if (willJoinRows) {
+                        if (type === O)
+                            usedSecondTableRows[idx2] = true;
+                        joinTable.push(doJoinRows(firstRow, secondRow));
+                        hasOneRelation = true;
+                    }
+                    else {
+                        if (type === O)
+                            secondRowCache[idx2] = secondRow;
+                    }
+                }
+                keep2(false);
+            }, function () {
+                // left, right or outer join will cause rows without a relation to be added anyway with null relation
+                if (!hasOneRelation && [L, R, O].indexOf(type) > -1) {
+                    joinTable.push(doJoinRows(firstRow, null));
+                }
+                keep(false);
+            });
+        }, function () {
+            // full outer join, add the secondary rows that haven't been added yet
+            if (type === O) {
+                var addRows = secondRowCache.filter(function (val, i) { return !usedSecondTableRows[i]; });
+                var i = 0;
+                while (i < addRows.length) {
+                    joinTable.push(doJoinRows(null, addRows[i]));
+                    i++;
+                }
+                complete(joinTable);
+            }
+            else {
+                complete(joinTable);
+            }
+        });
+    };
+    /**
+     * Get the sort direction for two objects given the objects, columns and resolve paths.
+     *
+     * @internal
+     * @param {*} objA
+     * @param {*} objB
+     * @param {{ [key: string]: string }} columns
+     * @param {boolean} resolvePaths
+     * @returns {number}
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._sortObj = function (objA, objB, columns, resolvePaths) {
+        return Object.keys(columns).reduce(function (prev, cur) {
+            var A = resolvePaths ? utilities_1.objQuery(cur, objA) : objA[cur];
+            var B = resolvePaths ? utilities_1.objQuery(cur, objB) : objB[cur];
+            if (!prev) {
+                if (A === B)
+                    return 0;
+                return (A > B ? 1 : -1) * (columns[cur] === "desc" ? -1 : 1);
+            }
+            else {
+                return prev;
+            }
+        }, 0);
+    };
+    /**
+     * Apply AS, functions and Group By
+     *
+     * @internal
+     * @param {DBRow[]} rows
+     * @param {(rows: DBRow[]) => void} complete
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._mutateRows = function (rows, complete, error) {
+        var _this = this;
+        var columnSelection = this.q.actionArgs;
+        var functionResults = {};
+        var functionResultRows = {};
+        var fnGroupByResults = {};
+        var fnGroupByResultRows = {};
+        if (columnSelection && columnSelection.length) {
+            // possibly has functions, AS statements
+            var hasAggregateFun_1 = false;
+            var columnData_1 = {};
+            var hasError_1 = false;
+            columnSelection.forEach(function (column) {
+                if (column.indexOf("(") === -1) { // no functions
+                    return;
+                }
+                var fnName = (column.match(/^.*\(/g) || [""])[0].replace(/\(|\)/g, "").toUpperCase();
+                var fn = index_1.NanoSQLInstance.functions[fnName];
+                var key = column.split(" AS ").length === 1 ? fnName : (column.split(" AS ").pop() || "").trim();
+                if (!fn) {
+                    hasError_1 = true;
+                    error(new Error("nSQL: '" + fnName + "' is not a valid function!"));
+                    return;
+                }
+                if (fn.type === "A") { // agregate function
+                    hasAggregateFun_1 = true;
+                }
+                columnData_1[column] = {
+                    fn: fn,
+                    key: key
+                };
+            });
+            if (hasError_1)
+                return;
+            utilities_1.fastALL(columnSelection, function (column, j, columnDone) {
+                var _a;
+                if (column.indexOf("(") > -1) { // function exists
+                    var fnArgs_1 = (column.match(/\(.*\)/g) || [""])[0].replace(/\(|\)/g, "").split(",").map(function (v) { return v.trim(); });
+                    if (_this._sortGroups && hasAggregateFun_1) { // group by exists with aggregate function
+                        utilities_1.fastALL(Object.keys(_this._sortGroups), function (k, l, fnDone) {
+                            var _a;
+                            if (!fnGroupByResults[k]) {
+                                fnGroupByResults[k] = {};
+                            }
+                            if (!fnGroupByResultRows[k]) {
+                                fnGroupByResultRows[k] = {};
+                            }
+                            (_a = columnData_1[column].fn).call.apply(_a, [rows.filter(function (r, i) { return _this._sortGroups[k].indexOf(i) > -1; }), function (result, resultRow) {
+                                    fnGroupByResults[k][columnData_1[column].key] = result;
+                                    if (resultRow) {
+                                        fnGroupByResultRows[k][columnData_1[column].key] = resultRow;
+                                    }
+                                    fnDone();
+                                }, _this.q.join !== undefined].concat(fnArgs_1));
+                        }).then(columnDone);
+                    }
+                    else { // no group by
+                        (_a = columnData_1[column].fn).call.apply(_a, [rows, function (result, row) {
+                                functionResults[columnData_1[column].key] = result;
+                                functionResultRows[columnData_1[column].key] = row;
+                                columnDone();
+                            }, _this.q.join !== undefined].concat(fnArgs_1));
+                    }
+                }
+                else {
+                    columnDone(); // no function
+                }
+            }).then(function () {
+                // time to rebuild row results
+                var doMuateRows = function (row, idx, fnResults, fnResultRows) {
+                    var newRow = {};
+                    // remove unselected columns, apply AS and integrate function results
+                    columnSelection.forEach(function (column) {
+                        var hasFunc = column.indexOf("(") > -1;
+                        var type = hasFunc ? columnData_1[column].fn.type : "";
+                        var key = hasFunc ? columnData_1[column].key : column;
+                        var objCol = column;
+                        if (column.indexOf(" AS ") > -1) { // alias column data
+                            var alias = column.split(" AS ");
+                            key = hasFunc ? columnData_1[column].key : alias[0].trim();
+                            objCol = alias[1];
+                        }
+                        if (fnResultRows[key]) {
+                            Object.keys(fnResultRows[key]).forEach(function (rowCol) {
+                                newRow[rowCol] = fnResultRows[key][rowCol];
+                            });
+                        }
+                        newRow[objCol] = hasFunc ? (type === "A" ? fnResults[key] : fnResults[key][idx]) : utilities_1.objQuery(key, row, _this.q.join !== undefined);
+                    });
+                    return newRow;
+                };
+                if (!rows.length && hasAggregateFun_1) {
+                    var oneRow_1 = [{}];
+                    Object.keys(columnData_1).forEach(function (fnName) {
+                        if (typeof functionResults[columnData_1[fnName].key] !== "undefined") {
+                            oneRow_1[0][fnName] = functionResults[columnData_1[fnName].key];
+                        }
+                    });
+                    complete(oneRow_1);
+                    return;
+                }
+                if (_this._sortGroups && hasAggregateFun_1) { // group by with aggregate
+                    var newRows_2 = [];
+                    Object.keys(_this._sortGroups).forEach(function (k) {
+                        var thisRow = rows.filter(function (r, i) { return _this._sortGroups[k].indexOf(i) > -1; }).filter(function (v, i) { return i < 1; });
+                        if (thisRow && thisRow.length) {
+                            newRows_2.push(doMuateRows(thisRow[0], 0, fnGroupByResults[k], fnGroupByResultRows[k]));
+                        }
+                    });
+                    complete(newRows_2);
+                }
+                else if (hasAggregateFun_1) { // just aggregate (returns 1 row)
+                    complete(rows.filter(function (v, i) { return i < 1; }).map(function (v, i) { return doMuateRows(v, i, functionResults, functionResultRows); }));
+                }
+                else { // no aggregate and no group by, easy peasy
+                    complete(rows.map(function (v, i) { return doMuateRows(v, i, functionResults, functionResultRows); }));
+                }
+            });
+        }
+        else {
+            // just pass through
+            complete(rows);
+        }
+    };
+    /**
+     * Triggers the mutations in the order of operations.
+     *
+     * @param {DBRow[]} inputRows
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _MutateSelection
+     */
+    _MutateSelection.prototype._executeQueryArguments = function (inputRows, callback, error) {
+        var _this = this;
+        var afterMutate = function () {
+            if (_this.q.having) {
+                inputRows = _this._having(inputRows);
+            }
+            if (_this.q.orderBy) {
+                inputRows = _this._orderBy(inputRows);
+            }
+            if (_this.q.offset) {
+                inputRows = _this._offset(inputRows);
+            }
+            if (_this.q.limit) {
+                inputRows = _this._limit(inputRows);
+            }
+            callback(inputRows);
+        };
+        var afterORM = function () {
+            if (_this.q.actionArgs && _this.q.actionArgs.length) {
+                _this._mutateRows(inputRows, function (newRows) {
+                    inputRows = newRows;
+                    afterMutate();
+                }, error);
+            }
+            else {
+                afterMutate();
+            }
+        };
+        var afterJoin = function () {
+            if (_this.q.groupBy) {
+                inputRows = _this._groupBy(inputRows);
+            }
+            if (_this.q.orm) {
+                _this._orm(inputRows, function (newRows) {
+                    inputRows = newRows;
+                    afterORM();
+                });
+            }
+            else {
+                afterORM();
+            }
+        };
+        if (this.q.join) {
+            this._join(inputRows, function (rows) {
+                inputRows = rows;
+                afterJoin();
+            }, error);
+        }
+        else {
+            afterJoin();
+        }
+    };
+    return _MutateSelection;
+}());
+exports._MutateSelection = _MutateSelection;
+/**
+ * Selects the needed rows from the storage system.
+ * Uses the fastes possible method to get the rows.
+ *
+ * @export
+ * @class _RowSelection
+ */
+// tslint:disable-next-line
+var _RowSelection = /** @class */ (function () {
+    function _RowSelection(qu, q, s, callback, error) {
+        var _this = this;
+        this.qu = qu;
+        this.q = q;
+        this.s = s;
+        if (this.q.join && this.q.orm) {
+            error(new Error("nSQL: Cannot do a JOIN and ORM command at the same time!"));
+        }
+        if ([this.q.where, this.q.range, this.q.trie].filter(function (i) { return i; }).length > 1) {
+            error(new Error("nSQL: Can only have ONE of Trie, Range or Where!"));
+        }
+        // join command requires n^2 scan that gets taken care of in join logic.
+        if (this.q.join) {
+            callback([]);
+            return;
+        }
+        // trie search, nice and fast.
+        if (this.q.trie && this.q.trie.column && this.q.trie.search) {
+            this._selectByTrie(callback);
+            return;
+        }
+        // range select, very fast
+        if (this.q.range && this.q.range.length) {
+            this._selectByRange(callback);
+            return;
+        }
+        // no where statement, read whole db :(
+        // OR
+        // where statement is function, still gotta read the whole db.
+        if ((!this.q.where || !this.q.where.length) || !Array.isArray(this.q.where)) {
+            this._fullTableScan(callback);
+            return;
+        }
+        // where statement possibly contains only primary key and secondary key queries, do faster query if possible.
+        var doFastRead = false;
+        if (typeof this.q.where[0] === "string") { // Single WHERE
+            doFastRead = this._isOptimizedWhere(this.q.where) === 0;
+        }
+        else { // combined where statements
+            doFastRead = (this.q.where || []).reduce(function (prev, cur, i) {
+                if (i % 2 === 1)
+                    return prev;
+                return prev + _this._isOptimizedWhere(cur);
+            }, 0) === 0;
+        }
+        if (doFastRead) { // can go straight to primary or secondary keys, wee!
+            this._selectByKeysOrSeach(this.q.where, callback);
+            return;
+        }
+        // if compound where statement includes primary key/secondary index queries followed by AND with other conditions.
+        // grabs the section of data related to the optimized read, then full table scans the result.
+        var whereSlice = this._isSubOptimizedWhere(this.q.where);
+        if (whereSlice > 0) {
+            var fastWhere = this.q.where.slice(0, whereSlice);
+            var slowWhere_1 = this.q.where.slice(whereSlice + 1);
+            this._selectByKeysOrSeach(fastWhere, function (rows) {
+                callback(rows.filter(function (r, i) { return _where(r, slowWhere_1, i, false); }));
+            });
+            return;
+        }
+        // Full table scan :(
+        this._fullTableScan(callback);
+    }
+    /**
+     * Does super fast primary key or secondary index select.
+     * Handles compound WHERE statements, combining their results.
+     * Works as long as every WHERE statement is selecting against a primary key or secondary index.
+     *
+     * @internal
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._selectByKeysOrSeach = function (where, callback) {
+        var _this = this;
+        if (where && typeof where[0] === "string") { // single where
+            this._selectRowsByIndexOrSearch(where, callback);
+        }
+        else if (where) { // compound where
+            var resultRows_1 = [];
+            var lastCommand_1 = "";
+            var PK_1 = this.s.tableInfo[this.q.table]._pk;
+            utilities_1.fastCHAIN(where, function (wArg, i, nextWArg) {
+                if (i % 2 === 1) {
+                    lastCommand_1 = wArg;
+                    nextWArg();
+                    return;
+                }
+                _this._selectRowsByIndexOrSearch(wArg, function (rows) {
+                    if (lastCommand_1 === "AND") {
+                        var idx_1 = {};
+                        var i_1 = rows.length;
+                        while (i_1--) {
+                            idx_1[rows[i_1][PK_1]] = true;
+                        }
+                        resultRows_1 = resultRows_1.filter(function (row) { return idx_1[row[PK_1]]; });
+                    }
+                    else {
+                        resultRows_1 = resultRows_1.concat(rows);
+                    }
+                    nextWArg();
+                });
+            }).then(function () {
+                var pks = {};
+                // remove duplicates
+                callback(resultRows_1.filter(function (row) {
+                    if (pks[row[PK_1]])
+                        return false;
+                    pks[row[PK_1]] = true;
+                    return true;
+                }));
+            });
+        }
+    };
+    /**
+     * Much faster SELECT by primary key or secondary index.
+     * Accepts a single WHERE statement, no compound statements allowed.
+     *
+     * @internal
+     * @param {any[]} where
+     * @param {(rows: DBRow[]) => void} callback
+     * @returns
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._selectRowsByIndexOrSearch = function (where, callback) {
+        var _this = this;
+        if (where[0].indexOf("search(") === 0) {
+            var whereType_1 = 0;
+            if (where[1].indexOf(">") !== -1) {
+                whereType_1 = parseFloat(where[1].replace(">", "")) + 0.0001;
+            }
+            else if (where[1].indexOf("<") !== -1) {
+                whereType_1 = (parseFloat(where[1].replace("<", "")) * -1) + 0.0001;
+            }
+            var columns = where[0].replace(/search\((.*)\)/gmi, "$1").split(",").map(function (c) { return c.trim(); });
+            var weights_1 = {};
+            var searchTermsToFound_1 = {};
+            utilities_1.fastALL(columns, function (col, i, nextCol) {
+                // tokenize search terms
+                var searchTerms = _this.qu._tokenizer(col, where[2]);
+                var args = _this.s.tableInfo[_this.q.table]._searchColumns[col];
+                var reducedResults = {};
+                var reducedFirstLocations = [];
+                var tokenToTerm = {};
+                var termToToken = {};
+                searchTerms.forEach(function (search) {
+                    tokenToTerm[search.w] = search.o;
+                    termToToken[search.o] = search.w;
+                });
+                // get all rows that have at least one search term
+                utilities_1.fastALL(["_search_", "_search_fuzzy_"], function (tableSection, j, nextTable) {
+                    var indexTable = "_" + _this.q.table + tableSection + col;
+                    switch (j) {
+                        case 0:
+                            // Search the tokenized index for matches (super quick);
+                            utilities_1.fastALL(searchTerms, function (term, j, nextTerm) {
+                                _this.s.adapterRead(indexTable, term.w, function (row) {
+                                    if (!row) {
+                                        nextTerm();
+                                        return;
+                                    }
+                                    row.rows.forEach(function (r) {
+                                        if (!reducedResults[r.id]) {
+                                            reducedResults[r.id] = {};
+                                        }
+                                        reducedFirstLocations.push(r.i[0]);
+                                        reducedResults[r.id][term.w] = r;
+                                    });
+                                    nextTerm();
+                                });
+                            }).then(nextTable);
+                            break;
+                        case 1:
+                            if (whereType_1 === 0) {
+                                nextTable();
+                                return;
+                            }
+                            // Grab the fuzzy search index then compare each string for match
+                            // WAY slower than the tokenizer match but gets you fuzzy results.
+                            _this.s.adapters[0].adapter.getIndex(indexTable, false, function (index) {
+                                var wordsToGet = [];
+                                index.forEach(function (word) {
+                                    searchTerms.forEach(function (term) {
+                                        if (fuzzy(term.o, word)) {
+                                            searchTermsToFound_1[term.o] = word;
+                                            tokenToTerm[word] = term.o;
+                                            wordsToGet.push(word);
+                                        }
+                                    });
+                                });
+                                // remove duplicates
+                                wordsToGet = wordsToGet.filter(function (v, i, s) { return s.indexOf(v) === i; });
+                                utilities_1.fastALL(wordsToGet, function (term, j, nextTerm) {
+                                    _this.s.adapterRead(indexTable, term, function (row) {
+                                        if (!row) {
+                                            nextTerm();
+                                            return;
+                                        }
+                                        row.rows.forEach(function (r) {
+                                            // if the non fuzzy search already got this row then ignore it
+                                            var exists = false;
+                                            if (!reducedResults[r.id]) {
+                                                reducedResults[r.id] = {};
+                                            }
+                                            else {
+                                                if (reducedFirstLocations.indexOf(r.i[0]) !== -1) {
+                                                    exists = true;
+                                                }
+                                            }
+                                            if (!exists) {
+                                                var key = termToToken[term] || term;
+                                                reducedResults[r.id][key] = r;
+                                            }
+                                        });
+                                        nextTerm();
+                                    });
+                                }).then(nextTable);
+                            });
+                            break;
+                    }
+                }).then(function () {
+                    // now get the weights and locations for each row
+                    Object.keys(reducedResults).forEach(function (rowPK) {
+                        if (whereType_1 === 0) { // exact match, row results must have same number of terms as search
+                            if (Object.keys(reducedResults[rowPK]).length !== searchTerms.length) {
+                                delete reducedResults[rowPK];
+                                return;
+                            }
+                        }
+                        if (!weights_1[rowPK]) {
+                            weights_1[rowPK] = { weight: 0, locations: {} };
+                        }
+                        var docLength = 0;
+                        var wordLocs = Object.keys(reducedResults[rowPK]).map(function (w) {
+                            docLength = reducedResults[rowPK][w].l;
+                            if (tokenToTerm[w]) {
+                                // if we got something from fuzzy search, boost it up.
+                                // this is to balance against the idxsTerm code below
+                                weights_1[rowPK].weight += 5;
+                            }
+                            return { word: tokenToTerm[w] || w, loc: reducedResults[rowPK][w].i };
+                        });
+                        var totalLocations = wordLocs.reduce(function (p, c) { return p + c.loc.length; }, 0);
+                        weights_1[rowPK].weight += (totalLocations / docLength) + parseInt(args[0]);
+                        weights_1[rowPK].locations[col] = wordLocs;
+                        if (whereType_1 !== 0) { // fuzzy term match
+                            // We're checking each result to see how closely it matches the search phrase.
+                            // Closer proximity === higher weight
+                            searchTerms.forEach(function (sTerm) {
+                                // all instances of this term in this row/column, only runs against tokenizer results
+                                var idxsTerm = reducedResults[rowPK][sTerm.w];
+                                if (idxsTerm) {
+                                    idxsTerm.i.forEach(function (refLocation) {
+                                        // now check to see where the other parts of the terms are located in reference to this one
+                                        Object.keys(reducedResults[rowPK]).forEach(function (sTerm2) {
+                                            if (sTerm2 !== sTerm.w) {
+                                                // check all instances of other terms
+                                                reducedResults[rowPK][sTerm2].i.forEach(function (wordLoc) {
+                                                    var distance = Math.abs(wordLoc - refLocation);
+                                                    if (distance)
+                                                        weights_1[rowPK].weight += (10 / (distance * 10));
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
+                                // the fuzzy() search algorithm used in the previouse step is orders of magnitude faster than levenshtein distance,
+                                // however it only returns boolean values, so we use levenshtein to get relevance on the much smaller set
+                                // of result records
+                                if (searchTermsToFound_1[sTerm.o]) {
+                                    wordLocs.forEach(function (loc) {
+                                        if (searchTermsToFound_1[sTerm.o] === loc.word) {
+                                            var lev = levenshtein(sTerm.o, loc.word);
+                                            if (lev <= 1) {
+                                                weights_1[rowPK].weight += 10;
+                                            }
+                                            else {
+                                                weights_1[rowPK].weight += 10 / (lev * 5);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        else { // exact term match
+                            if (searchTerms.length > 1) {
+                                var startingWord_1 = [];
+                                Object.keys(reducedResults[rowPK]).forEach(function (term) {
+                                    if (term === searchTerms[0].w) {
+                                        startingWord_1 = reducedResults[rowPK][term].i;
+                                    }
+                                });
+                                var doingGood_1 = true;
+                                startingWord_1.forEach(function (location, i) {
+                                    var nextWord = searchTerms[i + 1];
+                                    if (nextWord) {
+                                        Object.keys(reducedResults[rowPK]).forEach(function (term) {
+                                            if (term === nextWord.w) {
+                                                var offset = nextWord.i + location;
+                                                if (reducedResults[rowPK][term].i.indexOf(offset) === -1) {
+                                                    doingGood_1 = false;
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                                if (!doingGood_1) {
+                                    delete weights_1[rowPK];
+                                }
+                            }
+                        }
+                    });
+                    nextCol();
+                });
+            }).then(function (results) {
+                // normalize the weights
+                var max = 0;
+                var rowKeys = Object.keys(weights_1);
+                var ii = rowKeys.length;
+                while (ii--) {
+                    max = Math.max(max, weights_1[rowKeys[ii]].weight);
+                }
+                ii = rowKeys.length;
+                while (ii--) {
+                    weights_1[rowKeys[ii]].weight = weights_1[rowKeys[ii]].weight / max;
+                }
+                utilities_1.fastALL(rowKeys.filter(function (pk) {
+                    if (whereType_1 === 0)
+                        return true;
+                    if (whereType_1 > 0) {
+                        return whereType_1 < weights_1[pk].weight;
+                    }
+                    if (whereType_1 < 0) {
+                        return whereType_1 * -1 > weights_1[pk].weight;
+                    }
+                    return true;
+                }), function (pk, i, done) {
+                    // get result rows
+                    _this.s.adapterRead(_this.q.table, pk, done);
+                }).then(function (rows) {
+                    var pk = _this.s.tableInfo[_this.q.table]._pk;
+                    rows = rows.filter(function (r) { return r; });
+                    // run levenshtein again against the results.
+                    // We're doing this again because there's no way to know the values of the tokenized result rows that we've matched
+                    // without querying them, so we reduce the problem set to the smallest possible, then levenshtein against it.
+                    rows.forEach(function (row) {
+                        var rowPK = row[pk];
+                        Object.keys(weights_1[rowPK].locations).forEach(function (col) {
+                            var rowCol = _this.qu._tokenizer(col, row[col]).map(function (w) { return w.o; });
+                            weights_1[rowPK].locations[col].forEach(function (matches) {
+                                matches.loc.forEach(function (idx) {
+                                    var lev = levenshtein(rowCol[idx], matches.word);
+                                    if (lev <= 1) {
+                                        weights_1[rowPK].weight += 10;
+                                    }
+                                    else {
+                                        weights_1[rowPK].weight += 10 / (lev * 10);
+                                    }
+                                });
+                            });
+                        });
+                    });
+                    // normalize weights again
+                    var max = 0;
+                    var rowKeys = Object.keys(weights_1);
+                    var ii = rowKeys.length;
+                    while (ii--) {
+                        max = Math.max(max, weights_1[rowKeys[ii]].weight);
+                    }
+                    ii = rowKeys.length;
+                    while (ii--) {
+                        weights_1[rowKeys[ii]].weight = weights_1[rowKeys[ii]].weight / max;
+                    }
+                    callback(rows.filter(function (r) {
+                        if (whereType_1 === 0)
+                            return true;
+                        if (whereType_1 > 0) {
+                            return whereType_1 < weights_1[r[pk]].weight;
+                        }
+                        if (whereType_1 < 0) {
+                            return whereType_1 * -1 > weights_1[r[pk]].weight;
+                        }
+                        return true;
+                    }).map(function (r) { return (__assign({}, r, { _weight: weights_1[r[pk]].weight, _locations: weights_1[r[pk]].locations })); }));
+                });
+            });
+            return;
+        }
+        // get rows based on crow distance from given GPS coordinates
+        if (where[0].indexOf("crow(") === 0) {
+            var gps_1 = where[0].replace(/crow\((.*)\)/gmi, "$1").split(",").map(function (c, i) { return i < 2 ? parseFloat(c.trim()) : c.trim(); });
+            var latTable = "_" + this.q.table + "_idx_" + (gps_1.length > 2 ? gps_1[2] : "lat");
+            var lonTable = "_" + this.q.table + "_idx_" + (gps_1.length > 2 ? gps_1[3] : "lon");
+            var distance_1 = parseFloat(where[2] || "0");
+            // get latitudes that are distance north and distance south from the search point
+            var latRange_1 = [-1, 1].map(function (i) {
+                return gps_1[0] + ((distance_1 * i) / index_1.NanoSQLInstance.earthRadius) * (180 * Math.PI);
+            });
+            // get the longitudes that are distance west and distance east from the search point
+            var lonRange_1 = [-1, 1].map(function (i) {
+                return gps_1[1] + ((distance_1 * i) / index_1.NanoSQLInstance.earthRadius) * (180 * Math.PI) / Math.cos(gps_1[0] * Math.PI / 180);
+            });
+            // We're getting all rows that are within the latitude OR longitude range.
+            // the final result will be a square giving us an approximation of the final result set.
+            utilities_1.fastALL([latTable, lonTable], function (table, i, next) {
+                var ranges = i === 0 ? latRange_1 : lonRange_1;
+                _this.s._rangeRead(table, ranges[0], ranges[1], true, next);
+            }).then(function (result) {
+                // if the lat or lon results are empty then we have no records that match
+                if (!result[0].length || !result[1].length) {
+                    callback([]);
+                    return;
+                }
+                // build an array of row primary keys and calculate their distance
+                // doesn't calculate distance if row doesn't fit inside the approximation square.
+                var rows = {};
+                var keys = [];
+                [0, 1].forEach(function (i) {
+                    result[i].forEach(function (r) {
+                        r.rows.forEach(function (pk) {
+                            switch (i) {
+                                case 0:
+                                    rows[pk] = r.id;
+                                    break;
+                                case 1:
+                                    // record is inside the search radius
+                                    if (rows[pk] && utilities_1.crowDistance(gps_1[0], gps_1[1], rows[pk], r.id, index_1.NanoSQLInstance.earthRadius) < distance_1) {
+                                        keys.push(pk);
+                                    }
+                                    break;
+                            }
+                        });
+                    });
+                });
+                // Get the rows
+                var pk = _this.qu._store.tableInfo[_this.q.table]._pk;
+                _this.s._read(_this.q.table, keys, function (records) {
+                    callback(records.map(function (r) { return (__assign({}, r, { _distance: rows[r[pk]] })); }));
+                });
+            });
+            return;
+        }
+        if (where[1] === "BETWEEN") {
+            var secondaryIndexKey = where[0] === this.s.tableInfo[this.q.table]._pk ? "" : where[0];
+            if (!Array.isArray(where[2])) {
+                throw new Error("nSQL: BETWEEN query must use an array!");
+            }
+            if (secondaryIndexKey) {
+                var idxTable_1 = "_" + this.q.table + "_idx_" + secondaryIndexKey;
+                if (this.s._doCache) {
+                    var pks = this.s._secondaryIndexes[idxTable_1].idx.filter(function (idx) { return where[2][0] <= idx && where[2][1] >= idx; });
+                    var keys_1 = pks.map(function (r) { return _this.s._secondaryIndexes[idxTable_1].rows[r]; }).reverse().reduce(function (prev, cur) {
+                        return prev.concat(cur.rows);
+                    }, []);
+                    this.s._read(this.q.table, keys_1, callback);
+                }
+                else {
+                    this.s._rangeRead(idxTable_1, where[2][0], where[2][1], true, function (rows) {
+                        var keys = [];
+                        var i = rows.length;
+                        while (i--) {
+                            keys = keys.concat(rows[i].rows);
+                        }
+                        _this.s._read(_this.q.table, keys, callback);
+                    });
+                }
+            }
+            else {
+                this.s._rangeRead(this.q.table, where[2][0], where[2][1], true, function (rows) {
+                    callback(rows);
+                });
+            }
+            return;
+        }
+        var keys = [];
+        var condition = "";
+        switch (where[1]) {
+            case "IN":
+                keys = where[2];
+                if (!Array.isArray(keys)) {
+                    throw new Error("nSQL: IN query must use array!");
+                }
+                condition = "=";
+                break;
+            case "=":
+            case ">":
+            case ">=":
+            case "<":
+            case "<=":
+                keys = [where[2]];
+                condition = where[1];
+                break;
+        }
+        if (where[0] === this.s.tableInfo[this.q.table]._pk) { // primary key select
+            if (condition === "=") {
+                this.s._read(this.q.table, keys, callback);
+            }
+            else {
+                this.s.adapters[0].adapter.getIndex(this.q.table, false, function (index) {
+                    var searchVal = keys[0];
+                    var getPKs = index.filter(function (val) {
+                        switch (condition) {
+                            case ">": return val > searchVal;
+                            case ">=": return val >= searchVal;
+                            case "<": return val < searchVal;
+                            case "<=": return val <= searchVal;
+                        }
+                        return false;
+                    });
+                    if (!getPKs.length) {
+                        callback([]);
+                        return;
+                    }
+                    _this.s._read(_this.q.table, getPKs, callback);
+                });
+            }
+        }
+        else { // secondary index select
+            utilities_1.fastALL(keys, function (idx, i, complete) {
+                _this.s._secondaryIndexRead(_this.q.table, condition, where[0], idx, complete);
+            }).then(function (rows) {
+                callback([].concat.apply([], rows));
+            });
+        }
+    };
+    /**
+     * Select rows within a numerical range using limit and offset values.
+     * Negative limit values will start the range from the bottom of the table.
+     *
+     * @internal
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _RowSelection
+     */
+    // [limit, offset]
+    _RowSelection.prototype._selectByRange = function (callback) {
+        var _this = this;
+        if (this.q.range) {
+            var r_1 = this.q.range;
+            if (r_1[0] > 0) { // positive limit value, we can send this straight to the adapter
+                this.s._rangeRead(this.q.table, r_1[1], (r_1[1] + r_1[0]) - 1, false, callback);
+            }
+            else { // using negative limit value to get rows at the end of the database.
+                this.s.adapters[0].adapter.getIndex(this.q.table, true, function (count) {
+                    var fromIdx = count + r_1[0] - r_1[1];
+                    var toIdx = fromIdx;
+                    var counter = Math.abs(r_1[0]) - 1;
+                    while (counter--) {
+                        toIdx++;
+                    }
+                    _this.s._rangeRead(_this.q.table, fromIdx, toIdx, false, callback);
+                });
+            }
+        }
+        else {
+            callback([]);
+        }
+    };
+    /**
+     * Select rows based on a Trie Query.
+     *
+     * @internal
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._selectByTrie = function (callback) {
+        if (this.q.trie) {
+            this.s._trieRead(this.q.table, this.q.trie.column, this.q.trie.search, callback);
+        }
+        else {
+            callback([]);
+        }
+    };
+    /**
+     * Do a full table scan, checking every row against the WHERE statement.
+     *
+     * @internal
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._fullTableScan = function (callback) {
+        var _this = this;
+        var hasWhere = this.q.where !== undefined;
+        var arrWhere = hasWhere && Array.isArray(this.q.where);
+        var PK = this.s.tableInfo[this.q.table]._pk;
+        var arraySearchCache = [];
+        var rowCache = [];
+        var scanTable = function () {
+            _this.s._read(_this.q.table, function (row, i, keep) {
+                if (!hasWhere) { // no where statement
+                    keep(true);
+                    return;
+                }
+                if (arrWhere) { // where is array
+                    keep(_where(row, _this.q.where, i, false, arraySearchCache, PK));
+                }
+                else { // where is function
+                    keep(_this.q.where(row, i));
+                }
+            }, callback);
+        };
+        var where = this.q.where || [];
+        if (arrWhere && typeof where[0] !== "string") { // array and compount where
+            // compound where, handle search() queries inside an unoptimized query.
+            utilities_1.fastCHAIN(where, function (wAr, i, done) {
+                if (wAr[0].indexOf("search(") === -1) {
+                    done();
+                    return;
+                }
+                // perform optimized search query, then store the results to compare aginst the rest of the .where() conditions
+                _this.qu._store._nsql.query("select").where(wAr).manualExec({ table: _this.q.table }).then(function (rows) {
+                    arraySearchCache[i] = rows.map(function (r) { return r[PK]; });
+                    done();
+                });
+            }).then(function () {
+                scanTable();
+            });
+        }
+        else {
+            scanTable();
+        }
+    };
+    /**
+     * Given a compound where statement like [[value, =, key], AND, [something, =, something]]
+     * Check if first where conditions are primary key/ secondary index followed by unoptimized/unindexed conditions
+     *
+     * In this case we can grab the primary key/secondary index query from the database and do a faster query on the smaller result set.
+     *
+     * Returns 0 if this isn't a suboptimized where condition.
+     * Returns the index of the where array where the AND splits between optimized and unoptimized conditions otherwise.
+     *
+     * @private
+     * @param {any[]} wArgs
+     * @returns {number}
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._isSubOptimizedWhere = function (wArgs) {
+        var _this = this;
+        if (typeof wArgs[0] === "string") { // not compound where
+            return 0;
+        }
+        if (this._isOptimizedWhere(wArgs[0]) === 0) { // at least first value is optimized
+            // last primary key/secondary index condition MUST be followed by AND
+            var lastCheck_1 = 0;
+            wArgs.forEach(function (wArg, i) {
+                if (i % 2 === 0) {
+                    if (_this._isOptimizedWhere(wArg) === 0 && wArgs[i + 1]) {
+                        lastCheck_1 = i + 1;
+                    }
+                }
+            });
+            // AND must follow the last secondary index/primary key condition
+            if (wArgs[lastCheck_1] !== "AND")
+                return 0;
+            return lastCheck_1;
+        }
+        return 0;
+    };
+    /**
+     * Checks if a single WHERE statement ["row", "=", value] uses a primary key or secondary index as it's row.
+     * If so, we can use a much faster SELECT method.
+     *
+     * @internal
+     * @param {any[]} wArgs
+     * @returns {number}
+     * @memberof _RowSelection
+     */
+    _RowSelection.prototype._isOptimizedWhere = function (wArgs) {
+        var tableData = this.s.tableInfo[this.q.table];
+        var wQuery = wArgs[0] || "";
+        var wCondition = wArgs[1] || "";
+        if (Array.isArray(wQuery)) { // nested where statement
+            return 0;
+        }
+        // is a valid crow query with secondary indexes
+        if (wQuery.indexOf("crow(") !== 1 && wCondition === "<") {
+            var crowArgs = wQuery.replace(/crow\((.*)\)/gmi, "$1").split(",").map(function (c) { return c.trim(); });
+            var latTable = crowArgs[2] || "lat";
+            var lonTable = crowArgs[3] || "lon";
+            if (tableData._secondaryIndexes.indexOf(latTable) === -1 || tableData._secondaryIndexes.indexOf(lonTable) === -1)
+                return 1;
+            return 0;
+        }
+        // is a valid search query
+        if (wQuery.indexOf("search(") !== -1 && ["=", ">", "<"].reduce(function (p, c) { return p + wArgs[1].indexOf(c); }, 0) !== -3) {
+            var searchArgs = wQuery.replace(/search\((.*)\)/gmi, "$1").split(",").map(function (c) { return c.trim(); });
+            // all search columns are indexed
+            if (searchArgs.filter(function (s) { return Object.keys(tableData._searchColumns).indexOf(s) !== -1; }).length) {
+                return 0;
+            }
+            return 1;
+        }
+        // primary or secondary index with valid where condition
+        if (wQuery === tableData._pk || tableData._secondaryIndexes.indexOf(wQuery) !== -1) {
+            if (["=", "IN", "BETWEEN", ">", ">=", "<", "<="].indexOf(wArgs[1]) > -1)
+                return 0;
+            return 1;
+        }
+        return 1;
+    };
+    return _RowSelection;
+}());
+exports._RowSelection = _RowSelection;
+/**
+ * Select rows from an instance table. Supports RANGE and WHERE statements.
+ *
+ * @export
+ * @class InstanceSelection
+ */
+var InstanceSelection = /** @class */ (function () {
+    function InstanceSelection(q, p) {
+        this.q = q;
+        this.p = p;
+    }
+    InstanceSelection.prototype.getRows = function (onRows, error) {
+        var _this = this;
+        if (this.q.join || this.q.orm || this.q.trie) {
+            error(new Error("nSQL: Cannot do a JOIN, ORM or TRIE command with instance table!"));
+            return;
+        }
+        if (this.q.range && this.q.range.length) { // range select [limit, offset]
+            var range = this.q.range, from_1, to_1;
+            if (range[0] < 0) {
+                from_1 = (this.q.table.length) + range[0] - range[1];
+            }
+            else {
+                from_1 = range[1];
+            }
+            var cnt = Math.abs(range[0]) - 1;
+            to_1 = from_1;
+            while (cnt--) {
+                to_1++;
+            }
+            onRows(this.q.table.filter(function (val, idx) {
+                return idx >= from_1 && idx <= to_1;
+            }));
+            return;
+        }
+        onRows(this.q.table.filter(function (row, i) {
+            if (_this.q.where) {
+                return Array.isArray(_this.q.where) ? _where(row, _this.q.where || [], i, false) : _this.q.where(row, i);
+            }
+            return true;
+        }));
+    };
+    return InstanceSelection;
+}());
+exports.InstanceSelection = InstanceSelection;
+/**
+ * Handles WHERE statements, combining multiple compared statements aginst AND/OR as needed to return a final boolean value.
+ * The final boolean value is wether the row matches the WHERE conditions or not.
+ *
+ * @param {*} singleRow
+ * @param {any[]} where
+ * @param {number} rowIDX
+ * @param {boolean} [ignoreFirstPath]
+ * @returns {boolean}
+ */
+var _where = function (singleRow, where, rowIDX, ignoreFirstPath, searchCache, pk) {
+    if (typeof where[0] !== "string") { // compound where statements
+        var hasOr_1 = where.indexOf("OR") !== -1;
+        var decided_1;
+        var prevCondition_1;
+        return where.reduce(function (prev, wArg, idx) {
+            if (decided_1 !== undefined)
+                return decided_1;
+            if (idx % 2 === 1) {
+                prevCondition_1 = wArg;
+                return prev;
+            }
+            var compareResult = false;
+            if (wArg[0].indexOf("search(") === 0 && searchCache) {
+                compareResult = searchCache[idx].indexOf(singleRow[pk]) !== -1;
+            }
+            else if (Array.isArray(wArg[0])) {
+                compareResult = _where(singleRow, wArg, rowIDX, ignoreFirstPath || false, searchCache, pk);
+            }
+            else {
+                compareResult = _compare(wArg, singleRow, ignoreFirstPath || false);
+            }
+            // if all conditions are "AND" we can stop checking on the first false result
+            if (!hasOr_1 && compareResult === false) {
+                decided_1 = false;
+                return decided_1;
+            }
+            if (idx === 0)
+                return compareResult;
+            if (prevCondition_1 === "AND") {
+                return prev && compareResult;
+            }
+            else {
+                return prev || compareResult;
+            }
+        }, false);
+    }
+    else { // single where statement
+        return _compare(where, singleRow, ignoreFirstPath || false);
+    }
+};
+var likeCache = {};
+var whereFuncCache = {};
+/**
+ * Compare function used by WHERE to determine if a given value matches a given condition.
+ *
+ * Accepts single where arguments (compound arguments not allowed).
+ *
+ *
+ * @param {*} val1
+ * @param {string} compare
+ * @param {*} val2
+ * @returns {boolean}
+ */
+var _compare = function (where, wholeRow, isJoin) {
+    if (!whereFuncCache[where[0]]) {
+        // "levenshtein(word, column)"" => ["levenshtein", "word", "column"]
+        // "crow(-49, 29, lat_main, lon_main)" => ["crow", -49, 29, "lat_main", "lon_main"]
+        // notAFunction => []
+        whereFuncCache[where[0]] = where[0].indexOf("(") !== -1 ?
+            where[0].replace(/(.*)\((.*)\)/gmi, "$1,$2").split(",").map(function (c) { return isNaN(c) ? c.trim() : parseFloat(c.trim()); })
+            : [];
+    }
+    var processLIKE = function (columnValue, givenValue) {
+        if (!likeCache[givenValue]) {
+            var prevChar_1 = "";
+            likeCache[givenValue] = new RegExp(givenValue.split("").map(function (s) {
+                if (prevChar_1 === "\\") {
+                    prevChar_1 = s;
+                    return s;
+                }
+                prevChar_1 = s;
+                if (s === "%")
+                    return ".*";
+                if (s === "_")
+                    return ".";
+                return s;
+            }).join(""), "gmi");
+        }
+        if (typeof columnValue !== "string") {
+            if (typeof columnValue === "number") {
+                return String(columnValue).match(likeCache[givenValue]) !== null;
+            }
+            else {
+                return JSON.stringify(columnValue).match(likeCache[givenValue]) !== null;
+            }
+        }
+        return columnValue.match(likeCache[givenValue]) !== null;
+    };
+    var givenValue = where[2];
+    var compare = where[1];
+    var columnValue = (function () {
+        if (whereFuncCache[where[0]].length) {
+            var whereFn = index_1.NanoSQLInstance.whereFunctions[whereFuncCache[where[0]][0]];
+            if (whereFn) {
+                return whereFn.apply(null, [wholeRow, isJoin].concat(whereFuncCache[where[0]].slice(1)));
+            }
+            return undefined;
+        }
+        else {
+            return utilities_1.objQuery(where[0], wholeRow, isJoin);
+        }
+    })();
+    if (givenValue === "NULL" || givenValue === "NOT NULL") {
+        var isNull = [undefined, null, ""].indexOf(columnValue) !== -1;
+        var isEqual = compare === "=" || compare === "LIKE";
+        switch (givenValue) {
+            case "NULL": return isEqual ? isNull : !isNull;
+            case "NOT NULL": return isEqual ? !isNull : isNull;
+        }
+    }
+    if (["IN", "BETWEEN", "INTERSECT", "INTERSECT ALL", "NOT INTERSECT"].indexOf(compare) !== -1) {
+        if (!Array.isArray(givenValue)) {
+            throw new Error("nSQL: " + compare + " requires an array value!");
+        }
+    }
+    switch (compare) {
+        // if column equal to given value
+        case "=": return columnValue === givenValue;
+        // if column not equal to given value
+        case "!=": return columnValue !== givenValue;
+        // if column greather than given value
+        case ">": return columnValue > givenValue;
+        // if column less than given value
+        case "<": return columnValue < givenValue;
+        // if column less than or equal to given value
+        case "<=": return columnValue <= givenValue;
+        // if column greater than or equal to given value
+        case ">=": return columnValue >= givenValue;
+        // if column value exists in given array
+        case "IN": return (givenValue || []).indexOf(columnValue) !== -1;
+        // if column does not exist in given array
+        case "NOT IN": return (givenValue || []).indexOf(columnValue) === -1;
+        // regexp search the column
+        case "REGEXP":
+        case "REGEX": return (columnValue || "").match(givenValue) !== null;
+        // if given value exists in column value
+        case "LIKE": return processLIKE((columnValue || ""), givenValue);
+        // if given value does not exist in column value
+        case "NOT LIKE": return !processLIKE((columnValue || ""), givenValue);
+        // if the column value is between two given numbers
+        case "BETWEEN": return givenValue[0] <= columnValue && givenValue[1] >= columnValue;
+        // if single value exists in array column
+        case "HAVE":
+        case "INCLUDES": return (columnValue || []).indexOf(givenValue) !== -1;
+        // if single value does not exist in array column
+        case "NOT HAVE":
+        case "NOT INCLUDES": return (columnValue || []).indexOf(givenValue) === -1;
+        // if array of values intersects with array column
+        case "INTERSECT": return (columnValue || []).filter(function (l) { return (givenValue || []).indexOf(l) > -1; }).length > 0;
+        // if every value in the provided array exists in the array column
+        case "INTERSECT ALL": return (columnValue || []).filter(function (l) { return (givenValue || []).indexOf(l) > -1; }).length === givenValue.length;
+        // if array of values does not intersect with array column
+        case "NOT INTERSECT": return (columnValue || []).filter(function (l) { return (givenValue || []).indexOf(l) > -1; }).length === 0;
+        default: return false;
+    }
+};
+//# sourceMappingURL=query.js.map
+},{"../index":"node_modules/nano-sql/lib/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","fuzzysearch":"node_modules/fuzzysearch/index.js","levenshtein-edit-distance":"node_modules/levenshtein-edit-distance/index.js"}],"node_modules/prefix-trie-ts/node/index.js":[function(require,module,exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var config = {
+    END_WORD: "$",
+    PERMS_MIN_LEN: 2,
+};
+var Trie = (function () {
+    function Trie(input) {
+        this._trie = Trie._create(input);
+    }
+    Trie.prototype.getIndex = function () {
+        return this._trie;
+    };
+    Trie.prototype.setIndex = function (trie) {
+        this._trie = trie;
+    };
+    Trie.prototype.addWord = function (word) {
+        var reducer = function (previousValue, currentValue, currentIndex, array) {
+            return Trie._append(previousValue, currentValue, currentIndex, array);
+        };
+        var input = word.toLowerCase().split("");
+        input.reduce(reducer, this._trie);
+        return this;
+    };
+    Trie.prototype.removeWord = function (word) {
+        var _a = Trie._checkPrefix(this._trie, word), prefixFound = _a.prefixFound, prefixNode = _a.prefixNode;
+        if (prefixFound) {
+            delete prefixNode[config.END_WORD];
+        }
+        return this;
+    };
+    Trie.prototype.getWords = function () {
+        return Trie._recursePrefix(this._trie, '');
+    };
+    Trie.prototype.getPrefix = function (strPrefix) {
+        strPrefix = strPrefix.toLowerCase();
+        if (!this._isPrefix(strPrefix)) {
+            return [];
+        }
+        var prefixNode = Trie._checkPrefix(this._trie, strPrefix).prefixNode;
+        return Trie._recursePrefix(prefixNode, strPrefix);
+    };
+    Trie.prototype._isPrefix = function (prefix) {
+        var prefixFound = Trie._checkPrefix(this._trie, prefix).prefixFound;
+        return prefixFound;
+    };
+    Trie._append = function (trie, letter, index, array) {
+        trie[letter] = trie[letter] || {};
+        trie = trie[letter];
+        if (index === array.length - 1) {
+            trie[config.END_WORD] = 1;
+        }
+        return trie;
+    };
+    Trie._checkPrefix = function (prefixNode, prefix) {
+        var input = prefix.toLowerCase().split("");
+        var prefixFound = input.every(function (letter, index) {
+            if (!prefixNode[letter]) {
+                return false;
+            }
+            return prefixNode = prefixNode[letter];
+        });
+        return {
+            prefixFound: prefixFound,
+            prefixNode: prefixNode,
+        };
+    };
+    Trie._create = function (input) {
+        var trie = (input || []).reduce(function (accumulator, item) {
+            item
+                .toLowerCase()
+                .split("")
+                .reduce(Trie._append, accumulator);
+            return accumulator;
+        }, {});
+        return trie;
+    };
+    Trie._recursePrefix = function (node, prefix, prefixes) {
+        if (prefixes === void 0) { prefixes = []; }
+        var word = prefix;
+        for (var branch in node) {
+            if (branch === config.END_WORD) {
+                prefixes.push(word);
+                word = "";
+            }
+            Trie._recursePrefix(node[branch], prefix + branch, prefixes);
+        }
+        return prefixes.sort();
+    };
+    return Trie;
+}());
+exports.Trie = Trie;
+
+},{}],"node_modules/nano-sql/lib/database/db-idx.js":[function(require,module,exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var utilities_1 = require("../utilities");
+/**
+ * Optimized in memory index used for each table.
+ * Even if you're not using auto incriment, the index will gaurantee to maintain a sorted order of keys.
+ * Exchanges a reduced write performance for increased read performance.
+ *
+ * @export
+ * @class DatabaseIndex
+ */
+var DatabaseIndex = /** @class */ (function () {
+    function DatabaseIndex() {
+        this._sorted = [];
+        this._exists = {};
+        this.ai = 1;
+        this.sortIndex = true;
+        this.doAI = false;
+    }
+    DatabaseIndex.prototype.clone = function (skipEvent) {
+        if (this._changeCB && !skipEvent)
+            this._changeCB(this._ta, "drop", null);
+        var idx = new DatabaseIndex();
+        idx.doAI = this.doAI;
+        idx.ai = this.ai;
+        idx.sortIndex = this.sortIndex;
+        idx._changeCB = this._changeCB;
+        idx._ta = this._ta;
+        idx.pkType = this.pkType;
+        if (skipEvent) {
+            this.set([]);
+        }
+        return idx;
+    };
+    DatabaseIndex.prototype.onChange = function (table, cb) {
+        this._ta = table;
+        this._changeCB = cb;
+    };
+    DatabaseIndex.prototype.set = function (index) {
+        var _this = this;
+        this._sorted = index || [];
+        this._exists = {};
+        this._sorted.forEach(function (s, i) {
+            _this._exists[String(s)] = true;
+        });
+        if (this.doAI && this._sorted.length) {
+            this.ai = this._sorted[this._sorted.length - 1] + 1;
+        }
+    };
+    DatabaseIndex.prototype.getLocation = function (key, startIdx) {
+        var idx = this.indexOf(key);
+        if (idx !== -1) {
+            return idx;
+        }
+        if (this.sortIndex) {
+            return utilities_1.binarySearch(this._sorted, key, startIdx);
+        }
+        else {
+            return utilities_1.binarySearch(this._sorted.sort(function (a, b) { return a > b ? 1 : -1; }), key, startIdx);
+        }
+    };
+    DatabaseIndex.prototype.add = function (key, skipEvent) {
+        if (this._exists[String(key)])
+            return;
+        if (this._changeCB && !skipEvent)
+            this._changeCB(this._ta, "add", key);
+        this._exists[String(key)] = true;
+        if (skipEvent && ["number", "int", "float"].indexOf(this.pkType) !== -1) {
+            key = parseFloat(key);
+        }
+        if (!this.doAI) {
+            if (this.sortIndex) {
+                var idx = utilities_1.binarySearch(this._sorted, key);
+                this._sorted.splice(idx, 0, key);
+            }
+            else {
+                this._sorted.push(key);
+            }
+        }
+        else {
+            this.ai++;
+            this._sorted.push(key);
+        }
+    };
+    DatabaseIndex.prototype.keys = function () {
+        return this._sorted;
+    };
+    DatabaseIndex.prototype.exists = function (key) {
+        return this._exists[String(key)] ? true : false;
+    };
+    DatabaseIndex.prototype.indexOf = function (key) {
+        if (!this._exists[String(key)])
+            return -1;
+        return this.sortIndex ? utilities_1.binarySearch(this._sorted, key) : this._sorted.indexOf(key);
+    };
+    DatabaseIndex.prototype.remove = function (key, skipEvent) {
+        if (this._changeCB && !skipEvent)
+            this._changeCB(this._ta, "rm", key);
+        if (skipEvent && ["number", "int", "float"].indexOf(this.pkType) !== -1) {
+            key = parseFloat(key);
+        }
+        if (this._exists[String(key)]) {
+            var idx = this.indexOf(key);
+            this._exists[String(key)] = false;
+            this._sorted.splice(idx, 1);
+        }
+    };
+    return DatabaseIndex;
+}());
+exports.DatabaseIndex = DatabaseIndex;
+exports.syncPeerIndex = function (nSQL, idx) {
+    if (nSQL.peerMode) {
+        Object.keys(idx).forEach(function (table) {
+            idx[table].onChange(table, function (table, type, data) {
+                nSQL.peers.filter(function (p) { return p !== nSQL.pid; }).forEach(function (peer) {
+                    localStorage.setItem(peer + "::" + utilities_1.random16Bits().toString(16), type + "," + table + "," + (data || ""));
+                });
+            });
+        });
+        window.addEventListener("storage", function (e) {
+            if (e.key && e.key.indexOf(nSQL.pid + "::") !== -1) {
+                var data = (e.newValue || "").split(",");
+                localStorage.removeItem(e.key);
+                switch (data[0]) {
+                    case "rm":
+                        idx[data[1]].remove(data[2], true);
+                        break;
+                    case "add":
+                        idx[data[1]].add(data[2], true);
+                        break;
+                    case "drop":
+                        idx[data[1]].clone(true);
+                        break;
+                }
+            }
+        });
+    }
+};
+//# sourceMappingURL=db-idx.js.map
+},{"../utilities":"node_modules/nano-sql/lib/utilities.js"}],"node_modules/nano-sql/lib/database/adapter-sync.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var utilities_1 = require("../utilities");
+var db_idx_1 = require("./db-idx");
+/**
+ * Handles all available syncronous versions of storage (memory and localstorage)
+ *
+ * @export
+ * @class _SyncStore
+ * @implements {NanoSQLStorageAdapter}
+ */
+// tslint:disable-next-line
+var _SyncStore = /** @class */ (function () {
+    function _SyncStore(useLocalStorage) {
+        this._pkKey = {};
+        this._rows = {};
+        this._dbIndex = {};
+        this._ls = useLocalStorage || false;
+    }
+    _SyncStore.prototype.connect = function (complete) {
+        complete();
+    };
+    _SyncStore.prototype.setID = function (id) {
+        this._id = id;
+    };
+    _SyncStore.prototype.makeTable = function (tableName, dataModels) {
+        var _this = this;
+        this._rows[tableName] = {};
+        this._dbIndex[tableName] = new db_idx_1.DatabaseIndex();
+        dataModels.forEach(function (d) {
+            if (d.props && utilities_1.intersect(["pk", "pk()"], d.props)) {
+                _this._dbIndex[tableName].pkType = d.type;
+                _this._pkKey[tableName] = d.key;
+                if (d.props && utilities_1.intersect(["ai", "ai()"], d.props) && (d.type === "int" || d.type === "number")) {
+                    _this._dbIndex[tableName].doAI = true;
+                }
+                if (d.props && utilities_1.intersect(["ns", "ns()"], d.props) || ["uuid", "timeId", "timeIdms"].indexOf(_this._dbIndex[tableName].pkType) !== -1) {
+                    _this._dbIndex[tableName].sortIndex = false;
+                }
+                if (_this._ls) {
+                    var index = localStorage.getItem(_this._id + "*" + tableName + "_idx");
+                    if (index) {
+                        _this._dbIndex[tableName].set(JSON.parse(index));
+                    }
+                }
+            }
+        });
+    };
+    _SyncStore.prototype.write = function (table, pk, data, complete, error) {
+        var _a, _b;
+        pk = pk || utilities_1.generateID(this._dbIndex[table].pkType, this._dbIndex[table].ai);
+        if (!pk) {
+            error(new Error("nSQL: Can't add a row without a primary key!"));
+            return;
+        }
+        if (this._dbIndex[table].indexOf(pk) === -1) {
+            this._dbIndex[table].add(pk);
+            if (this._ls) {
+                localStorage.setItem(this._id + "*" + table + "_idx", JSON.stringify(this._dbIndex[table].keys()));
+            }
+        }
+        if (this._ls) {
+            var r = __assign({}, data, (_a = {}, _a[this._pkKey[table]] = pk, _a));
+            localStorage.setItem(this._id + "*" + table + "__" + pk, JSON.stringify(r));
+            complete(r);
+        }
+        else {
+            var r = __assign({}, data, (_b = {}, _b[this._pkKey[table]] = pk, _b));
+            this._rows[table][pk] = utilities_1.deepFreeze(r);
+            complete(r);
+        }
+    };
+    _SyncStore.prototype.delete = function (table, pk, complete) {
+        var idx = this._dbIndex[table].indexOf(pk);
+        if (idx !== -1) {
+            this._dbIndex[table].remove(pk);
+            if (this._ls) {
+                localStorage.setItem(this._id + "*" + table + "_idx", JSON.stringify(this._dbIndex[table].keys()));
+            }
+        }
+        if (this._ls) {
+            localStorage.removeItem(this._id + "*" + table + "__" + pk);
+        }
+        else {
+            delete this._rows[table][pk];
+        }
+        complete();
+    };
+    _SyncStore.prototype.read = function (table, pk, callback) {
+        if (this._ls) {
+            var r = localStorage.getItem(this._id + "*" + table + "__" + pk);
+            callback(r ? JSON.parse(r) : undefined);
+        }
+        else {
+            callback(this._rows[table][pk]);
+        }
+    };
+    _SyncStore.prototype.rangeRead = function (table, rowCallback, complete, from, to, usePK) {
+        var _this = this;
+        var keys = this._dbIndex[table].keys();
+        var usefulValues = [typeof from, typeof to].indexOf("undefined") === -1;
+        var ranges = usefulValues ? [from, to] : [0, keys.length - 1];
+        if (!keys.length) {
+            complete();
+            return;
+        }
+        if (!(usePK && usefulValues) && this._dbIndex[table].sortIndex === false) {
+            keys = keys.sort();
+        }
+        if (usePK && usefulValues) {
+            ranges = ranges.map(function (r) {
+                var idxOf = _this._dbIndex[table].indexOf(r);
+                return idxOf !== -1 ? idxOf : _this._dbIndex[table].getLocation(r);
+            });
+        }
+        var idx = ranges[0];
+        var i = 0;
+        var rowDone = function () {
+            idx++;
+            i++;
+            i % 500 === 0 ? lie_ts_1.setFast(getRow) : getRow(); // handle maximum call stack error
+        };
+        var getRow = function () {
+            if (idx <= ranges[1]) {
+                if (_this._ls) {
+                    var r = localStorage.getItem(_this._id + "*" + table + "__" + keys[idx]);
+                    rowCallback(r ? JSON.parse(r) : undefined, idx, rowDone);
+                }
+                else {
+                    rowCallback(_this._rows[table][keys[idx]], idx, rowDone);
+                }
+            }
+            else {
+                complete();
+            }
+        };
+        getRow();
+    };
+    _SyncStore.prototype.drop = function (table, callback) {
+        var _this = this;
+        if (this._ls) {
+            localStorage.setItem(this._id + "*" + table + "_idx", JSON.stringify([]));
+            this._dbIndex[table].keys().forEach(function (key) {
+                localStorage.removeItem(_this._id + "*" + table + "__" + key);
+            });
+        }
+        else {
+            this._rows[table] = {};
+        }
+        this._dbIndex[table] = this._dbIndex[table].clone();
+        callback();
+    };
+    _SyncStore.prototype.getIndex = function (table, getLength, complete) {
+        complete(getLength ? this._dbIndex[table].keys().length : this._dbIndex[table].keys());
+    };
+    _SyncStore.prototype.destroy = function (complete) {
+        var _this = this;
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            _this.drop(table, done);
+        }).then(complete);
+    };
+    _SyncStore.prototype.setNSQL = function (nSQL) {
+        db_idx_1.syncPeerIndex(nSQL, this._dbIndex);
+    };
+    return _SyncStore;
+}());
+exports._SyncStore = _SyncStore;
+//# sourceMappingURL=adapter-sync.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./db-idx":"node_modules/nano-sql/lib/database/db-idx.js"}],"node_modules/nano-sql/lib/database/adapter-indexedDB.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var utilities_1 = require("../utilities");
+var db_idx_1 = require("./db-idx");
+/**
+ * Handles IndexedDB with and without web workers.
+ * Uses blob worker OR eval()s the worker and uses it inline.
+ *
+ * @export
+ * @class _IndexedDBStore
+ * @implements {NanoSQLStorageAdapter}
+ */
+// tslint:disable-next-line
+var _IndexedDBStore = /** @class */ (function () {
+    function _IndexedDBStore(version) {
+        this.version = version;
+        this._pkKey = {};
+        this._dbIndex = {};
+        this._dataModels = {};
+    }
+    _IndexedDBStore.prototype.onError = function (ev) {
+        console.error(ev);
+        throw new Error("nSQL: IndexedDB Error!");
+    };
+    _IndexedDBStore.prototype.connect = function (complete) {
+        var _this = this;
+        this._modelHash = utilities_1.hash(JSON.stringify(this._dataModels));
+        var version = 1;
+        if (this.version) { // manually handled by developer
+            version = this.version;
+        }
+        else { // automatically handled by nanoSQL
+            version = parseInt(localStorage.getItem(this._id + "-idb-version") || "") || 1;
+            var modelHash = localStorage.getItem(this._id + "-idb-hash") || this._modelHash;
+            if (modelHash !== this._modelHash) {
+                version++;
+            }
+            localStorage.setItem(this._id + "-idb-version", String(version));
+            localStorage.setItem(this._id + "-idb-hash", this._modelHash);
+        }
+        var idb = indexedDB.open(this._id, version);
+        var idxes = {};
+        idb.onerror = this.onError;
+        // Called only when there is no existing DB, creates the tables and data store.
+        // Sets indexes as empty arrays.
+        idb.onupgradeneeded = function (event) {
+            _this._db = event.target.result;
+            Object.keys(_this._dbIndex).forEach(function (table) {
+                if (!_this._db.objectStoreNames.contains(table)) {
+                    _this._db.createObjectStore(table, { keyPath: _this._pkKey[table] });
+                }
+                idxes[table] = [];
+            });
+        };
+        // Called once the database is connected and working
+        // If an onupgrade wasn't called it's an existing DB, so we import indexes
+        idb.onsuccess = function (event) {
+            _this._db = event.target.result;
+            var getIDBIndex = function (tName, callBack) {
+                var items = [];
+                _this.store(tName, "readonly", function (transaction, store) {
+                    var cursorRequest = store.openCursor();
+                    cursorRequest.onsuccess = function (evt) {
+                        var cursor = evt.target.result;
+                        if (cursor) {
+                            items.push(cursor.key);
+                            cursor.continue();
+                        }
+                    };
+                    cursorRequest.onerror = _this.onError;
+                    transaction.oncomplete = function () {
+                        callBack(items);
+                    };
+                });
+            };
+            utilities_1.fastALL(Object.keys(_this._dbIndex), function (table, i, tDone) {
+                getIDBIndex(table, function (index) {
+                    _this._dbIndex[table].set(index);
+                    tDone();
+                });
+            }).then(function () {
+                complete();
+            });
+        };
+    };
+    _IndexedDBStore.prototype.store = function (table, type, open) {
+        var transaction = this._db.transaction(table, type);
+        transaction.onabort = this.onError;
+        transaction.onerror = this.onError;
+        open(transaction, transaction.objectStore(table));
+    };
+    _IndexedDBStore.prototype.setID = function (id) {
+        this._id = id;
+    };
+    _IndexedDBStore.prototype.makeTable = function (tableName, dataModels) {
+        var _this = this;
+        this._dbIndex[tableName] = new db_idx_1.DatabaseIndex();
+        this._dataModels[tableName] = dataModels;
+        dataModels.forEach(function (d) {
+            if (d.props && utilities_1.intersect(["pk", "pk()"], d.props)) {
+                _this._dbIndex[tableName].pkType = d.type;
+                _this._pkKey[tableName] = d.key;
+                if (d.props && utilities_1.intersect(["ai", "ai()"], d.props) && (d.type === "int" || d.type === "number")) {
+                    _this._dbIndex[tableName].doAI = true;
+                }
+                if (d.props && utilities_1.intersect(["ns", "ns()"], d.props) || ["uuid", "timeId", "timeIdms"].indexOf(_this._dbIndex[tableName].pkType) !== -1) {
+                    _this._dbIndex[tableName].sortIndex = false;
+                }
+            }
+        });
+    };
+    _IndexedDBStore.prototype.write = function (table, pk, data, complete, error) {
+        var _a;
+        pk = pk || utilities_1.generateID(this._dbIndex[table].pkType, this._dbIndex[table].ai);
+        if (!pk) {
+            error(new Error("nSQL: Can't add a row without a primary key!"));
+            return;
+        }
+        if (this._dbIndex[table].indexOf(pk) === -1) {
+            this._dbIndex[table].add(pk);
+        }
+        var r = __assign({}, data, (_a = {}, _a[this._pkKey[table]] = pk, _a));
+        this.store(table, "readwrite", function (transaction, store) {
+            try {
+                store.put(r).onsuccess = function () {
+                    complete(r);
+                };
+            }
+            catch (e) {
+                console.error(e);
+                error(e);
+            }
+        });
+    };
+    _IndexedDBStore.prototype.delete = function (table, pk, complete) {
+        var _this = this;
+        var idx = this._dbIndex[table].indexOf(pk);
+        if (idx !== -1) {
+            this._dbIndex[table].remove(pk);
+        }
+        this.store(table, "readwrite", function (transaction, store) {
+            var req = (pk === "_clear_") ? store.clear() : store.delete(pk);
+            req.onerror = _this.onError;
+            req.onsuccess = function (e) {
+                complete();
+            };
+        });
+    };
+    _IndexedDBStore.prototype.read = function (table, pk, callback) {
+        var _this = this;
+        if (this._dbIndex[table].indexOf(pk) === -1) {
+            callback(null);
+            return;
+        }
+        this.store(table, "readonly", function (transaction, store) {
+            var singleReq = store.get(pk);
+            singleReq.onerror = _this.onError;
+            singleReq.onsuccess = function () {
+                callback(singleReq.result);
+            };
+        });
+    };
+    _IndexedDBStore.prototype.rangeRead = function (table, rowCallback, complete, from, to, usePK) {
+        var _this = this;
+        var keys = this._dbIndex[table].keys();
+        var usefulValues = [typeof from, typeof to].indexOf("undefined") === -1;
+        var ranges = usefulValues ? [from, to] : [0, keys.length - 1];
+        if (!keys.length) {
+            complete();
+            return;
+        }
+        if (!(usePK && usefulValues) && this._dbIndex[table].sortIndex === false) {
+            keys = keys.sort();
+        }
+        if (usePK && usefulValues) {
+            ranges = ranges.map(function (r) {
+                var idxOf = _this._dbIndex[table].indexOf(r);
+                return idxOf !== -1 ? idxOf : _this._dbIndex[table].getLocation(r);
+            });
+        }
+        var idx = ranges[0];
+        var i = 0;
+        var rowDone = function () {
+            idx++;
+            i++;
+            i % 500 === 0 ? lie_ts_1.setFast(getRow) : getRow(); // handle maximum call stack error
+        };
+        var getRow = function () {
+            if (idx <= ranges[1]) {
+                _this.read(table, keys[idx], function (row) {
+                    rowCallback(row, idx, rowDone);
+                });
+            }
+            else {
+                complete();
+            }
+        };
+        getRow();
+        /*let keys = this._dbIndex[table].keys();
+        const usefulValues = [typeof from, typeof to].indexOf("undefined") === -1;
+        let ranges: number[] = usefulValues ? [from as any, to as any] : [0, keys.length - 1];
+
+        if (!keys.length) {
+            complete();
+            return;
+        }
+
+        if (!(usePK && usefulValues) && this._dbIndex[table].sortIndex === false) {
+            keys = keys.sort();
+        }
+
+        const lower = usePK && usefulValues ? from : keys[ranges[0]];
+        const higher = (usePK && usefulValues ? to : keys[ranges[1]]);
+
+
+        this.store(table, "readonly", (transaction, store) => {
+            let rows: any[] = [];
+            try {
+                const cursorRequest = usefulValues ? store.openCursor(IDBKeyRange.bound(lower, higher)) : store.openCursor();
+                transaction.oncomplete = (e) => {
+                    let i = 0;
+                    const getRow = () => {
+                        if (rows[i]) {
+                            rowCallback(rows[i], i, () => {
+                                i++;
+                                i % 500 === 0 ? setFast(getRow) : getRow(); // handle maximum call stack error
+                            });
+                        } else {
+                            complete();
+                        }
+                    };
+                    getRow();
+                };
+                cursorRequest.onsuccess = (evt: any) => {
+                    const cursor: IDBCursorWithValue = evt.target.result;
+                    if (cursor) {
+                        rows.push(cursor.value);
+                        cursor.continue();
+                    }
+                };
+                cursorRequest.onerror = this.onError;
+            } catch (e) {
+                console.log(lower, higher);
+                console.error(e);
+            }
+
+        });*/
+    };
+    _IndexedDBStore.prototype.drop = function (table, callback) {
+        this._dbIndex[table] = this._dbIndex[table].clone();
+        this.delete(table, "_clear_", function () {
+            callback();
+        });
+    };
+    _IndexedDBStore.prototype.getIndex = function (table, getLength, complete) {
+        complete(getLength ? this._dbIndex[table].keys().length : this._dbIndex[table].keys());
+    };
+    _IndexedDBStore.prototype.destroy = function (complete) {
+        var _this = this;
+        localStorage.removeItem(this._id + "-idb-version");
+        localStorage.removeItem(this._id + "-idb-hash");
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            _this.drop(table, done);
+        }).then(complete);
+    };
+    _IndexedDBStore.prototype.setNSQL = function (nSQL) {
+        db_idx_1.syncPeerIndex(nSQL, this._dbIndex);
+    };
+    return _IndexedDBStore;
+}());
+exports._IndexedDBStore = _IndexedDBStore;
+//# sourceMappingURL=adapter-indexedDB.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./db-idx":"node_modules/nano-sql/lib/database/db-idx.js"}],"node_modules/nano-sql/lib/database/adapter-websql.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var utilities_1 = require("../utilities");
+var db_idx_1 = require("./db-idx");
+/**
+ * Handles WebSQL persistent storage
+ *
+ * @export
+ * @class _SyncStore
+ * @implements {NanoSQLStorageAdapter}
+ */
+// tslint:disable-next-line
+var _WebSQLStore = /** @class */ (function () {
+    function _WebSQLStore(size) {
+        this._pkKey = {};
+        this._dbIndex = {};
+        this._size = (size || 0) * 1000 * 1000;
+    }
+    _WebSQLStore.prototype.setID = function (id) {
+        this._id = id;
+    };
+    _WebSQLStore.prototype.connect = function (complete) {
+        var _this = this;
+        this._db = window.openDatabase(this._id, "1.0", this._id, this._size || utilities_1.isAndroid ? 5000000 : 1);
+        utilities_1.fastALL(Object.keys(this._pkKey), function (table, i, nextKey) {
+            _this._sql(true, "CREATE TABLE IF NOT EXISTS " + table + " (id BLOB PRIMARY KEY UNIQUE, data TEXT)", [], function () {
+                _this._sql(false, "SELECT id FROM " + table, [], function (result) {
+                    var idx = [];
+                    for (var i_1 = 0; i_1 < result.rows.length; i_1++) {
+                        idx.push(result.rows.item(i_1).id);
+                    }
+                    // SQLite doesn't sort primary keys, but the system depends on sorted primary keys
+                    if (_this._dbIndex[table].sortIndex) {
+                        idx = idx.sort(function (a, b) { return a > b ? 1 : -1; });
+                    }
+                    _this._dbIndex[table].set(idx);
+                    nextKey();
+                });
+            });
+        }).then(complete);
+    };
+    /**
+     * Table names can't be escaped easily in the queries.
+     * This function gaurantees any provided table is a valid table name being used by the system.
+     *
+     * @private
+     * @param {string} table
+     * @returns {string}
+     * @memberof _WebSQLStore
+     */
+    _WebSQLStore.prototype._chkTable = function (table) {
+        if (Object.keys(this._dbIndex).indexOf(table) === -1) {
+            throw Error("No table " + table + " found!");
+        }
+        else {
+            return table;
+        }
+    };
+    _WebSQLStore.prototype.makeTable = function (tableName, dataModels) {
+        var _this = this;
+        this._dbIndex[tableName] = new db_idx_1.DatabaseIndex();
+        dataModels.forEach(function (d) {
+            if (d.props && utilities_1.intersect(["pk", "pk()"], d.props)) {
+                _this._dbIndex[tableName].pkType = d.type;
+                _this._pkKey[tableName] = d.key;
+                if (d.props && utilities_1.intersect(["ai", "ai()"], d.props) && (d.type === "int" || d.type === "number")) {
+                    _this._dbIndex[tableName].doAI = true;
+                }
+                if (d.props && utilities_1.intersect(["ns", "ns()"], d.props) || ["uuid", "timeId", "timeIdms"].indexOf(_this._dbIndex[tableName].pkType) !== -1) {
+                    _this._dbIndex[tableName].sortIndex = false;
+                }
+            }
+        });
+    };
+    _WebSQLStore.prototype._sql = function (allowWrite, sql, args, complete) {
+        var doTransaction = function (tx) {
+            tx.executeSql(sql, args, function (tx2, result) {
+                complete(result);
+            }, function (tx, err) {
+                console.error(sql, args, err);
+                return false;
+            });
+        };
+        if (allowWrite) {
+            this._db.transaction(doTransaction);
+        }
+        else {
+            this._db.readTransaction(doTransaction);
+        }
+    };
+    _WebSQLStore.prototype.write = function (table, pk, data, complete, error) {
+        var _a, _b;
+        pk = pk || utilities_1.generateID(this._dbIndex[table].pkType, this._dbIndex[table].ai);
+        if (!pk) {
+            error(new Error("nSQL: Can't add a row without a primary key!"));
+            return;
+        }
+        var newRow = false;
+        if (!this._dbIndex[table].exists(pk)) {
+            newRow = true;
+            this._dbIndex[table].add(pk);
+        }
+        if (newRow) {
+            var r_1 = __assign({}, data, (_a = {}, _a[this._pkKey[table]] = pk, _a));
+            this._sql(true, "INSERT into " + this._chkTable(table) + " (id, data) VALUES (?, ?)", [pk, JSON.stringify(r_1)], function (result) {
+                complete(r_1);
+            });
+        }
+        else {
+            var r_2 = __assign({}, data, (_b = {}, _b[this._pkKey[table]] = pk, _b));
+            this._sql(true, "UPDATE " + this._chkTable(table) + " SET data = ? WHERE id = ?", [JSON.stringify(r_2), pk], function () {
+                complete(r_2);
+            });
+        }
+    };
+    _WebSQLStore.prototype.delete = function (table, pk, complete) {
+        var pos = this._dbIndex[table].indexOf(pk);
+        if (pos !== -1) {
+            this._dbIndex[table].remove(pk);
+        }
+        this._sql(true, "DELETE FROM " + this._chkTable(table) + " WHERE id = ?", [pk], function () {
+            complete();
+        });
+    };
+    _WebSQLStore.prototype.read = function (table, pk, callback) {
+        this._sql(false, "SELECT data FROM " + this._chkTable(table) + " WHERE id = ?", [pk], function (result) {
+            if (result.rows.length) {
+                callback(JSON.parse(result.rows.item(0).data));
+            }
+            else {
+                callback(undefined);
+            }
+        });
+    };
+    _WebSQLStore.prototype.batchRead = function (table, pks, callback) {
+        this._sql(false, "SELECT data from " + this._chkTable(table) + " WHERE id IN (" + pks.map(function (p) { return "?"; }).join(", ") + ") ORDER BY id", pks, function (result) {
+            var i = result.rows.length;
+            var rows = [];
+            while (i--) {
+                rows.unshift(JSON.parse(result.rows.item(i).data));
+            }
+            callback(rows);
+        });
+    };
+    _WebSQLStore.prototype.rangeRead = function (table, rowCallback, complete, from, to, usePK) {
+        var _this = this;
+        var keys = this._dbIndex[table].keys();
+        var usefulValues = [typeof from, typeof to].indexOf("undefined") === -1;
+        var ranges = usefulValues ? [from, to] : [];
+        if (!keys.length) {
+            complete();
+            return;
+        }
+        if (usePK && usefulValues) {
+            ranges = ranges.map(function (r) { return _this._dbIndex[table].getLocation(r); });
+        }
+        if (!(usePK && usefulValues) && this._dbIndex[table].sortIndex === false) {
+            keys = keys.sort();
+        }
+        var idx = ranges[0] || 0;
+        var getKeys = [];
+        var startIDX = ranges[0];
+        var stmnt = "SELECT data from " + this._chkTable(table);
+        // SQLite doesn't handle BETWEEN statements gracefully with primary keys, always doing a full table scan.
+        // So we take the index of the table (which is in js memory) and convert it into an IN statement meaning SQLite
+        // can go directly to the rows we need without a full table scan.
+        if (ranges.length) {
+            var t = typeof keys[startIDX] === "number";
+            while (startIDX <= ranges[1]) {
+                getKeys.push(keys[startIDX]);
+                startIDX++;
+            }
+            stmnt += " WHERE id IN (" + getKeys.map(function (k) { return "?"; }).join(", ") + ")";
+        }
+        stmnt += " ORDER BY id";
+        this._sql(false, stmnt, getKeys, function (result) {
+            var i = 0;
+            var getRow = function () {
+                if (result.rows.length > i) {
+                    rowCallback(JSON.parse(result.rows.item(i).data), idx, function () {
+                        idx++;
+                        i++;
+                        i % 500 === 0 ? lie_ts_1.setFast(getRow) : getRow(); // handle maximum call stack error
+                    });
+                }
+                else {
+                    complete();
+                }
+            };
+            getRow();
+        });
+    };
+    _WebSQLStore.prototype.drop = function (table, callback) {
+        this._dbIndex[table] = this._dbIndex[table].clone();
+        this._sql(true, "DELETE FROM " + this._chkTable(table), [], function (rows) {
+            callback();
+        });
+    };
+    _WebSQLStore.prototype.getIndex = function (table, getLength, complete) {
+        complete(getLength ? this._dbIndex[table].keys().length : this._dbIndex[table].keys());
+    };
+    _WebSQLStore.prototype.destroy = function (complete) {
+        var _this = this;
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            _this.drop(table, done);
+        }).then(complete);
+    };
+    _WebSQLStore.prototype.setNSQL = function (nSQL) {
+        db_idx_1.syncPeerIndex(nSQL, this._dbIndex);
+    };
+    return _WebSQLStore;
+}());
+exports._WebSQLStore = _WebSQLStore;
+//# sourceMappingURL=adapter-websql.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./db-idx":"node_modules/nano-sql/lib/database/db-idx.js"}],"node_modules/nano-sql/lib/database/adapter-levelDB.js":[function(require,module,exports) {
+var global = arguments[3];
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var utilities_1 = require("../utilities");
+var db_idx_1 = require("./db-idx");
+var deleteFolderRecursive = function (path) {
+    if (global._fs.existsSync(path)) {
+        global._fs.readdirSync(path).forEach(function (file) {
+            var curPath = path + "/" + file;
+            if (global._fs.statSync(curPath).isDirectory()) { // recurse
+                deleteFolderRecursive(curPath);
+            }
+            else { // delete file
+                global._fs.unlinkSync(curPath);
+            }
+        });
+        global._fs.rmdirSync(path);
+    }
+};
+/**
+ * Handles Level DB storage.
+ *
+ * @export
+ * @class _LevelStore
+ * @implements {NanoSQLStorageAdapter}
+ */
+// tslint:disable-next-line
+var _LevelStore = /** @class */ (function () {
+    function _LevelStore(path, writeCache, readCache) {
+        var _this = this;
+        this.path = path;
+        this.writeCache = writeCache;
+        this.readCache = readCache;
+        this._pkKey = {};
+        this._pkType = {};
+        this._dbIndex = {};
+        this._levelDBs = {};
+        this._isPKnum = {};
+        if (typeof this.path === "string" || typeof this.path === "undefined") {
+            this._lvlDown = (function (dbId, tableName) {
+                var basePath = (_this.path || ".") + "/db_" + dbId;
+                if (!global._fs.existsSync(basePath)) {
+                    global._fs.mkdirSync(basePath);
+                }
+                return {
+                    lvld: global._leveldown(global._path.join(basePath, tableName)),
+                    args: {
+                        cacheSize: (_this.readCache || 32) * 1024 * 1024,
+                        writeBufferSize: (_this.writeCache || 32) * 1024 * 1024
+                    }
+                };
+            });
+        }
+        else {
+            this._lvlDown = this.path;
+        }
+    }
+    _LevelStore.prototype.connect = function (complete) {
+        var _this = this;
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            var pks = [];
+            _this._levelDBs[table].createKeyStream()
+                .on("data", function (data) {
+                pks.push(_this._isPKnum[table] ? new global._Int64BE(data).toNumber() : data.toString());
+            })
+                .on("end", function () {
+                if (pks.length) {
+                    _this._dbIndex[table].set(pks);
+                }
+                done();
+            });
+        }).then(complete);
+    };
+    _LevelStore.prototype.disconnect = function (complete) {
+        var _this = this;
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            _this._levelDBs[table].close(done);
+        }).then(function () {
+            complete();
+        });
+    };
+    _LevelStore.prototype.setID = function (id) {
+        this._id = id;
+    };
+    _LevelStore.prototype.makeTable = function (tableName, dataModels) {
+        var _this = this;
+        this._dbIndex[tableName] = new db_idx_1.DatabaseIndex();
+        var lvlDown = this._lvlDown(this._id, tableName);
+        this._levelDBs[tableName] = global._levelup(lvlDown.lvld, lvlDown.args);
+        dataModels.forEach(function (d) {
+            if (d.props && utilities_1.intersect(["pk", "pk()"], d.props)) {
+                _this._pkType[tableName] = d.type;
+                _this._pkKey[tableName] = d.key;
+                _this._isPKnum[tableName] = ["int", "float", "number"].indexOf(d.type) !== -1;
+                if (d.props && utilities_1.intersect(["ai", "ai()"], d.props) && (d.type === "int" || d.type === "number")) {
+                    _this._dbIndex[tableName].doAI = true;
+                }
+                if (d.props && utilities_1.intersect(["ns", "ns()"], d.props) || ["uuid", "timeId", "timeIdms"].indexOf(_this._pkType[tableName]) !== -1) {
+                    _this._dbIndex[tableName].sortIndex = false;
+                }
+            }
+        });
+    };
+    _LevelStore.prototype.write = function (table, pk, data, complete, error) {
+        var _a;
+        pk = pk || utilities_1.generateID(this._pkType[table], this._dbIndex[table].ai);
+        if (!pk) {
+            error(new Error("Can't add a row without a primary key!"));
+            return;
+        }
+        if (this._dbIndex[table].indexOf(pk) === -1) {
+            this._dbIndex[table].add(pk);
+        }
+        var r = __assign({}, data, (_a = {}, _a[this._pkKey[table]] = pk, _a));
+        this._levelDBs[table].put(this._isPKnum[table] ? new global._Int64BE(pk).toBuffer() : pk, JSON.stringify(r), function (err) {
+            if (err) {
+                throw Error(err);
+            }
+            else {
+                complete(r);
+            }
+        });
+    };
+    _LevelStore.prototype.delete = function (table, pk, complete) {
+        var idx = this._dbIndex[table].indexOf(pk);
+        if (idx !== -1) {
+            this._dbIndex[table].remove(pk);
+        }
+        this._levelDBs[table].del(this._isPKnum[table] ? new global._Int64BE(pk).toBuffer() : pk, function (err) {
+            if (err) {
+                throw Error(err);
+            }
+            else {
+                complete();
+            }
+        });
+    };
+    _LevelStore.prototype.read = function (table, pk, callback) {
+        if (!this._dbIndex[table].exists(pk)) {
+            callback(null);
+            return;
+        }
+        this._levelDBs[table].get(this._isPKnum[table] ? new global._Int64BE(pk).toBuffer() : pk, function (err, row) {
+            if (err) {
+                throw Error(err);
+            }
+            else {
+                callback(JSON.parse(row));
+            }
+        });
+    };
+    _LevelStore.prototype.rangeRead = function (table, rowCallback, complete, from, to, usePK) {
+        var keys = this._dbIndex[table].keys();
+        var usefulValues = [typeof from, typeof to].indexOf("undefined") === -1;
+        var ranges = usefulValues ? [from, to] : [0, keys.length - 1];
+        var rows = [];
+        if (!(usePK && usefulValues) && this._dbIndex[table].sortIndex === false) {
+            keys = keys.sort();
+        }
+        var lower = usePK && usefulValues ? from : keys[ranges[0]];
+        var higher = usePK && usefulValues ? to : keys[ranges[1]];
+        this._levelDBs[table]
+            .createValueStream({
+            gte: this._isPKnum[table] ? new global._Int64BE(lower).toBuffer() : lower,
+            lte: this._isPKnum[table] ? new global._Int64BE(higher).toBuffer() : higher
+        })
+            .on("data", function (data) {
+            rows.push(JSON.parse(data));
+        })
+            .on("end", function () {
+            var idx = ranges[0] || 0;
+            var i = 0;
+            var getRow = function () {
+                if (i < rows.length) {
+                    rowCallback(rows[i], idx, function () {
+                        idx++;
+                        i++;
+                        i % 500 === 0 ? lie_ts_1.setFast(getRow) : getRow(); // handle maximum call stack error
+                    });
+                }
+                else {
+                    complete();
+                }
+            };
+            getRow();
+        });
+    };
+    _LevelStore.prototype.drop = function (table, callback) {
+        var _this = this;
+        utilities_1.fastALL(this._dbIndex[table].keys(), function (pk, i, done) {
+            _this._levelDBs[table].del(pk, done);
+        }).then(function () {
+            _this._dbIndex[table] = _this._dbIndex[table].clone();
+            callback();
+        });
+    };
+    _LevelStore.prototype.getIndex = function (table, getLength, complete) {
+        complete(getLength ? this._dbIndex[table].keys().length : this._dbIndex[table].keys());
+    };
+    _LevelStore.prototype.destroy = function (complete) {
+        var _this = this;
+        utilities_1.fastALL(Object.keys(this._dbIndex), function (table, i, done) {
+            _this.drop(table, function () {
+                _this._levelDBs[table].close(done);
+            });
+        }).then(function () {
+            deleteFolderRecursive(_this._path);
+            complete();
+        });
+    };
+    return _LevelStore;
+}());
+exports._LevelStore = _LevelStore;
+//# sourceMappingURL=adapter-levelDB.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./db-idx":"node_modules/nano-sql/lib/database/db-idx.js"}],"node_modules/inherits/inherits_browser.js":[function(require,module,exports) {
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],"node_modules/events/events.js":[function(require,module,exports) {
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function (n) {
+  if (!isNumber(n) || n < 0 || isNaN(n)) throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function (type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events) this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler)) return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++) listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function (type, listener) {
+  var m;
+
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener) this.emit('newListener', type, isFunction(listener.listener) ? listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' + 'leak detected. %d listeners added. ' + 'Use emitter.setMaxListeners() to increase limit.', this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function (type, listener) {
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function (type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type]) return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener || isFunction(list.listener) && list.listener === listener) {
+    delete this._events[type];
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener || list[i].listener && list[i].listener === listener) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0) return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function (type) {
+  var key, listeners;
+
+  if (!this._events) return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0) this._events = {};else if (this._events[type]) delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length) this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function (type) {
+  var ret;
+  if (!this._events || !this._events[type]) ret = [];else if (isFunction(this._events[type])) ret = [this._events[type]];else ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function (type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener)) return 1;else if (evlistener) return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function (emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+},{}],"node_modules/queue/index.js":[function(require,module,exports) {
+var inherits = require('inherits')
+var EventEmitter = require('events').EventEmitter
+
+module.exports = Queue
+
+function Queue (options) {
+  if (!(this instanceof Queue)) {
+    return new Queue(options)
+  }
+
+  EventEmitter.call(this)
+  options = options || {}
+  this.concurrency = options.concurrency || Infinity
+  this.timeout = options.timeout || 0
+  this.autostart = options.autostart || false
+  this.results = options.results || null
+  this.pending = 0
+  this.session = 0
+  this.running = false
+  this.jobs = []
+  this.timers = {}
+}
+inherits(Queue, EventEmitter)
+
+var arrayMethods = [
+  'pop',
+  'shift',
+  'indexOf',
+  'lastIndexOf'
+]
+
+arrayMethods.forEach(function (method) {
+  Queue.prototype[method] = function () {
+    return Array.prototype[method].apply(this.jobs, arguments)
+  }
+})
+
+Queue.prototype.slice = function (begin, end) {
+  this.jobs = this.jobs.slice(begin, end)
+  return this
+}
+
+Queue.prototype.reverse = function () {
+  this.jobs.reverse()
+  return this
+}
+
+var arrayAddMethods = [
+  'push',
+  'unshift',
+  'splice'
+]
+
+arrayAddMethods.forEach(function (method) {
+  Queue.prototype[method] = function () {
+    var methodResult = Array.prototype[method].apply(this.jobs, arguments)
+    if (this.autostart) {
+      this.start()
+    }
+    return methodResult
+  }
+})
+
+Object.defineProperty(Queue.prototype, 'length', {
+  get: function () {
+    return this.pending + this.jobs.length
+  }
+})
+
+Queue.prototype.start = function (cb) {
+  if (cb) {
+    callOnErrorOrEnd.call(this, cb)
+  }
+
+  this.running = true
+
+  if (this.pending >= this.concurrency) {
+    return
+  }
+
+  if (this.jobs.length === 0) {
+    if (this.pending === 0) {
+      done.call(this)
+    }
+    return
+  }
+
+  var self = this
+  var job = this.jobs.shift()
+  var once = true
+  var session = this.session
+  var timeoutId = null
+  var didTimeout = false
+  var resultIndex = null
+
+  function next (err, result) {
+    if (once && self.session === session) {
+      once = false
+      self.pending--
+      if (timeoutId !== null) {
+        delete self.timers[timeoutId]
+        clearTimeout(timeoutId)
+      }
+
+      if (err) {
+        self.emit('error', err, job)
+      } else if (didTimeout === false) {
+        if (resultIndex !== null) {
+          self.results[resultIndex] = Array.prototype.slice.call(arguments, 1)
+        }
+        self.emit('success', result, job)
+      }
+
+      if (self.session === session) {
+        if (self.pending === 0 && self.jobs.length === 0) {
+          done.call(self)
+        } else if (self.running) {
+          self.start()
+        }
+      }
+    }
+  }
+
+  if (this.timeout) {
+    timeoutId = setTimeout(function () {
+      didTimeout = true
+      if (self.listeners('timeout').length > 0) {
+        self.emit('timeout', next, job)
+      } else {
+        next()
+      }
+    }, this.timeout)
+    this.timers[timeoutId] = timeoutId
+  }
+
+  if (this.results) {
+    resultIndex = this.results.length
+    this.results[resultIndex] = null
+  }
+
+  this.pending++
+  var promise = job(next)
+  if (promise && promise.then && typeof promise.then === 'function') {
+    promise.then(function (result) {
+      next(null, result)
+    }).catch(function (err) {
+      next(err || true)
+    })
+  }
+
+  if (this.running && this.jobs.length > 0) {
+    this.start()
+  }
+}
+
+Queue.prototype.stop = function () {
+  this.running = false
+}
+
+Queue.prototype.end = function (err) {
+  clearTimers.call(this)
+  this.jobs.length = 0
+  this.pending = 0
+  done.call(this, err)
+}
+
+function clearTimers () {
+  for (var key in this.timers) {
+    var timeoutId = this.timers[key]
+    delete this.timers[key]
+    clearTimeout(timeoutId)
+  }
+}
+
+function callOnErrorOrEnd (cb) {
+  var self = this
+  this.on('error', onerror)
+  this.on('end', onend)
+
+  function onerror (err) { self.end(err) }
+  function onend (err) {
+    self.removeListener('error', onerror)
+    self.removeListener('end', onend)
+    cb(err, this.results)
+  }
+}
+
+function done (err) {
+  this.session++
+  this.running = false
+  this.emit('end', err)
+}
+
+},{"inherits":"node_modules/inherits/inherits_browser.js","events":"node_modules/events/events.js"}],"node_modules/nano-sql/lib/database/storage.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var prefix_trie_ts_1 = require("prefix-trie-ts");
+var utilities_1 = require("../utilities");
+var adapter_sync_1 = require("./adapter-sync");
+var adapter_indexedDB_1 = require("./adapter-indexedDB");
+var adapter_websql_1 = require("./adapter-websql");
+var lie_ts_1 = require("lie-ts");
+/* NODE-START */
+var adapter_levelDB_1 = require("./adapter-levelDB");
+/* NODE-END */
+var queue = require("queue");
+var newQueryQ = function (_this) {
+    return {
+        qs: {},
+        add: function (table, cb) {
+            if (!_this.queue.qs[table]) {
+                _this.queue.qs[table] = queue({ autostart: true, concurrency: 1 });
+            }
+            _this.queue.qs[table].push(function (done) {
+                lie_ts_1.setFast(function () { return cb(done); });
+            });
+        }
+    };
+};
+/**
+ * Holds the general abstractions to connect the query module to the storage adapters.
+ * Takes care of indexing, tries, secondary indexes and adapter management.
+ *
+ * @export
+ * @class _NanoSQLStorage
+ */
+// tslint:disable-next-line
+var _NanoSQLStorage = /** @class */ (function () {
+    function _NanoSQLStorage(parent, args) {
+        var _this_1 = this;
+        /**
+         * Array of table names
+         *
+         * @internal
+         * @type {string[]}
+         * @memberof _NanoSQLStorage
+         */
+        this._tableNames = [];
+        this._secondaryIndexes = {};
+        this._secondaryIndexUpdates = {};
+        this._nsql = parent;
+        this._mode = args.persistent ? "PERM" : args.mode || "TEMP";
+        this._id = args.id;
+        this._size = args.size || 5;
+        this.queue = newQueryQ(this);
+        this.adapters = [];
+        this.models = {};
+        this.tableInfo = {};
+        this._trieIndexes = {};
+        this._tableNames = [];
+        this._doCache = (typeof args.cache !== "undefined" ? args.cache : true);
+        this._cache = {};
+        this._cacheTime = {};
+        if (this._doCache && args.peer && typeof window !== "undefined") {
+            var prevTable = parent.sTable;
+            parent.table("*").on("peer-change", function (ev) {
+                _this_1._cache[ev.table] = {};
+                _this_1._cacheTime[ev.table] = Date.now();
+            });
+            parent.table(prevTable);
+        }
+        this.adapters[0] = {
+            adapter: null,
+            waitForWrites: true
+        };
+        if (typeof this._mode === "string") {
+            if (this._mode === "PERM") {
+                this._mode = this._detectStorageMethod() || this._mode;
+            }
+            switch (this._mode) {
+                case "IDB":
+                case "IDB_WW":
+                    this.adapters[0].adapter = new adapter_indexedDB_1._IndexedDBStore(args.idbVersion || args.version);
+                    break;
+                case "WSQL":
+                    this.adapters[0].adapter = new adapter_websql_1._WebSQLStore(this._size);
+                    break;
+                case "LS":
+                    this.adapters[0].adapter = new adapter_sync_1._SyncStore(true);
+                    break;
+                /* NODE-START */
+                case "LVL":
+                    this.adapters[0].adapter = new adapter_levelDB_1._LevelStore(args.dbPath, args.writeCache, args.readCache);
+                    break;
+                /* NODE-END */
+                case "TEMP":
+                    this.adapters[0].adapter = new adapter_sync_1._SyncStore(false);
+                    break;
+            }
+        }
+        else {
+            this.adapters[0].adapter = this._mode;
+        }
+    }
+    _NanoSQLStorage.prototype._flushIndexes = function () {
+        var _this_1 = this;
+        if (this._doCache && !this._isFlushing && Object.keys(this._secondaryIndexUpdates).length) {
+            this._isFlushing = true;
+            var indexes_1 = utilities_1._assign(this._secondaryIndexUpdates);
+            this._secondaryIndexUpdates = {};
+            utilities_1.fastALL(Object.keys(indexes_1), function (table, i, done) {
+                var PKs = indexes_1[table];
+                utilities_1.fastALL(PKs, function (pk, ii, nextRow) {
+                    _this_1.adapterWrite(table, pk, utilities_1._assign(_this_1._secondaryIndexes[table].rows[pk]), nextRow, function (err) {
+                    });
+                }).then(done);
+            }).then(function () {
+                // flush indexes to database no more than every 100ms.
+                setTimeout(function () {
+                    _this_1._isFlushing = false;
+                    _this_1._flushIndexes();
+                }, 100);
+            });
+        }
+    };
+    /**
+     * Initilize the storage adapter and get ready to rumble!
+     *
+     * @param {StdObject<DataModel[]>} dataModels
+     * @param {(newModels: StdObject<DataModel[]>) => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype.init = function (dataModels, complete) {
+        var _this_1 = this;
+        if (!this._id) {
+            this._id = utilities_1.hash(JSON.stringify(dataModels)).toString();
+        }
+        this.models = this._createIndexTables(dataModels);
+        this._tableNames = Object.keys(this.models);
+        this.adapters.forEach(function (a) {
+            a.adapter.setID(_this_1._id);
+        });
+        this._tableNames.forEach(function (table) {
+            _this_1._newTable(table, dataModels[table]);
+        });
+        this._relFromTable = {};
+        this._relToTable = {};
+        this._relationColumns = {};
+        this._columnsAreTables = {};
+        this._tableNames.forEach(function (table) {
+            // finish views data
+            // gets a list of tables that need to be checked on each row update of this table
+            _this_1.tableInfo[table]._viewTables = Object.keys(_this_1.tableInfo).reduce(function (prev, cur) {
+                if (cur === table)
+                    return prev;
+                var vTables = Object.keys(_this_1.tableInfo[cur]._views);
+                if (vTables.indexOf(table) !== -1) {
+                    prev.push({ table: cur, column: _this_1.tableInfo[cur]._views[table].pkColumn });
+                }
+                return prev;
+            }, []);
+            // finish ORM and other stuff
+            var i = _this_1.models[table].length;
+            _this_1._relFromTable[table] = {};
+            _this_1._relationColumns[table] = [];
+            _this_1._relToTable[table] = [];
+            _this_1._columnsAreTables[table] = {};
+            var _loop_1 = function () {
+                var p = _this_1.models[table][i];
+                // Check for relations
+                if (_this_1._tableNames.indexOf(p.type.replace("[]", "")) !== -1) {
+                    var mapTo_1 = "";
+                    _this_1._columnsAreTables[table][p.key] = {
+                        _toTable: p.type.replace("[]", ""),
+                        _thisType: p.type.indexOf("[]") === -1 ? "single" : "array"
+                    };
+                    if (p.props) {
+                        p.props.forEach(function (p) {
+                            // old format ref=>column or ref=>column[]
+                            if (p.indexOf("ref=>") !== -1) {
+                                mapTo_1 = p.replace("ref=>", "");
+                            }
+                            // new format orm(column) or orm(column[])
+                            if (p.indexOf("orm(") === 0) {
+                                mapTo_1 = p.replace(/orm\((.*)\)/gmi, "$1");
+                            }
+                        });
+                        if (mapTo_1) {
+                            _this_1._hasORM = true;
+                            _this_1._relationColumns[table].push(p.key);
+                            _this_1._relFromTable[table][p.key] = {
+                                _toTable: p.type.replace("[]", ""),
+                                _toColumn: mapTo_1.replace("[]", ""),
+                                _toType: mapTo_1.indexOf("[]") === -1 ? "single" : "array",
+                                _thisType: p.type.indexOf("[]") === -1 ? "single" : "array"
+                            };
+                        }
+                    }
+                }
+            };
+            while (i--) {
+                _loop_1();
+            }
+        });
+        Object.keys(this._relFromTable).forEach(function (table) {
+            Object.keys(_this_1._relFromTable[table]).forEach(function (column) {
+                var rel = _this_1._relFromTable[table][column];
+                _this_1._relToTable[rel._toTable].push({
+                    _thisColumn: rel._toColumn,
+                    _thisType: rel._toType,
+                    _fromTable: table,
+                    _fromColumn: column,
+                    _fromType: rel._thisType
+                });
+            });
+        });
+        utilities_1.fastALL(this.adapters, function (a, i, done) {
+            a.adapter.connect(function () {
+                if (a.adapter.setNSQL) {
+                    a.adapter.setNSQL(_this_1._nsql);
+                }
+                done();
+            });
+        }).then(function () {
+            // populate trie data
+            utilities_1.fastALL(Object.keys(_this_1._trieIndexes), function (table, i, tableDone) {
+                var trieColumns = _this_1._trieIndexes[table];
+                if (Object.keys(trieColumns).length) {
+                    utilities_1.fastALL(Object.keys(trieColumns), function (column, ii, nextColumn) {
+                        var idxTable = "_" + table + "_idx_" + column;
+                        _this_1.adapters[0].adapter.getIndex(idxTable, false, function (index) {
+                            index.forEach(function (value) {
+                                _this_1._trieIndexes[table][column].addWord(String(value));
+                            });
+                            nextColumn();
+                        });
+                    }).then(tableDone);
+                }
+                else {
+                    tableDone();
+                }
+            }).then(function () {
+                // populate cached secondary indexes from persistent storage
+                if (_this_1._doCache) {
+                    utilities_1.fastALL(Object.keys(_this_1.tableInfo), function (table, i, next) {
+                        utilities_1.fastALL(_this_1.tableInfo[table]._secondaryIndexes, function (column, ii, nextCol) {
+                            var idxTable = "_" + table + "_idx_" + column;
+                            _this_1.adapters[0].adapter.getIndex(idxTable, false, function (index) {
+                                _this_1._secondaryIndexes[idxTable].idx = index;
+                                _this_1.adapters[0].adapter.rangeRead(idxTable, function (row, i, nextRow) {
+                                    _this_1._secondaryIndexes[idxTable].rows[row.id] = row;
+                                    nextRow();
+                                }, nextCol);
+                            });
+                        }).then(next);
+                    }).then(function () {
+                        complete(_this_1.models);
+                    });
+                }
+                else {
+                    complete(_this_1.models);
+                }
+            });
+        });
+    };
+    /**
+     * Rebuild secondary indexes of a given table.
+     * Pass "_ALL_" as table to rebuild all indexes.
+     *
+     * @param {(time: number) => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype.rebuildIndexes = function (table, complete) {
+        var _this_1 = this;
+        var start = new Date().getTime();
+        utilities_1.fastALL(Object.keys(this.tableInfo), function (ta, k, tableDone, tableErr) {
+            if ((table !== "_ALL_" && table !== ta) || ta.indexOf("_") === 0) {
+                tableDone();
+                return;
+            }
+            var secondIndexes = _this_1.tableInfo[ta]._secondaryIndexes;
+            utilities_1.fastALL(secondIndexes, function (column, j, idxDone) {
+                var idxTable = "_" + ta + "_idx_" + column;
+                _this_1._secondaryIndexes[idxTable].idx = [];
+                _this_1._secondaryIndexes[idxTable].rows = {};
+                _this_1._secondaryIndexUpdates[idxTable] = [];
+                _this_1._drop(idxTable, idxDone);
+            }).then(function () {
+                var pk = _this_1.tableInfo[ta]._pk;
+                var indexGroups = {};
+                secondIndexes.forEach(function (column) {
+                    indexGroups[column] = {};
+                });
+                _this_1._read(ta, function (row, idx, done) {
+                    if (!row[pk]) {
+                        done(false);
+                        return;
+                    }
+                    secondIndexes.forEach(function (column) {
+                        if (!row[column]) {
+                            return;
+                        }
+                        if (!indexGroups[column][row[column]]) {
+                            indexGroups[column][row[column]] = [];
+                        }
+                        indexGroups[column][row[column]].push(row[pk]);
+                    });
+                    done(false);
+                    /*this._setSecondaryIndexes(ta, row[pk], row, [], () => {
+                        done(false);
+                    });*/
+                }, function () {
+                    utilities_1.fastALL(secondIndexes, function (item, i, done) {
+                        var idxTable = "_" + ta + "_idx_" + item;
+                        if (_this_1._doCache) {
+                            Object.keys(indexGroups[item]).forEach(function (rowKey, i) {
+                                _this_1._secondaryIndexUpdates[idxTable].push(rowKey);
+                                _this_1._secondaryIndexes[idxTable].idx.push(rowKey);
+                                _this_1._secondaryIndexes[idxTable].rows[rowKey] = { id: rowKey, rows: indexGroups[item][rowKey] };
+                            });
+                            done();
+                        }
+                        else {
+                            utilities_1.fastALL(Object.keys(indexGroups[item]), function (rowKey, i, next, err) {
+                                _this_1.adapterWrite(idxTable, rowKey, {
+                                    id: rowKey,
+                                    rows: indexGroups[item][rowKey].sort()
+                                }, next, err);
+                            }).then(done).catch(tableErr);
+                        }
+                    }).then(function () {
+                        tableDone();
+                    }).catch(tableErr);
+                });
+            });
+        }).then(function () {
+            complete(new Date().getTime() - start);
+        });
+    };
+    /**
+     * Turn any js variable into a 32 character long primary key for secondary index tables.
+     *
+     * @internal
+     * @param {*} value
+     * @returns {(string|number)}
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._secondaryIndexKey = function (value) {
+        if (utilities_1.isObject(value) || Array.isArray(value)) {
+            return JSON.stringify(value).substr(0, 12);
+        }
+        if (typeof value === "number") {
+            return value;
+        }
+        return String(value).substr(0, 32);
+    };
+    /**
+     * Use variouse methods to detect the best persistent storage method for the environment NanoSQL is in.
+     *
+     * @returns {string}
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._detectStorageMethod = function () {
+        // NodeJS
+        if (typeof window === "undefined") {
+            return "LVL";
+        }
+        // Browser
+        // Safari / iOS always gets WebSQL (mobile and desktop)
+        if (utilities_1.isSafari) {
+            return "WSQL";
+        }
+        // everyone else (FF + Chrome + Edge + IE)
+        // check for support for indexed db, web workers and blob
+        if (typeof indexedDB !== "undefined") { // fall back to indexed db if we can
+            return "IDB";
+        }
+        // Use WebSQL if it's there.
+        if (typeof window !== "undefined" && typeof window.openDatabase !== "undefined") {
+            return "WSQL";
+        }
+        // nothing else works, we gotta do local storage. :(
+        return "LS";
+    };
+    /**
+     * Get rows from a table given the column and secondary index primary key to read from.
+     *
+     * valid conditions are: =, <, <=, >, >=
+     *
+     *
+     * @param {string} table
+     * @param {string} column
+     * @param {string} search
+     * @param {(rows: DBRow[]) => void} callback
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._secondaryIndexRead = function (table, condition, column, search, callback) {
+        var _this_1 = this;
+        var getSecondaryIndex = function (table, pks, cb) {
+            if (_this_1._doCache) {
+                cb(pks.map(function (pk) { return _this_1._secondaryIndexes[table].rows[pk]; }).filter(function (r) { return r; }));
+            }
+            else {
+                if (pks.length === 1) {
+                    _this_1.adapters[0].adapter.read(table, pks[0], function (row) {
+                        cb([row]);
+                    });
+                }
+                else {
+                    _this_1._read(table, pks, function (rows) {
+                        cb(rows);
+                    });
+                }
+            }
+        };
+        var getSecondaryIndexKeys = function (table, cb) {
+            if (_this_1._doCache) {
+                cb(_this_1._secondaryIndexes[table].idx);
+            }
+            else {
+                _this_1.adapters[0].adapter.getIndex(table, false, cb);
+            }
+        };
+        switch (condition) {
+            case "=":
+                getSecondaryIndex("_" + table + "_idx_" + column, [this._secondaryIndexKey(search)], function (rows) {
+                    if (rows[0] !== undefined && rows[0] !== null) {
+                        _this_1._read(table, (rows[0]["rows"] || []), function (rows) {
+                            callback(rows);
+                        });
+                    }
+                    else {
+                        callback([]);
+                    }
+                });
+                break;
+            default:
+                getSecondaryIndexKeys("_" + table + "_idx_" + column, function (index) {
+                    var searchVal = _this_1._secondaryIndexKey(search);
+                    var getPKs = index.filter(function (val) {
+                        switch (condition) {
+                            case ">": return val > searchVal;
+                            case ">=": return val >= searchVal;
+                            case "<": return val < searchVal;
+                            case "<=": return val <= searchVal;
+                        }
+                        return false;
+                    });
+                    if (!getPKs.length) {
+                        callback([]);
+                        return;
+                    }
+                    getSecondaryIndex("_" + table + "_idx_" + column, getPKs, function (rows) {
+                        var rowPKs = [].concat.apply([], rows.map(function (r) { return r.rows; }));
+                        if (!rowPKs.length) {
+                            callback([]);
+                            return;
+                        }
+                        _this_1._read(table, rowPKs, function (rows) {
+                            callback(rows);
+                        });
+                    });
+                });
+        }
+    };
+    /**
+     * Get a range of rows from a given table.
+     * If usePKs is false the range is in limit/offset form where the from and to values are numbers indicating a range of rows to get.
+     * Otherwise the from and to values should be primary key values to get everything in between.
+     *
+     * @param {string} table
+     * @param {DBKey} from
+     * @param {DBKey} to
+     * @param {(rows: DBRow[]) => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._rangeRead = function (table, from, to, usePKs, complete) {
+        var rows = [];
+        this.adapters[0].adapter.rangeRead(table, function (row, idx, next) {
+            rows.push(row);
+            next();
+        }, function () {
+            complete(rows);
+        }, from, to, usePKs);
+    };
+    /**
+     * Full table scan if a function is passed in OR read an array of primary keys.
+     *
+     * @param {string} table
+     * @param {(row: DBRow, idx: number, toKeep: (result: boolean) => void) => void} query
+     * @param {(rows: DBRow[]) => void} callback
+     * @returns
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._read = function (table, query, callback) {
+        var _this_1 = this;
+        if (Array.isArray(query)) { // select by array of primary keys
+            var batchRead = this.adapters[0].adapter.batchRead;
+            if (batchRead) {
+                batchRead.apply(this.adapters[0].adapter, [table, query, callback]);
+            }
+            else {
+                // possibly (but not always) slower fallback
+                utilities_1.fastALL(query, function (q, i, result) {
+                    _this_1.adapters[0].adapter.read(table, q, result);
+                }).then(function (rows) {
+                    callback(rows.filter(function (r) { return r; }));
+                });
+            }
+            return;
+        }
+        var rows = [];
+        // full table scan
+        if (typeof query === "function") { // iterate through entire db, returning rows that return true on the function
+            this.adapters[0].adapter.rangeRead(table, function (row, idx, nextRow) {
+                query(row, idx, function (keep) {
+                    if (keep) {
+                        rows.push(row);
+                    }
+                    idx % 200 === 0 ? lie_ts_1.setFast(nextRow) : nextRow();
+                });
+            }, function () {
+                callback(rows);
+            });
+            return;
+        }
+    };
+    /**
+     * Get all values in a table where the column value matches against the given trie search value.
+     *
+     * @param {string} table
+     * @param {string} column
+     * @param {string} search
+     * @param {(rows: DBRow[] ) => void} callback
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._trieRead = function (table, column, search, callback) {
+        var _this_1 = this;
+        var words = this._trieIndexes[table][column].getPrefix(search);
+        utilities_1.fastALL(words, function (w, i, result) {
+            _this_1._secondaryIndexRead(table, "=", column, w, result);
+        }).then(function (arrayOfRows) {
+            callback([].concat.apply([], arrayOfRows));
+        });
+    };
+    /**
+     * Remove secondary index values of a specific row.
+     *
+     * @internal
+     * @param {string} table
+     * @param {DBKey} pk
+     * @param {DBRow} rowData
+     * @param {string[]} skipColumns
+     * @param {() => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._clearSecondaryIndexes = function (table, pk, rowData, doColumns, complete) {
+        var _this_1 = this;
+        if (this._doCache) {
+            doColumns.forEach(function (idx) {
+                var idxTable = "_" + table + "_idx_" + idx;
+                var column = _this_1._secondaryIndexKey(rowData[idx]);
+                if (!_this_1._secondaryIndexUpdates[idxTable]) {
+                    _this_1._secondaryIndexUpdates[idxTable] = [];
+                }
+                if (_this_1._secondaryIndexUpdates[idxTable].indexOf(column) === -1) {
+                    _this_1._secondaryIndexUpdates[idxTable].push(column);
+                }
+                var index = _this_1._secondaryIndexes[idxTable].rows[column];
+                if (!index) {
+                    return;
+                }
+                var i = index.rows.indexOf(pk);
+                if (i === -1) {
+                    return;
+                }
+                var newRow = index || { id: column, rows: [] };
+                newRow.rows.splice(i, 1);
+                _this_1._secondaryIndexes[idxTable].rows[column] = newRow;
+            });
+            this._flushIndexes();
+            complete();
+        }
+        else {
+            utilities_1.fastALL(doColumns, function (idx, k, done, error) {
+                var column = _this_1._secondaryIndexKey(rowData[idx]);
+                var idxTable = "_" + table + "_idx_" + idx;
+                _this_1.adapters[0].adapter.read(idxTable, column, function (row) {
+                    if (!row) {
+                        done();
+                        return;
+                    }
+                    var i = row.rows.indexOf(pk);
+                    if (i === -1) {
+                        done();
+                        return;
+                    }
+                    var newRow = row ? Object.isFrozen(row) ? utilities_1._assign(row) : row : { id: column, rows: [] };
+                    newRow.rows.splice(i, 1);
+                    // newRow.rows = removeDuplicates(newRow.rows);
+                    _this_1.adapterWrite(idxTable, newRow.id, newRow, done, error);
+                });
+            }).then(complete);
+        }
+    };
+    /**
+     * Add secondary index values for a specific row.
+     *
+     * @internal
+     * @param {string} table
+     * @param {DBKey} pk
+     * @param {DBRow} rowData
+     * @param {string[]} skipColumns
+     * @param {() => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._setSecondaryIndexes = function (table, pk, rowData, doColumns, complete) {
+        var _this_1 = this;
+        if (this._doCache) {
+            doColumns.forEach(function (col, i) {
+                var column = _this_1._secondaryIndexKey(rowData[col]);
+                if (typeof column === "undefined") {
+                    return;
+                }
+                if (typeof column === "string" && !column.length) {
+                    return;
+                }
+                if (_this_1._trieIndexes[table][col]) {
+                    _this_1._trieIndexes[table][col].addWord(String(rowData[col]));
+                }
+                var idxTable = "_" + table + "_idx_" + col;
+                if (!_this_1._secondaryIndexUpdates[idxTable]) {
+                    _this_1._secondaryIndexUpdates[idxTable] = [];
+                }
+                if (_this_1._secondaryIndexUpdates[idxTable].indexOf(column) === -1) {
+                    _this_1._secondaryIndexUpdates[idxTable].push(column);
+                }
+                var indexRow = _this_1._secondaryIndexes[idxTable].rows[column];
+                if (!indexRow) {
+                    indexRow = { id: column, rows: [] };
+                    if (_this_1._secondaryIndexes[idxTable].sortIdx) {
+                        var pos = utilities_1.binarySearch(_this_1._secondaryIndexes[idxTable].idx, column);
+                        _this_1._secondaryIndexes[idxTable].idx.splice(pos, 0, column);
+                    }
+                    else {
+                        _this_1._secondaryIndexes[idxTable].idx.push(column);
+                    }
+                }
+                indexRow.rows.push(pk);
+                _this_1._secondaryIndexes[idxTable].rows[column] = indexRow;
+            });
+            this._flushIndexes();
+            if (complete)
+                complete();
+        }
+        else {
+            utilities_1.fastALL(doColumns, function (col, i, done, error) {
+                var column = _this_1._secondaryIndexKey(rowData[col]);
+                if (typeof column === "undefined") {
+                    done();
+                    return;
+                }
+                if (typeof column === "string" && !column.length) {
+                    done();
+                    return;
+                }
+                if (_this_1._trieIndexes[table][col]) {
+                    _this_1._trieIndexes[table][col].addWord(String(rowData[col]));
+                }
+                var idxTable = "_" + table + "_idx_" + col;
+                _this_1.adapters[0].adapter.read(idxTable, column, function (row) {
+                    var indexRow = row ? (Object.isFrozen(row) ? utilities_1._assign(row) : row) : { id: column, rows: [] };
+                    indexRow.rows.push(pk);
+                    // indexRow.rows.sort();
+                    // indexRow.rows = removeDuplicates(indexRow.rows);
+                    _this_1.adapterWrite(idxTable, column, indexRow, done, error);
+                });
+            }).then(function () {
+                if (complete)
+                    complete();
+            });
+        }
+    };
+    /**
+     * Write a row to the database
+     *
+     * @param {string} table
+     * @param {DBKey} pk
+     * @param {*} oldRow
+     * @param {DBRow} newRow
+     * @param {(row: DBRow) => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._write = function (table, pk, oldRow, newRow, complete, error) {
+        var _this_1 = this;
+        var _a;
+        if (!oldRow) { // new row
+            this.adapterWrite(table, pk, newRow, function (row) {
+                if (_this_1.tableInfo[table]._secondaryIndexes.length) {
+                    _this_1._setSecondaryIndexes(table, row[_this_1.tableInfo[table]._pk], newRow, _this_1.tableInfo[table]._secondaryIndexes, function () {
+                        complete(row);
+                    });
+                }
+                else {
+                    complete(row);
+                }
+            }, error);
+        }
+        else { // existing row
+            var setRow_1 = __assign({}, oldRow, newRow, (_a = {}, _a[this.tableInfo[table]._pk] = pk, _a));
+            var doColumns_1 = this.tableInfo[table]._secondaryIndexes.filter(function (col) { return Object.keys(setRow_1).filter(function (key) {
+                return setRow_1[key] === oldRow[key];
+            }).indexOf(col) === -1; });
+            if (this.tableInfo[table]._secondaryIndexes.length) {
+                utilities_1.fastALL([0, 1, 2], function (idx, i, next, err) {
+                    switch (idx) {
+                        case 0:
+                            _this_1._clearSecondaryIndexes(table, pk, oldRow, doColumns_1, next);
+                            break;
+                        case 1:
+                            _this_1._setSecondaryIndexes(table, pk, setRow_1, doColumns_1, next);
+                            break;
+                        case 2:
+                            _this_1.adapterWrite(table, pk, setRow_1, next, err);
+                            break;
+                    }
+                }).then(function (results) {
+                    complete(results[2]);
+                }).catch(error);
+            }
+            else {
+                this.adapterWrite(table, pk, setRow_1, function (row) {
+                    complete(row);
+                }, error);
+            }
+        }
+    };
+    /**
+     * Delete a specific row from the database.
+     *
+     * @param {string} table
+     * @param {DBKey} pk
+     * @param {(row: DBRow) => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._delete = function (table, pk, complete) {
+        var _this_1 = this;
+        if (!pk) {
+            throw new Error("nSQL: Can't delete without a primary key!");
+        }
+        else {
+            // update secondary indexes
+            this.adapters[0].adapter.read(table, pk, function (row) {
+                utilities_1.fastALL([0, 1], function (job, ii, next) {
+                    switch (job) {
+                        case 0:
+                            _this_1._clearSecondaryIndexes(table, pk, row, _this_1.tableInfo[table]._secondaryIndexes, next);
+                            break;
+                        case 1:
+                            _this_1.adapterDelete(table, pk, next);
+                            break;
+                    }
+                }).then(function () {
+                    complete(row);
+                });
+            });
+        }
+    };
+    /**
+     * Drop entire table from the database.
+     *
+     * @param {string} table
+     * @param {() => void} complete
+     * @memberof _NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._drop = function (table, complete) {
+        var _this_1 = this;
+        // drop token and hash search cache
+        var tablesToDrop = Object.keys(this.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_tokens_" + t; });
+        tablesToDrop = tablesToDrop.concat(Object.keys(this.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_" + t; }));
+        tablesToDrop = tablesToDrop.concat(Object.keys(this.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_fuzzy_" + t; }));
+        // drop secondary indexes
+        var secondaryIdxs = this.tableInfo[table]._secondaryIndexes.map(function (t) { return "_" + table + "_idx_" + t; });
+        tablesToDrop = tablesToDrop.concat(secondaryIdxs);
+        if (this._doCache) {
+            secondaryIdxs.forEach(function (idxTable) {
+                _this_1._secondaryIndexes[idxTable].idx = [];
+                _this_1._secondaryIndexes[idxTable].rows = {};
+            });
+        }
+        utilities_1.fastALL(tablesToDrop, function (table, i, done) {
+            _this_1.adapterDrop(table, done);
+        }).then(function () {
+            _this_1._trieIndexes[table] = {};
+            _this_1.tableInfo[table]._trieColumns.forEach(function (co) {
+                _this_1._trieIndexes[table][co] = new prefix_trie_ts_1.Trie([]);
+            });
+            _this_1.adapterDrop(table, complete);
+        });
+    };
+    /**
+     * Find secondary indexes and automatically generate an index table for each.
+     *
+     * @internal
+     * @param {StdObject<DataModel[]>} dataModels
+     * @returns
+     * @memberof NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._createIndexTables = function (dataModels) {
+        Object.keys(dataModels).forEach(function (table) {
+            var hasIDX = false;
+            var hasSearch = false;
+            var pkType = "";
+            dataModels[table].forEach(function (model) {
+                if (model.props && model.props.length) {
+                    if (utilities_1.intersect(["pk", "pk()"], model.props)) {
+                        pkType = model.key;
+                    }
+                    if (utilities_1.intersect(["trie", "idx", "idx()", "trie()", "unique()", "unique"], model.props)) {
+                        hasIDX = true;
+                        var isNumber = ["number", "float", "int"].indexOf(model.type) !== -1;
+                        dataModels["_" + table + "_idx_" + model.key] = [
+                            { key: "id", type: isNumber ? model.type : "string", props: ["pk()"] },
+                            { key: "rows", type: "any[]" }
+                        ];
+                    }
+                    model.props.forEach(function (prop) {
+                        if (prop.indexOf("search(") !== -1) {
+                            hasSearch = true;
+                            dataModels["_" + table + "_search_" + model.key] = [
+                                { key: "wrd", type: "string", props: ["pk()", "ns()"] },
+                                { key: "rows", type: "any[]" }
+                            ];
+                            dataModels["_" + table + "_search_fuzzy_" + model.key] = [
+                                { key: "wrd", type: "string", props: ["pk()", "ns()"] },
+                                { key: "rows", type: "any[]" }
+                            ];
+                            dataModels["_" + table + "_search_tokens_" + model.key] = [
+                                { key: "id", type: pkType, props: ["pk()", "ns()"] },
+                                { key: "hash", type: "string" },
+                                { key: "tokens", type: "any[]" }
+                            ];
+                        }
+                    });
+                }
+            });
+            if ((hasIDX || hasSearch) && !pkType) {
+                throw new Error("nSQL: Tables with secondary indexes or search() must have a primary key!");
+            }
+        });
+        return dataModels;
+    };
+    /**
+     * Generate the data needed to manage each table in the database
+     *
+     * @internal
+     * @param {string} tableName
+     * @param {DataModel[]} dataModels
+     * @returns {string}
+     * @memberof NanoSQLStorage
+     */
+    _NanoSQLStorage.prototype._newTable = function (tableName, dataModels) {
+        var _this_1 = this;
+        this.tableInfo[tableName] = {
+            _pk: "",
+            _pkType: "",
+            _keys: [],
+            _defaults: [],
+            _secondaryIndexes: [],
+            _hasDefaults: false,
+            _trieColumns: [],
+            _name: tableName,
+            _views: {},
+            _viewTables: [],
+            _searchColumns: {},
+            _uniqueColumns: []
+        };
+        this._cache[tableName] = {};
+        this._cacheTime[tableName] = Date.now();
+        this._trieIndexes[tableName] = {};
+        this.adapters.forEach(function (a) {
+            a.adapter.makeTable(tableName, dataModels);
+        });
+        // Discover primary keys for each table
+        var i = this.models[tableName].length;
+        var _loop_2 = function () {
+            var p = this_1.models[tableName][i];
+            this_1.tableInfo[tableName]._keys.unshift(p.key);
+            if (p.default !== undefined) {
+                this_1.tableInfo[tableName]._defaults[p.key] = p.default;
+                this_1.tableInfo[tableName]._hasDefaults = true;
+            }
+            if (p.props && p.props.length) {
+                var is2ndIndex_1 = false;
+                p.props.forEach(function (prop) {
+                    if (prop.indexOf("from=>") !== -1) {
+                        _this_1._hasViews = true;
+                        var table = p.type;
+                        if (prop !== "from=>GHOST" && prop !== "from=>LIVE") {
+                            // prop is "from=>table.column"
+                            table = prop.replace("from=>", "").split(".").shift();
+                        }
+                        if (!_this_1.tableInfo[tableName]._views[table]) {
+                            _this_1.tableInfo[tableName]._views[table] = {
+                                pkColumn: "",
+                                mode: "",
+                                columns: []
+                            };
+                        }
+                        if (prop === "from=>GHOST" || prop === "from=>LIVE") {
+                            is2ndIndex_1 = true;
+                            _this_1.tableInfo[tableName]._views[table].pkColumn = p.key;
+                            _this_1.tableInfo[tableName]._views[table].mode = prop.replace("from=>", "");
+                        }
+                        else {
+                            _this_1.tableInfo[tableName]._views[table].columns.push({
+                                thisColumn: p.key,
+                                otherColumn: prop.replace("from=>", "").split(".").pop()
+                            });
+                        }
+                    }
+                    if (prop.indexOf("search(") === 0) {
+                        _this_1.tableInfo[tableName]._searchColumns[p.key] = prop.replace(/search\((.*)\)/gmi, "$1").split(",").map(function (c) { return c.trim(); });
+                    }
+                });
+                var isPKCol = false;
+                // Check for primary key
+                if (utilities_1.intersect(["pk", "pk()"], p.props)) {
+                    isPKCol = true;
+                    this_1.tableInfo[tableName]._pk = p.key;
+                    this_1.tableInfo[tableName]._pkType = p.type;
+                }
+                // check for unique rows
+                if (utilities_1.intersect(["unique()", "unique"], p.props) && !isPKCol) {
+                    is2ndIndex_1 = true;
+                    this_1.tableInfo[tableName]._uniqueColumns.push(p.key);
+                }
+                // Check for secondary indexes
+                if (utilities_1.intersect(["trie", "idx", "idx()", "trie()"], p.props) || is2ndIndex_1) {
+                    if (isPKCol === false) {
+                        this_1.tableInfo[tableName]._secondaryIndexes.push(p.key);
+                        this_1._secondaryIndexes["_" + tableName + "_idx_" + p.key] = { idx: [], rows: [], sortIdx: ["number", "int", "float"].indexOf(p.type) !== -1 };
+                    }
+                }
+                // Check for trie indexes
+                if (utilities_1.intersect(["trie", "trie()"], p.props)) {
+                    if (isPKCol === false) {
+                        this_1.tableInfo[tableName]._trieColumns.push(p.key);
+                        this_1._trieIndexes[tableName][p.key] = new prefix_trie_ts_1.Trie([]);
+                    }
+                }
+            }
+        };
+        var this_1 = this;
+        while (i--) {
+            _loop_2();
+        }
+        return tableName;
+    };
+    _NanoSQLStorage.prototype.adapterRead = function (table, pk, complete, queue) {
+        this.adapters[0].adapter.read(table, pk, function (row) {
+            complete(row);
+        });
+    };
+    _NanoSQLStorage.prototype.adapterWrite = function (table, pk, data, complete, error) {
+        var result;
+        utilities_1.fastCHAIN(this.adapters, function (a, i, done, writeErr) {
+            if (a.waitForWrites) {
+                a.adapter.write(table, pk, data, function (row) {
+                    result = row;
+                    done();
+                }, writeErr);
+            }
+            else {
+                done();
+                a.adapter.write(table, pk, data, function (row) { }, writeErr);
+            }
+        }).then(function () {
+            complete(result);
+        }).catch(error);
+    };
+    _NanoSQLStorage.prototype.adapterDelete = function (table, pk, complete, error) {
+        utilities_1.fastALL(this.adapters, function (a, i, done) {
+            if (a.waitForWrites) {
+                a.adapter.delete(table, pk, function () {
+                    done();
+                });
+            }
+            else {
+                done();
+                a.adapter.delete(table, pk, function () { });
+            }
+        }).then(function () {
+            complete();
+        }).catch(function (err) {
+            if (error)
+                error(err);
+        });
+    };
+    _NanoSQLStorage.prototype.adapterDrop = function (table, complete, error) {
+        utilities_1.fastALL(this.adapters, function (a, i, done) {
+            if (a.waitForWrites) {
+                a.adapter.drop(table, function () {
+                    done();
+                });
+            }
+            else {
+                done();
+                a.adapter.drop(table, function () { });
+            }
+        }).then(function () {
+            complete();
+        }).catch(function (err) {
+            if (error)
+                error(err);
+        });
+    };
+    return _NanoSQLStorage;
+}());
+exports._NanoSQLStorage = _NanoSQLStorage;
+//# sourceMappingURL=storage.js.map
+},{"prefix-trie-ts":"node_modules/prefix-trie-ts/node/index.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./adapter-sync":"node_modules/nano-sql/lib/database/adapter-sync.js","./adapter-indexedDB":"node_modules/nano-sql/lib/database/adapter-indexedDB.js","./adapter-websql":"node_modules/nano-sql/lib/database/adapter-websql.js","lie-ts":"node_modules/lie-ts/index.js","./adapter-levelDB":"node_modules/nano-sql/lib/database/adapter-levelDB.js","queue":"node_modules/queue/index.js"}],"node_modules/nano-sql/lib/database/index.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var index_1 = require("../index");
+var query_1 = require("./query");
+var utilities_1 = require("../utilities");
+var storage_1 = require("./storage");
+var lie_ts_1 = require("lie-ts");
+var NanoSQLDefaultBackend = /** @class */ (function () {
+    function NanoSQLDefaultBackend() {
+        this._queryPool = [];
+        this._queryPtr = 0;
+    }
+    NanoSQLDefaultBackend.prototype.willConnect = function (connectArgs, next) {
+        this.parent = connectArgs.parent;
+        this._store = new storage_1._NanoSQLStorage(connectArgs.parent, __assign({}, connectArgs.config));
+        /*for (let i = 0; i < 100; i++) {
+            this._queryPool.push(new _NanoSQLStorageQuery(this._store));
+        }*/
+        this._store.init(connectArgs.models, function (newModels) {
+            connectArgs.models = __assign({}, connectArgs.models, newModels);
+            next(connectArgs);
+        });
+    };
+    NanoSQLDefaultBackend.prototype.getId = function () {
+        return this._store._id;
+    };
+    NanoSQLDefaultBackend.prototype.doExec = function (execArgs, next, error) {
+        execArgs.state = "complete";
+        /*this._queryPtr++;
+        if (this._queryPtr > this._queryPool.length - 1) {
+            this._queryPtr = 0;
+        }*/
+        new query_1._NanoSQLStorageQuery(this._store).doQuery(execArgs, next, error);
+    };
+    /*public transactionBegin(id: string, next: () => void): void {
+        next();
+    }
+
+    public transactionEnd(id: string, next: () => void): void {
+        next();
+    }
+    */
+    NanoSQLDefaultBackend.prototype.dumpTables = function (tables) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            var dump = {};
+            var exportTables = tables && tables.length ? tables : Object.keys(_this._store.tableInfo);
+            utilities_1.fastALL(exportTables, function (table, i, done) {
+                dump[table] = [];
+                _this._store.adapters[0].adapter.rangeRead(table, function (r, idx, rowDone) {
+                    dump[table].push(r);
+                    rowDone();
+                }, done);
+            }).then(function () {
+                res(dump);
+            });
+        });
+    };
+    NanoSQLDefaultBackend.prototype.importTables = function (tables, onProgress) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            var totalLength = 0;
+            var totalProgress = 0;
+            Object.keys(tables).forEach(function (table) {
+                totalLength += (tables[table] || []).length || 0;
+            });
+            utilities_1.fastALL(Object.keys(tables), function (tableName, i, done, err) {
+                var pkKey = _this._store.tableInfo[tableName]._pk;
+                var length = (tables[tableName] || []).length || 0;
+                var k = 0;
+                var next = function () {
+                    if (k < length) {
+                        var row = tables[tableName][k];
+                        k++;
+                        totalProgress++;
+                        if (row[pkKey]) {
+                            _this._store.adapterWrite(tableName, row[pkKey], row, function () {
+                                onProgress(Math.round(((totalProgress + 1) / totalLength) * 10000) / 100);
+                                k % 500 === 0 ? lie_ts_1.setFast(next) : next();
+                            }, err);
+                        }
+                        else {
+                            onProgress(Math.round(((totalProgress + 1) / totalLength) * 10000) / 100);
+                            k % 500 === 0 ? lie_ts_1.setFast(next) : next();
+                        }
+                    }
+                    else {
+                        done();
+                    }
+                };
+                next();
+            }).then(function () {
+                res();
+            });
+        });
+    };
+    NanoSQLDefaultBackend.prototype.willDisconnect = function (next) {
+        utilities_1.fastALL(this._store.adapters || [], function (adapter, i, done) {
+            if (adapter.disconnect) {
+                adapter.disconnect(done);
+            }
+            else {
+                done();
+            }
+        }).then(next);
+    };
+    NanoSQLDefaultBackend.prototype.extend = function (next, args, result) {
+        var _this = this;
+        switch (args[0]) {
+            case "clone":
+                var nSQLi_1 = new index_1.NanoSQLInstance();
+                Object.keys(this.parent.dataModels).forEach(function (table) {
+                    nSQLi_1.table(table).model(_this.parent.dataModels[table], [], true);
+                });
+                nSQLi_1
+                    .config({
+                    id: this._store._id,
+                    mode: args[1]
+                })
+                    .connect().then(function () {
+                    var i = 0;
+                    utilities_1.fastCHAIN(Object.keys(_this.parent.dataModels), function (table, i, done) {
+                        console.log("Importing " + table + "...");
+                        _this.parent.rawDump([table])
+                            .then(function (data) {
+                            return nSQLi_1.rawImport(data);
+                        })
+                            .then(done);
+                    }).then(function () {
+                        next(args, []);
+                    });
+                });
+                break;
+            case "flush":
+                var tables_1 = [];
+                if (!args[1]) {
+                    tables_1 = this.parent.tableNames;
+                }
+                else {
+                    tables_1 = [args[1]];
+                }
+                utilities_1.fastCHAIN(tables_1, function (table, i, next) {
+                    _this._store._drop(table, next);
+                }).then(function () {
+                    next(args, tables_1);
+                });
+                break;
+            case "get_adapter":
+                if (!args[1]) {
+                    next(args, [this._store.adapters[0].adapter]);
+                }
+                else {
+                    next(args, [this._store.adapters[args[1]].adapter]);
+                }
+                break;
+            case "idx.length":
+            case "idx":
+                var table = args[1];
+                if (Object.keys(this._store.tableInfo).indexOf(table) > -1) {
+                    this._store.adapters[0].adapter.getIndex(table, args[0] !== "idx", function (idx) {
+                        next(args, idx);
+                    });
+                }
+                else {
+                    next(args, []);
+                }
+                break;
+            case "rebuild_search":
+                var rebuildTables_1 = (function () {
+                    if (args[1])
+                        return [args[1]];
+                    return Object.keys(_this._store.tableInfo);
+                })();
+                var progress_1 = args[2];
+                utilities_1.fastALL(rebuildTables_1, function (table, i, done) {
+                    var totalProgress = 0;
+                    var currentProgress = 0;
+                    utilities_1.fastALL(rebuildTables_1, function (t, kk, lengthDone) {
+                        _this._store.adapters[0].adapter.getIndex(t, true, function (len) {
+                            totalProgress += len;
+                            lengthDone();
+                        });
+                    }).then(function () {
+                        var tablesToDrop = Object.keys(_this._store.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_tokens_" + t; });
+                        tablesToDrop = tablesToDrop.concat(Object.keys(_this._store.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_" + t; }));
+                        tablesToDrop = tablesToDrop.concat(Object.keys(_this._store.tableInfo[table]._searchColumns).map(function (t) { return "_" + table + "_search_fuzzy_" + t; }));
+                        utilities_1.fastALL(tablesToDrop, function (dropTable, i, dropDone) {
+                            _this._store.adapterDrop(dropTable, dropDone);
+                        }).then(function () {
+                            _this._store.adapters[0].adapter.rangeRead(table, function (row, idx, next) {
+                                _this.parent.query("upsert", row)
+                                    .comment("_rebuild_search_index_")
+                                    .manualExec({ table: table }).then(function () {
+                                    if (progress_1)
+                                        progress_1(Math.round(((currentProgress + 1) / totalProgress) * 10000) / 100);
+                                    currentProgress++;
+                                    next();
+                                });
+                            }, done);
+                        });
+                    });
+                }).then(function () {
+                    next(args, []);
+                });
+                break;
+            case "rebuild_idx":
+                if (args[1]) {
+                    this._store.rebuildIndexes(args[1], function (time) {
+                        if (_this._store._doCache) {
+                            _this._store._flushIndexes();
+                        }
+                        next(args, [time]);
+                    });
+                }
+                else {
+                    utilities_1.fastALL(Object.keys(this._store.tableInfo), function (table, i, done) {
+                        _this._store.rebuildIndexes(table, done);
+                    }).then(function (times) {
+                        if (_this._store._doCache) {
+                            _this._store._flushIndexes();
+                        }
+                        next(args, times);
+                    });
+                }
+                break;
+            default:
+                next(args, result);
+        }
+    };
+    return NanoSQLDefaultBackend;
+}());
+exports.NanoSQLDefaultBackend = NanoSQLDefaultBackend;
+//# sourceMappingURL=index.js.map
+},{"../index":"node_modules/nano-sql/lib/index.js","./query":"node_modules/nano-sql/lib/database/query.js","../utilities":"node_modules/nano-sql/lib/utilities.js","./storage":"node_modules/nano-sql/lib/database/storage.js","lie-ts":"node_modules/lie-ts/index.js"}],"node_modules/nano-sql/lib/history-plugin.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var utilities_1 = require("./utilities");
+// uglifyJS workaround
+var strs = ["_hist", "_hist_ptr", "_id"];
+/**
+ * New History Plugin
+ * Provides multiple history modes, including a per row mode (for row revisions), a database wide mode and a table wide mode.
+ * You can either set a single argument to tell the system to use row, table, or database mode OR you can pass in an object.
+ * The object should contain a key with all tables with history, each value should be "row" or "table", dictating the type of history
+ * for that table.
+ *
+ * @export
+ * @class _NanoSQLHistoryPlugin
+ * @implements {NanoSQLPlugin}
+ */
+// tslint:disable-next-line
+var _NanoSQLHistoryPlugin = /** @class */ (function () {
+    function _NanoSQLHistoryPlugin(historyModeArgs) {
+        this.historyModeArgs = historyModeArgs;
+        this._tablePkKeys = {};
+        this._tablePkTypes = {};
+        this._tableKeys = {};
+    }
+    _NanoSQLHistoryPlugin.prototype.willConnect = function (connectArgs, next) {
+        var _this = this;
+        this.parent = connectArgs.parent;
+        var historyTables = {};
+        // handle tables to store row data history
+        Object.keys(connectArgs.models).forEach(function (table) {
+            // only add history for public tables
+            if (table.indexOf("_") !== 0) {
+                var histModel = utilities_1._assign(connectArgs.models[table]).map(function (model) {
+                    if (model.props && utilities_1.intersect(["pk", "pk()"], model.props)) {
+                        _this._tablePkKeys[table] = model.key;
+                        _this._tablePkTypes[table] = model.type;
+                        _this._tableKeys[table] = {};
+                    }
+                    delete model.props; // remove secondary indexes and everything else fancy
+                    delete model.default; // remove default column value
+                    return model;
+                });
+                // add new primary key used by the history system
+                histModel.unshift({ key: "_id", type: "timeIdms", props: ["pk()"] });
+                // Holds old or new row data
+                historyTables["_" + table + "__hist_rows"] = histModel;
+                // holds where in the row history we are
+                historyTables["_" + table + "__hist_idx"] = [
+                    { key: "id", type: _this._tablePkTypes[table], props: ["pk()"] },
+                    { key: "histRows", type: "timeIdms[]" },
+                    { key: "histPtr", type: "number" } // where in the above array we are.
+                ];
+            }
+        });
+        var isNotString = typeof this.historyModeArgs !== "string";
+        var historyTable = [
+            { key: "id", type: "timeIdms", props: ["pk()"] },
+            { key: "table", type: "string" },
+            { key: "keys", type: "any[]" }
+        ];
+        var historyTablePointer = [
+            { key: "id", type: "timeIdms", props: ["pk()"] },
+            { key: "ptr", type: "int" }
+        ];
+        // database/linear mode. all undo/redo is tracked across the entire database.  Default behavior
+        if (this.historyModeArgs === "database" || !this.historyModeArgs) {
+            historyTables[strs[0]] = historyTable;
+            historyTables[strs[1]] = historyTablePointer;
+            // table/row mode, undo/redo is tracked either per row OR per table
+        }
+        else if (this.historyModeArgs !== "database" || isNotString) {
+            this.historyModes = {};
+            if (!isNotString) { // apply the global arg ("row" or "table") to every table
+                Object.keys(this._tablePkKeys).forEach(function (table) {
+                    _this.historyModes[table] = _this.historyModeArgs;
+                });
+            }
+            else { // object of tables was passed in, the user specified a behavior for each table.  Just copy their config object.
+                this.historyModes = utilities_1._assign(this.historyModeArgs);
+            }
+            // create tracking rows needed for table wide history
+            Object.keys(this.historyModes).forEach(function (table) {
+                if (_this.historyModes[table] === "table") {
+                    historyTables["_" + table + "__hist"] = historyTable;
+                    historyTables["_" + table + "__hist_ptr"] = historyTablePointer;
+                }
+            });
+        }
+        connectArgs.models = __assign({}, connectArgs.models, historyTables);
+        next(connectArgs);
+    };
+    _NanoSQLHistoryPlugin.prototype._histTable = function (table) {
+        if (!table)
+            return "__null";
+        return this.historyModes ? this.historyModes[table] === "table" ? "_" + table + "__hist" : null : "_hist";
+    };
+    _NanoSQLHistoryPlugin.prototype._generateHistoryPointers = function (table, complete) {
+        var _this = this;
+        var histTable = this._histTable(table);
+        if (!histTable) { // row mode
+            complete();
+        }
+        else {
+            this.parent.query("select").manualExec({
+                table: histTable + "_ptr"
+            }).then(function (rows) {
+                if (rows.length) { // already has a pointer
+                    complete();
+                }
+                else { // needs one
+                    _this.parent.query("upsert", {
+                        id: utilities_1.timeid(true),
+                        table: table,
+                        ptr: 0 // empty table
+                    }).manualExec({ table: histTable + "_ptr" }).then(complete);
+                }
+            });
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype.didConnect = function (connectArgs, next) {
+        var _this = this;
+        var finishSetup = function () {
+            // we need to know what existing primary keys are in each table and make sure pointers are setup where needed.
+            utilities_1.fastALL(Object.keys(_this._tableKeys), function (table, k, tableDone) {
+                _this.parent.extend("beforeConn", "idx", "_" + table + "__hist_idx").then(function (index) {
+                    index.forEach(function (item) {
+                        _this._tableKeys[table][item] = true;
+                    });
+                    if (_this.historyModes) { // table / row mode
+                        _this._generateHistoryPointers(table, tableDone);
+                    }
+                    else { // global mode
+                        tableDone();
+                    }
+                });
+            }).then(next);
+        };
+        if (!this.historyModes) { // global mode
+            this.parent.query("select").manualExec({
+                table: "_hist_ptr"
+            }).then(function (rows) {
+                if (rows.length) {
+                    finishSetup();
+                }
+                else {
+                    _this.parent.query("upsert", {
+                        id: utilities_1.timeid(true),
+                        table: "",
+                        ptr: 0
+                    }).manualExec({ table: "_hist_ptr" }).then(finishSetup);
+                }
+            });
+        }
+        else {
+            finishSetup();
+        }
+    };
+    /**
+     * If any of the given row pointers are above zero, remove the rows in "forward" history.
+     *
+     * @private
+     * @param {string} table
+     * @param {any[]} rowPKs
+     * @param {() => void} complete
+     * @memberof _NanoSQLHistoryPlugin
+     */
+    _NanoSQLHistoryPlugin.prototype._purgeRowHistory = function (table, rowPKs, complete, clearAll) {
+        var _this = this;
+        var rowHistTable = "_" + table + "__hist_rows";
+        var rowIDXTable = "_" + table + "__hist_idx";
+        utilities_1.fastALL(rowPKs, function (pk, l, rowDone) {
+            _this.parent.query("select").where(["id", "=", pk]).manualExec({ table: rowIDXTable }).then(function (rows) {
+                if (!rows.length) {
+                    rowDone();
+                    return;
+                }
+                var histRowIDX = Object.isFrozen(rows[0]) ? utilities_1._assign(rows[0]) : rows[0];
+                var delIDs = [];
+                if (clearAll) {
+                    delIDs = delIDs.concat(histRowIDX.histRows.filter(function (r) { return r !== -1; }));
+                    histRowIDX.histPtr = 0;
+                    histRowIDX.histRows = [];
+                }
+                else {
+                    while (histRowIDX.histPtr--) {
+                        delIDs.push(histRowIDX.histRows.shift());
+                    }
+                    histRowIDX.histPtr = 0;
+                }
+                if (!delIDs.length) {
+                    rowDone();
+                    return;
+                }
+                _this.parent.query("upsert", histRowIDX).comment("History Purge").where(["id", "=", pk]).manualExec({ table: rowIDXTable }).then(function () {
+                    _this.parent.query("delete").comment("History Purge").where(["_id", "IN", delIDs]).manualExec({ table: rowHistTable }).then(function () {
+                        if (clearAll) {
+                            _this.parent.query("select").where([_this._tablePkKeys[table], "=", pk]).manualExec({ table: table }).then(function (existingRow) {
+                                _this._unshiftSingleRow(table, ["change"], pk, existingRow[0], false, rowDone);
+                            });
+                        }
+                        else {
+                            rowDone();
+                        }
+                    });
+                });
+            });
+        }).then(complete);
+    };
+    _NanoSQLHistoryPlugin.prototype._purgeTableHistory = function (table, complete, clearAll) {
+        var _this = this;
+        this.parent.query("select").manualExec({ table: table + "_ptr" }).then(function (rows) {
+            var row = Object.isFrozen(rows[0]) ? utilities_1._assign(rows[0]) : rows[0];
+            if (clearAll || row.ptr > 0) {
+                var histQ = _this.parent.query("select");
+                if (!clearAll) {
+                    histQ.range(row.ptr * -1, 0);
+                }
+                histQ.manualExec({ table: table }).then(function (histTableRows) {
+                    if (!histTableRows.length) {
+                        complete();
+                        return;
+                    }
+                    var purgeRows = {};
+                    histTableRows.forEach(function (row) {
+                        if (!purgeRows[row.table])
+                            purgeRows[row.table] = [];
+                        purgeRows[row.table] = purgeRows[row.table].concat(row.keys);
+                    });
+                    utilities_1.fastALL(Object.keys(purgeRows), function (ta, j, tableDone) {
+                        _this._purgeRowHistory(ta, purgeRows[ta], tableDone, clearAll);
+                    }).then(function () {
+                        _this.parent.query("delete").comment("History Purge").where(["id", "IN", histTableRows.map(function (r) { return r.id; })]).manualExec({ table: table }).then(function () {
+                            row.ptr = 0;
+                            _this.parent.query("upsert", row).comment("History Purge").where(["id", "=", row.id]).manualExec({ table: table + "_ptr" }).then(complete);
+                        });
+                    });
+                });
+            }
+            else {
+                complete();
+            }
+        });
+    };
+    /**
+     * If any row pointers are above zero, we must first remove the revisions ahead of the existing one before adding a new revision.
+     * This prevents the history from becomming broken
+     *
+     * @private
+     * @param {string} table
+     * @param {any[]} rowPKs
+     * @param {() => void} complete
+     * @memberof _NanoSQLHistoryPlugin
+     */
+    _NanoSQLHistoryPlugin.prototype._purgeParentHistory = function (table, rowPKs, complete) {
+        if (!this.historyModes) { // global mode
+            this._purgeTableHistory("_hist", complete);
+            return;
+        }
+        var histTable = this._histTable(table);
+        if (!histTable) { // row mode
+            this._purgeRowHistory(table, rowPKs, complete);
+        }
+        else { // table mode
+            this._purgeTableHistory(histTable, complete);
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype._purgeAllHistory = function (table, rowPK, complete) {
+        if (!this.historyModes) { // global mode
+            this._purgeTableHistory("_hist", complete, true);
+            return;
+        }
+        var histTable = this._histTable(table);
+        if (!histTable) { // row mode
+            this._purgeRowHistory(table, [rowPK], complete, true);
+        }
+        else { // table mode
+            this._purgeTableHistory(histTable, complete, true);
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype.didExec = function (event, next) {
+        // only do history on public tables (ones that dont begin with _)
+        // also only do history if there was a change in the database
+        var _this = this;
+        if (event.table && event.table.indexOf("_") !== 0 && event.types.indexOf("change") > -1 && event.query.comments.indexOf("History Write") === -1) {
+            this._purgeParentHistory(event.table, event.affectedRowPKS, function () {
+                utilities_1.fastALL(event.affectedRows, function (row, k, rowDone) {
+                    var pk = row[_this._tablePkKeys[event.table]];
+                    if (_this._tableKeys[event.table][pk]) { // existing row
+                        _this._unshiftSingleRow(event.table, event.types, pk, row, false, function (id) {
+                            rowDone(pk);
+                        });
+                    }
+                    else { // new row
+                        _this._tableKeys[event.table][pk] = true;
+                        _this._unshiftSingleRow(event.table, event.types, pk, row, true, function (id) {
+                            _this.parent.query("upsert", {
+                                id: pk,
+                                histRows: [id, -1],
+                                histPtr: 0
+                            }).manualExec({ table: "_" + event.table + "__hist_idx" }).then(function () {
+                                rowDone(pk);
+                            });
+                        });
+                    }
+                }).then(function (rowIDs) {
+                    _this._unshiftParent(event, rowIDs, next);
+                });
+            });
+        }
+        else {
+            next(event);
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype._unshiftParent = function (event, histRowIDs, complete) {
+        // null if in row mode, otherwise provides the history table
+        var histTable = this._histTable(event.table);
+        if (!histTable) {
+            complete(event);
+        }
+        else {
+            this.parent.query("upsert", {
+                id: utilities_1.timeid(true),
+                table: event.table,
+                keys: histRowIDs
+            }).manualExec({ table: histTable }).then(function () {
+                complete(event);
+            });
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype._unshiftSingleRow = function (table, eventTypes, rowPK, row, skipIDX, complete) {
+        var _this = this;
+        var _a;
+        var rowHistTable = "_" + table + "__hist_idx";
+        var id = utilities_1.timeid(true);
+        var adjustHistoryIDX = function (appendID) {
+            // adjust the history pointer table with the new row id
+            _this.parent.query("select").where(["id", "=", rowPK]).manualExec({ table: rowHistTable }).then(function (rows) {
+                var histRowIDX = Object.isFrozen(rows[0]) || Object.isFrozen(rows[0].histRows) ? utilities_1._assign(rows[0]) : rows[0];
+                histRowIDX.histRows.unshift(appendID);
+                _this.parent.query("upsert", histRowIDX).where(["id", "=", rowPK]).manualExec({ table: rowHistTable }).then(function () {
+                    complete(appendID);
+                });
+            });
+        };
+        if (eventTypes.indexOf("delete") > -1 || eventTypes.indexOf("drop") > -1) {
+            // add deleted record to history table
+            adjustHistoryIDX(-1);
+        }
+        else {
+            // add row to history table
+            this.parent.query("upsert", __assign((_a = {}, _a[strs[2]] = id, _a), row)).manualExec({ table: "_" + table + "__hist_rows" }).then(function () {
+                if (skipIDX) {
+                    complete(id);
+                    return;
+                }
+                adjustHistoryIDX(id);
+            });
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype.extend = function (next, args, result) {
+        if (args[0] === "hist") {
+            var query = args[1];
+            var table = args[2];
+            var rowPK = args[3];
+            switch (query) {
+                // move database/table/row forward or backward in history
+                case "<":
+                case ">":
+                    this._shiftHistory(query, table, rowPK, function (didAnything) {
+                        next(args, [didAnything]);
+                    });
+                    break;
+                // query history state of database/table/row
+                case "?":
+                    this._queryHistory(table, rowPK, function (qResult) {
+                        next(args, qResult);
+                    });
+                    break;
+                // get all revisions of a given row
+                case "rev":
+                    this._getRevisionHistory(table, rowPK, function (qResult) {
+                        next(args, qResult);
+                    });
+                    break;
+                // clear history of the database/table/row
+                case "clear":
+                    this._purgeAllHistory(table, rowPK, function () {
+                        next(args, result);
+                    });
+                    break;
+            }
+        }
+        else {
+            next(args, result);
+        }
+    };
+    // only works when given a specific row
+    _NanoSQLHistoryPlugin.prototype._getRevisionHistory = function (table, rowPK, complete) {
+        var _this = this;
+        var rowHistTable = "_" + table + "__hist_idx";
+        this.parent.query("select").where(["id", "=", rowPK]).manualExec({ table: rowHistTable }).then(function (rows) {
+            var getRows = rows[0].histRows.filter(function (id) { return id !== -1; });
+            _this.parent.query("select").where(["_id", "IN", getRows]).manualExec({ table: "_" + table + "__hist_rows" }).then(function (resultRows) {
+                var rObj = {};
+                resultRows.forEach(function (row) {
+                    rObj[row[strs[2]]] = Object.isFrozen(row) ? utilities_1._assign(row) : row;
+                    delete rObj[row[strs[2]]][strs[2]];
+                });
+                complete([{
+                        pointer: rows[0].histRows.length - rows[0].histPtr - 1,
+                        revisions: rows[0].histRows.reverse().map(function (r) { return r === -1 ? null : rObj[r]; })
+                    }]);
+            });
+        });
+    };
+    _NanoSQLHistoryPlugin.prototype._getTableHistory = function (table, complete) {
+        var _this = this;
+        this.parent.extend("idx.length", table).then(function (len) {
+            _this.parent.query("select").manualExec({ table: table + "_ptr" }).then(function (rows) {
+                if (!rows.length) {
+                    complete([0, 0]);
+                    return;
+                }
+                complete([len, len - rows[0].ptr]);
+            });
+        });
+    };
+    _NanoSQLHistoryPlugin.prototype._queryHistory = function (table, rowPK, complete) {
+        if (!this.historyModes) { // global mode
+            this._getTableHistory("_hist", function (result) {
+                complete(result);
+            });
+            return;
+        }
+        var histTable = this._histTable(table);
+        if (!histTable) { // get single row history
+            if (!rowPK) {
+                throw Error("nSQL: Need a row primary key to query this history!");
+            }
+            var rowHistTable = "_" + table + "__hist_idx";
+            this.parent.query("select").where(["id", "=", rowPK]).manualExec({ table: rowHistTable }).then(function (rows) {
+                var histRowIDX = rows[0];
+                complete([histRowIDX.histRows.length, histRowIDX.histRows.length - histRowIDX.histPtr - 1]);
+            });
+        }
+        else { // get single table history
+            if (!table) {
+                throw Error("nSQL: Need a table to query this history!");
+            }
+            this._getTableHistory(histTable, complete);
+        }
+    };
+    _NanoSQLHistoryPlugin.prototype._shiftTableHistory = function (direction, table, complete) {
+        var _this = this;
+        this.parent.query("select").manualExec({ table: table + "_ptr" }).then(function (rows) {
+            var rowPtr = utilities_1._assign(rows[0]);
+            rowPtr.ptr += direction === "<" ? 1 : -1;
+            if (rowPtr.ptr < 0)
+                rowPtr.ptr = 0;
+            _this.parent.extend("idx.length", table).then(function (len) {
+                if (rowPtr.ptr > len) {
+                    rowPtr.ptr = len;
+                }
+                if (rows[0].ptr === rowPtr.ptr) { // no change in history, nothing to do.
+                    complete(false);
+                    return;
+                }
+                _this.parent.query("select").range(-1, direction === "<" ? rows[0].ptr : rowPtr.ptr).manualExec({ table: table }).then(function (rows) {
+                    _this.parent.query("upsert", rowPtr).manualExec({ table: table + "_ptr" }).then(function () {
+                        utilities_1.fastALL(rows[0].keys, function (pk, i, nextRow) {
+                            _this._shiftRowHistory(direction, rows[0].table, pk, nextRow);
+                        }).then(function (didAnything) {
+                            complete(didAnything.indexOf(true) > -1);
+                        });
+                    });
+                });
+            });
+        });
+    };
+    _NanoSQLHistoryPlugin.prototype._shiftRowHistory = function (direction, table, PK, complete) {
+        var _this = this;
+        var updateIDX = function (meta) {
+            _this.parent.query("upsert", meta).where([_this._tablePkKeys[table], "=", PK]).manualExec({ table: "_" + table + "__hist_idx" }).then(function () {
+                complete(true);
+            });
+        };
+        this.parent.query("select").where([this._tablePkKeys[table], "=", PK]).manualExec({ table: "_" + table + "__hist_idx" }).then(function (rows) {
+            var rowIDX = utilities_1._assign(rows[0]);
+            rowIDX.histPtr += direction === "<" ? 1 : -1;
+            if (rowIDX.histPtr < 0)
+                rowIDX.histPtr = 0;
+            if (rowIDX.histPtr > rowIDX.histRows.length - 1)
+                rowIDX.histPtr = rowIDX.histRows.length - 1;
+            if (rowIDX.histPtr === rows[0].histPtr) { // outside of history range, nothing to do
+                complete(false);
+                return;
+            }
+            var historyPK = rowIDX.histRows[rowIDX.histPtr];
+            if (historyPK === -1) { // row has been deleted
+                _this.parent.query("delete").comment("History Write").where([_this._tablePkKeys[table], "=", PK]).manualExec({ table: table }).then(function () {
+                    updateIDX(rowIDX);
+                });
+            }
+            else { // row has been added or modified
+                // pull the history's copy of the row
+                _this.parent.query("select").where(["_id", "=", historyPK]).manualExec({ table: "_" + table + "__hist_rows" }).then(function (rows) {
+                    // overwrite the row in the database
+                    _this.parent.query("upsert", rows[0]).comment("History Write").manualExec({ table: table }).then(function () {
+                        updateIDX(rowIDX);
+                    });
+                });
+            }
+        });
+    };
+    _NanoSQLHistoryPlugin.prototype._shiftHistory = function (direction, table, rowPK, complete) {
+        if (!this.historyModes) { // global mode
+            this._shiftTableHistory(direction, "_hist", complete);
+            return;
+        }
+        var histTable = this._histTable(table);
+        if (!histTable) { // adjust single row history
+            if (!rowPK) {
+                throw Error("nSQL: Need a row primary key to change this history!");
+            }
+            this._shiftRowHistory(direction, table, rowPK, complete);
+        }
+        else { // adjust single table history
+            if (!table) {
+                throw Error("nSQL: Need a table to change this history!");
+            }
+            this._shiftTableHistory(direction, histTable, complete);
+        }
+    };
+    return _NanoSQLHistoryPlugin;
+}());
+exports._NanoSQLHistoryPlugin = _NanoSQLHistoryPlugin;
+//# sourceMappingURL=history-plugin.js.map
+},{"./utilities":"node_modules/nano-sql/lib/utilities.js"}],"node_modules/nano-sql/lib/observable.js":[function(require,module,exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var Observer = /** @class */ (function () {
+    function Observer(_nSQL, _query, _tables) {
+        this._nSQL = _nSQL;
+        this._query = _query;
+        this._tables = _tables;
+        this._order = [];
+        this._count = 0;
+        this._config = [];
+    }
+    /**
+     * Debounce responses
+     *
+     * @param {number} ms
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.debounce = function (ms) {
+        this._config[this._order.length] = ms;
+        this._order.push("dbnc");
+        return this;
+    };
+    /**
+     * Suppress identical results
+     *
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.distinct = function (keyFunc, compareFunc) {
+        this._config[this._order.length] = [
+            keyFunc || (function (obj) { return obj; }),
+            compareFunc || (function (k1, k2) { return k1 === k2; })
+        ];
+        this._order.push("dsct");
+        return this;
+    };
+    /**
+     * Filter results based on specific conditions
+     *
+     * @param {(obj: any) => boolean} fn
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.filter = function (fn) {
+        this._config[this._order.length] = fn;
+        this._order.push("fltr");
+        return this;
+    };
+    /**
+     * Mutate results from observable
+     *
+     * @param {(obj: any) => any} fn
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.map = function (fn) {
+        this._config[this._order.length] = fn;
+        this._order.push("mp");
+        return this;
+    };
+    /**
+     * Emit only the first result OR emit the first result that meets a condition passed into the fn.
+     *
+     * @param {((obj?: any) => boolean|void)} fn
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.first = function (fn) {
+        this._config[this._order.length] = fn || (function (obj, idx) { return true; });
+        this._order.push("fst");
+        return this;
+    };
+    /**
+     * Skip the first n events.
+     *
+     * @param {number} num
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.skip = function (num) {
+        this._config[this._order.length] = num;
+        this._order.push("skp");
+        return this;
+    };
+    /**
+     * Only get the first n events.
+     *
+     * @param {number} num
+     * @memberof Observer
+     */
+    Observer.prototype.take = function (num) {
+        this._config[this._order.length] = num;
+        this._order.push("tk");
+        return this;
+    };
+    /**
+     * Subscribe to the observer
+     *
+     * @param {((value: T, event?: DatabaseEvent) => void | {
+     *         next: (value: T, event?: DatabaseEvent) => void;
+     *         error?: (error: any) => void;
+     *         complete?: (value?: T, event?: DatabaseEvent) => void;
+     *     })} callback
+     * @returns
+     * @memberof Observer
+     */
+    Observer.prototype.subscribe = function (callback) {
+        var _this = this;
+        var prevValue = {};
+        var lastRan = {};
+        var lastFunc = {};
+        var complete;
+        var lastCount = {};
+        return new ObserverSubscriber(this._nSQL, this._query, {
+            next: function (rows, event) {
+                _this._count++;
+                if (complete)
+                    return;
+                var step = 0;
+                var loop = function () {
+                    if (step === _this._order.length) {
+                        if (typeof callback === "function") {
+                            callback(rows, event);
+                        }
+                        else if (callback.next) {
+                            callback.next(rows, event);
+                        }
+                        if (complete && callback.complete) {
+                            callback.complete(rows, event);
+                        }
+                    }
+                    else {
+                        var getCount = function (step) {
+                            if (_this._count === 0)
+                                return 0;
+                            var i = step;
+                            var count = _this._count;
+                            var found = false;
+                            while (i-- && !found) {
+                                if (lastCount[i] !== undefined) {
+                                    found = true;
+                                    count = lastCount[i];
+                                }
+                            }
+                            return count;
+                        };
+                        switch (_this._order[step]) {
+                            case "dbnc":
+                                if (!lastRan[step]) {
+                                    lastRan[step] = Date.now();
+                                }
+                                else {
+                                    clearTimeout(lastFunc[step]);
+                                    var debnc_1 = _this._config[step];
+                                    lastFunc[step] = setTimeout(function () {
+                                        if ((Date.now() - lastRan[step]) >= debnc_1) {
+                                            lastRan[step] = Date.now();
+                                            if (lastCount[step] === undefined) {
+                                                lastCount[step] = 0;
+                                            }
+                                            lastCount[step]++;
+                                            step++;
+                                            loop();
+                                        }
+                                    }, debnc_1 - (Date.now() - lastRan[step]));
+                                    return;
+                                }
+                                break;
+                            case "dsct":
+                                var key = _this._config[step][0](rows, event);
+                                if (_this._config[step][1](prevValue[step], key) === false) {
+                                    prevValue[step] = key;
+                                    if (lastCount[step] === undefined) {
+                                        lastCount[step] = 0;
+                                    }
+                                    lastCount[step]++;
+                                }
+                                else {
+                                    return;
+                                }
+                                break;
+                            case "fltr":
+                                if (_this._config[step](rows, getCount(step), event) === false) {
+                                    return;
+                                }
+                                else {
+                                    if (lastCount[step] === undefined) {
+                                        lastCount[step] = 0;
+                                    }
+                                    lastCount[step]++;
+                                }
+                                break;
+                            case "fst":
+                                if (_this._config[step](rows, getCount(step), event) === true) {
+                                    if (lastCount[step] === undefined) {
+                                        lastCount[step] = 0;
+                                    }
+                                    lastCount[step]++;
+                                    complete = true;
+                                }
+                                else {
+                                    return;
+                                }
+                                break;
+                            case "mp":
+                                rows = _this._config[step](rows, getCount(step), event);
+                                break;
+                            case "skp":
+                                if (getCount(step) <= _this._config[step]) {
+                                    return;
+                                }
+                                break;
+                            case "tk":
+                                if (getCount(step) >= _this._config[step]) {
+                                    complete = true;
+                                }
+                                break;
+                        }
+                        step++;
+                        loop();
+                    }
+                };
+                loop();
+            },
+            error: function (err) {
+                if (callback.error) {
+                    callback.error(err);
+                }
+            }
+        }, this._tables);
+    };
+    return Observer;
+}());
+exports.Observer = Observer;
+var ObserverSubscriber = /** @class */ (function () {
+    function ObserverSubscriber(_nSQL, _getQuery, _callback, _tables) {
+        var _this = this;
+        this._nSQL = _nSQL;
+        this._getQuery = _getQuery;
+        this._callback = _callback;
+        this._tables = _tables;
+        this._closed = false;
+        this.exec = this.exec.bind(this);
+        this.unsubscribe = this.unsubscribe.bind(this);
+        var q = this._getQuery();
+        if (q) {
+            this._tables = this._tables.concat([q.table]);
+            this._tables = this._tables.filter(function (v, i, s) { return s.indexOf(v) === i; });
+            this.exec();
+        }
+        this._tables.forEach(function (table) {
+            _this._nSQL.table(table).on("change", _this.exec);
+        });
+    }
+    ObserverSubscriber.prototype.exec = function (event) {
+        var _this = this;
+        lie_ts_1.setFast(function () {
+            var q = _this._getQuery(event);
+            if (!q)
+                return;
+            _this._nSQL.query("select").manualExec(q).then(function (rows) {
+                _this._callback.next(rows, event);
+            }).catch(function (err) {
+                _this._callback.error(err);
+            });
+        });
+    };
+    ObserverSubscriber.prototype.unsubscribe = function () {
+        var _this = this;
+        this._tables.forEach(function (table) {
+            _this._nSQL.table(table).off("change", _this.exec);
+        });
+        this._closed = true;
+    };
+    ObserverSubscriber.prototype.closed = function () {
+        return this._closed;
+    };
+    return ObserverSubscriber;
+}());
+exports.ObserverSubscriber = ObserverSubscriber;
+//# sourceMappingURL=observable.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js"}],"node_modules/nano-sql/lib/index.js":[function(require,module,exports) {
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lie_ts_1 = require("lie-ts");
+var std_query_1 = require("./query/std-query");
+var transaction_1 = require("./query/transaction");
+var really_small_events_1 = require("really-small-events");
+var utilities_1 = require("./utilities");
+var index_1 = require("./database/index");
+var history_plugin_1 = require("./history-plugin");
+var levenshtein = require("levenshtein-edit-distance");
+var observable_1 = require("./observable");
+var VERSION = 1.76;
+// uglifyJS fix
+var str = ["_util", "_ttl"];
+/**
+ * The primary abstraction class, there is no database implimintation code here.
+ * Just events, quries and filters.
+ *
+ * @export
+ * @class NanoSQLInstance
+ */
+var NanoSQLInstance = /** @class */ (function () {
+    function NanoSQLInstance() {
+        this.version = VERSION;
+        this._onConnectedCallBacks = [];
+        var t = this;
+        t.isConnected = false;
+        t.focused = true;
+        t._actions = {};
+        t._views = {};
+        t.dataModels = {};
+        t._events = ["*", "change", "delete", "upsert", "drop", "select", "error", "peer-change"];
+        t._hasEvents = {};
+        t.tableNames = [];
+        t.plugins = [];
+        t.hasPK = {};
+        t.skipPurge = {};
+        t.toRowFns = {};
+        t._tablePKs = {};
+        t._tablePKTypes = {};
+        t.toColFns = {};
+        t.toColRules = {};
+        t.rowFilters = {};
+        t.peers = [];
+        t.peerEvents = [];
+        t.pid = utilities_1.uuid();
+        t._randoms = [];
+        // t._queryPool = [];
+        // t._queryPtr = 0;
+        t._randomPtr = 0;
+        t.hasAnyEvents = false;
+        for (var i = 0; i < 1000; i++) {
+            t._randoms.push(utilities_1.random16Bits());
+            // t._queryPool.push(new _NanoSQLQuery(t));
+        }
+        t._callbacks = {};
+        t._callbacks["*"] = new really_small_events_1.ReallySmallEvents();
+        t.iB = new index_1.NanoSQLDefaultBackend();
+        var instanceConnectArgs = {
+            models: {},
+            actions: {},
+            views: {},
+            config: {},
+            parent: this
+        };
+        if (t.iB.willConnect) {
+            t.iB.willConnect(instanceConnectArgs, function () {
+                if (t.iB.didConnect) {
+                    t.iB.didConnect(instanceConnectArgs, function () {
+                    });
+                }
+            });
+        }
+        this._checkTTL = this._checkTTL.bind(this);
+    }
+    NanoSQLInstance.prototype.rowFilter = function (callback) {
+        this.rowFilters[this.sTable] = callback;
+        return this;
+    };
+    NanoSQLInstance.prototype.toColumn = function (columnFns) {
+        if (!this.toColFns[this.sTable]) {
+            this.toColFns[this.sTable] = {};
+        }
+        this.toColFns[this.sTable] = columnFns;
+        return this;
+    };
+    NanoSQLInstance.prototype.toRow = function (columnFns) {
+        if (!this.toRowFns[this.sTable]) {
+            this.toRowFns[this.sTable] = {};
+        }
+        this.toRowFns[this.sTable] = columnFns;
+        return this;
+    };
+    /**
+     * nanoSQL generates 50 random 16 bit strings on every launch.
+     * If you don't need true randomness you can use this function to get a psudorandom 16 bit string.
+     * Performance is orders of a magnitude faster since no random number generator is needed.
+     *
+     * @returns {string}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.fastRand = function () {
+        this._randomPtr++;
+        if (this._randomPtr >= this._randoms.length) {
+            this._randomPtr = 0;
+        }
+        return this._randoms[this._randomPtr];
+    };
+    /**
+     * Remove TTL from specific row
+     *
+     * @param {*} primaryKey
+     * @returns {Promise<any>}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.clearTTL = function (primaryKey) {
+        var k = this.sTable + "." + primaryKey;
+        return this.query("delete").where(["key", "=", k]).manualExec({ table: "_ttl" });
+    };
+    /**
+     * Check when a given row is going to expire.
+     *
+     * @param {*} primaryKey
+     * @returns {Promise<any>}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.expires = function (primaryKey) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            var k = _this.sTable + "." + primaryKey;
+            _this.query("select").where(["key", "=", k]).manualExec({ table: "_ttl" }).then(function (rows) {
+                if (!rows.length) {
+                    res({ time: -1, cols: [] });
+                }
+                else {
+                    res({ time: (rows[0].date - Date.now()) / 1000, cols: rows[0].cols });
+                }
+            });
+        });
+    };
+    NanoSQLInstance.prototype._checkTTL = function () {
+        var _this = this;
+        if (this._ttlTimer) {
+            clearTimeout(this._ttlTimer);
+        }
+        var page = 0;
+        var nextTTL = 0;
+        var getPage = function () {
+            _this.query("select").range(20, 20 * page).manualExec({ table: "_ttl" }).then(function (rows) {
+                if (!rows.length) {
+                    if (nextTTL) {
+                        _this._ttlTimer = setTimeout(_this._checkTTL, nextTTL - Date.now());
+                    }
+                    return;
+                }
+                utilities_1.fastCHAIN(rows, function (row, i, next) {
+                    if (row.date < Date.now()) {
+                        var clearTTL = function () {
+                            _this.query("delete").where(["key", "=", row.key]).manualExec({ table: "_ttl" }).then(next);
+                        };
+                        var rowData = row.key.split(".");
+                        var table = rowData[0];
+                        var key = ["float", "int", "number"].indexOf(_this._tablePKTypes[table]) === -1 ? rowData[1] : parseFloat(rowData[1]);
+                        if (row.cols.length) {
+                            var upsertObj_1 = {};
+                            row.cols.forEach(function (col) {
+                                upsertObj_1[col] = null;
+                            });
+                            _this.query("upsert", upsertObj_1).where([_this._tablePKs[table], "=", key]).manualExec({ table: table }).then(clearTTL);
+                        }
+                        else {
+                            _this.query("delete").where([_this._tablePKs[table], "=", key]).manualExec({ table: table }).then(clearTTL);
+                        }
+                    }
+                    else {
+                        nextTTL = Math.max(nextTTL, row.date);
+                        next();
+                    }
+                }).then(function () {
+                    page++;
+                    getPage();
+                });
+            });
+        };
+        getPage();
+    };
+    /**
+     * Changes the table pointer to a new table.
+     *
+     * @param {string} [table]
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.table = function (table) {
+        if (table)
+            this.sTable = table;
+        return this;
+    };
+    NanoSQLInstance.prototype.getPeers = function () {
+        return JSON.parse(localStorage.getItem("nsql-peers-" + this.id) || "[]");
+    };
+    /**
+     * Inits the backend database for use.
+     *
+     * Optionally include a custom database driver, otherwise the built in memory driver will be used.
+     *
+     * @param {NanoSQLBackend} [backend]
+     * @returns {(Promise<Object | string>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.connect = function () {
+        var _this = this;
+        var t = this;
+        return new Promise(function (res, rej) {
+            var connectArgs = {
+                models: t.dataModels,
+                actions: t._actions,
+                views: t._views,
+                config: t._config,
+                parent: _this,
+            };
+            connectArgs.models[str[0]] = [
+                { key: "key", type: "string", props: ["pk()", "ai()"] },
+                { key: "value", type: "any" }
+            ];
+            connectArgs.models[str[1]] = [
+                { key: "key", type: "string", props: ["pk()"] },
+                { key: "table", type: "string" },
+                { key: "cols", type: "string[]" },
+                { key: "date", type: "number" }
+            ];
+            // if history is enabled, turn on the built in history plugin
+            if (t._config && t._config.history) {
+                _this.use(new history_plugin_1._NanoSQLHistoryPlugin(t._config.historyMode));
+            }
+            // If the db mode is not set to disable, add default store to the end of the plugin chain
+            if (!t._config || t._config.mode !== false) {
+                _this.use(new index_1.NanoSQLDefaultBackend());
+            }
+            if (typeof window !== "undefined" && _this._config && _this._config.peer) {
+                _this.peerMode = true;
+            }
+            utilities_1.fastCHAIN(t.plugins, function (p, i, nextP) {
+                if (p.willConnect) {
+                    p.willConnect(connectArgs, function (newArgs) {
+                        connectArgs = newArgs;
+                        nextP();
+                    });
+                }
+                else {
+                    nextP();
+                }
+            }).then(function () {
+                t.dataModels = connectArgs.models;
+                t._actions = connectArgs.actions;
+                t._views = connectArgs.views;
+                t._config = connectArgs.config;
+                Object.keys(t.dataModels).forEach(function (table) {
+                    var hasWild = false;
+                    t.dataModels[table] = t.dataModels[table].filter(function (model) {
+                        if (model.key === "*" && model.type === "*") {
+                            hasWild = true;
+                            return false;
+                        }
+                        return true;
+                    });
+                    t.skipPurge[table] = hasWild;
+                });
+                t.plugins.forEach(function (plugin) {
+                    if (plugin.didExec) {
+                        t.pluginHasDidExec = true;
+                    }
+                });
+                t.tableNames = Object.keys(t.dataModels);
+                var completeConnect = function () {
+                    utilities_1.fastALL(t.plugins, function (p, i, nextP) {
+                        if (p.getId && !_this.id) {
+                            _this.id = p.getId();
+                        }
+                        if (p.didConnect) {
+                            p.didConnect(connectArgs, function () {
+                                nextP();
+                            });
+                        }
+                        else {
+                            nextP();
+                        }
+                    }).then(function () {
+                        // handle peer features with other browser windows/tabs
+                        if (_this.peerMode) {
+                            var counter_1 = 0;
+                            if (!_this.id) {
+                                _this.id = _this.pid;
+                            }
+                            // Append this peer to the network
+                            _this.peers = _this.getPeers();
+                            _this.peers.unshift(_this.pid);
+                            localStorage.setItem("nsql-peers-" + _this.id, JSON.stringify(_this.peers));
+                            // When localstorage changes we may need to possibly update the peer list
+                            // or possibly respond to an event from another peer
+                            window.addEventListener("storage", function (e) {
+                                // peer list updated
+                                if (e.key === "nsql-peers-" + _this.id) {
+                                    _this.peers = _this.getPeers();
+                                }
+                                // recieved event from another peer
+                                if (e.key && e.key.indexOf(_this.pid + ".") === 0) {
+                                    localStorage.removeItem(e.key);
+                                    var ev_1 = JSON.parse(e.newValue || "{}");
+                                    _this.peerEvents.push(ev_1.query.queryID || "");
+                                    _this.triggerEvent(__assign({}, ev_1, { types: ["peer-change"] }));
+                                    lie_ts_1.setFast(function () {
+                                        _this.triggerEvent(ev_1);
+                                    });
+                                }
+                                // the "master" peer checks to make sure all peers have been
+                                // cleaning up their mess every 50 requests, if they aren't they
+                                // are removed. Keeps localStorage from filling up accidentally.
+                                counter_1++;
+                                if (counter_1 > 50 && _this.peers[0] === _this.pid) {
+                                    counter_1 = 0;
+                                    var len = localStorage.length;
+                                    var peerKeys_1 = {};
+                                    while (len--) {
+                                        var key = localStorage.key(len);
+                                        // only grab events
+                                        var keyMatch = key ? key.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{8}/gmi) : null;
+                                        if (key && keyMatch) {
+                                            var peerID = (keyMatch || [""])[0];
+                                            if (!peerKeys_1[peerID]) {
+                                                peerKeys_1[peerID] = [];
+                                            }
+                                            peerKeys_1[peerID].push(key);
+                                        }
+                                    }
+                                    Object.keys(peerKeys_1).forEach(function (peerID) {
+                                        // purge peers that aren't cleaning up their mess (and thus probably gone)
+                                        if (peerKeys_1[peerID].length > 10) {
+                                            _this.peers = _this.peers.filter(function (p) { return p !== peerID; });
+                                            peerKeys_1[peerID].forEach(function (key) {
+                                                localStorage.removeItem(key);
+                                            });
+                                            localStorage.setItem("nsql-peers-" + _this.id, JSON.stringify(_this.peers));
+                                        }
+                                    });
+                                }
+                            });
+                            window.onblur = function () {
+                                _this.focused = false;
+                            };
+                            // on focus we set this nsql to focused and move it's peer position
+                            // to the front
+                            window.onfocus = function () {
+                                // set this peer to master on focus
+                                _this.peers = _this.peers.filter(function (p) { return p !== _this.pid; });
+                                _this.peers.unshift(_this.pid);
+                                localStorage.setItem("nsql-peers-" + _this.id, JSON.stringify(_this.peers));
+                                _this.focused = true;
+                            };
+                            // send events to the peer network
+                            exports.nSQL("*").on("change", function (ev) {
+                                var idxOf = _this.peerEvents.indexOf(ev.query.queryID || "");
+                                if (idxOf !== -1) {
+                                    _this.peerEvents.splice(idxOf, 1);
+                                    return;
+                                }
+                                _this.peers.filter(function (p) { return p !== _this.pid; }).forEach(function (p) {
+                                    localStorage.setItem(p + "." + ev.query.queryID, JSON.stringify(ev));
+                                });
+                            });
+                            // Remove self from peer network
+                            window.addEventListener("beforeunload", function () {
+                                _this.peers = _this.peers.filter(function (p) { return p !== _this.pid; });
+                                localStorage.setItem("nsql-peers-" + _this.id, JSON.stringify(_this.peers));
+                                return false;
+                            });
+                        }
+                        t.isConnected = true;
+                        if (t._onConnectedCallBacks.length) {
+                            t._onConnectedCallBacks.forEach(function (cb) { return cb(); });
+                            t._onConnectedCallBacks = [];
+                        }
+                        _this._checkTTL();
+                        res(t.tableNames);
+                    });
+                };
+                var updateDBVersion = function () {
+                    if (typeof _this.getConfig().version !== "undefined") {
+                        t.query("select").where(["key", "=", "db-version"]).manualExec({ table: "_util" }).then(function (rows) {
+                            if (!rows.length) {
+                                t.query("upsert", { key: "db-version", value: _this.getConfig().version }).manualExec({ table: "_util" }).then(function () {
+                                    completeConnect();
+                                });
+                                return;
+                            }
+                            var version = rows.length ? rows[0].value : _this.getConfig().version;
+                            var upgrade = function () {
+                                if (version === _this.getConfig().version) {
+                                    completeConnect();
+                                }
+                                else {
+                                    if (!_this.getConfig().onVersionUpdate) {
+                                        version = _this.getConfig().version;
+                                        upgrade();
+                                        return;
+                                    }
+                                    _this.getConfig().onVersionUpdate(version).then(function (newVersion) {
+                                        version = newVersion;
+                                        lie_ts_1.setFast(upgrade);
+                                    }).catch(rej);
+                                }
+                            };
+                            upgrade();
+                        });
+                    }
+                    else {
+                        completeConnect();
+                    }
+                };
+                var updateNSQLVersion = function (rebuildIDX) {
+                    t.query("upsert", { key: "version", value: t.version }).manualExec({ table: "_util" }).then(function () {
+                        if (rebuildIDX) {
+                            t.extend("beforeConn", "rebuild_idx").then(function () {
+                                updateDBVersion();
+                            });
+                        }
+                        else {
+                            updateDBVersion();
+                        }
+                    });
+                };
+                t.query("select").where(["key", "=", "version"]).manualExec({ table: "_util" }).then(function (rows) {
+                    if (!rows.length) {
+                        // new database or an old one that needs indexes rebuilt
+                        updateNSQLVersion(true);
+                    }
+                    else {
+                        if (rows[0].value <= 1.21) { // secondary indexes need to be rebuilt before 1.21
+                            updateNSQLVersion(true);
+                        }
+                        else if (rows[0].value < VERSION) {
+                            updateNSQLVersion(false);
+                        }
+                        else {
+                            updateDBVersion();
+                        }
+                    }
+                });
+            });
+        });
+    };
+    /**
+     * Get all actions for a given table
+     * =
+     * @param {string} table
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.getActions = function (table) {
+        return this._actions[table].map(function (a) {
+            return {
+                name: a.name,
+                args: a.args
+            };
+        });
+    };
+    /**
+     * Get all views for a given table
+     *
+     * @param {string} table
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.getViews = function (table) {
+        return this._views[table].map(function (a) {
+            return {
+                name: a.name,
+                args: a.args
+            };
+        });
+    };
+    /**
+     * Grab a copy of the database config object.
+     *
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.getConfig = function () {
+        return (this._config || {});
+    };
+    /**
+     * Set the action/view filter function.  Called *before* the action/view is sent to the datastore
+     *
+     * @param {IActionViewMod} filterFunc
+     * @returns
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.avFilter = function (filterFunc) {
+        this._AVMod = filterFunc;
+        return this;
+    };
+    NanoSQLInstance.prototype.use = function (plugin) {
+        return this.plugins.push(plugin), this;
+    };
+    /**
+     * Adds an event listener to the selected database table.
+     *
+     * @param {("change"|"delete"|"upsert"|"drop"|"select"|"error")} actions
+     * @param {Function} callBack
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.on = function (actions, callBack) {
+        var t = this;
+        var l = t.sTable;
+        var i = t._events.length;
+        var a = actions.split(" ");
+        if (Array.isArray(l))
+            return this;
+        if (!t._callbacks[l]) { // Handle the event handler being called before the database has connected
+            t._callbacks[l] = new really_small_events_1.ReallySmallEvents();
+        }
+        i = a.length;
+        while (i--) {
+            if (t._events.indexOf(a[i]) !== -1) {
+                t._callbacks[l].on(a[i], callBack);
+            }
+        }
+        return t._refreshEventChecker();
+    };
+    /**
+     * Remove a specific event handler from being triggered anymore.
+     *
+     * @param {Function} callBack
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.off = function (actions, callBack) {
+        var t = this;
+        var a = actions.split(" ");
+        var i = a.length;
+        var l = t.sTable;
+        if (Array.isArray(l))
+            return this;
+        while (i--) {
+            if (t._events.indexOf(a[i]) !== -1) {
+                t._callbacks[l].off(a[i], callBack);
+            }
+        }
+        return t._refreshEventChecker();
+    };
+    NanoSQLInstance.prototype._refreshEventChecker = function () {
+        var _this = this;
+        this._hasEvents = {};
+        Object.keys(this._callbacks).concat(["*"]).forEach(function (table) {
+            _this._hasEvents[table] = _this._events.reduce(function (prev, cur) {
+                return prev + (_this._callbacks[table] && _this._callbacks[table].eventListeners[cur] ? _this._callbacks[table].eventListeners[cur].length : 0);
+            }, 0) > 0;
+        });
+        this.hasAnyEvents = false;
+        Object.keys(this._hasEvents).forEach(function (key) {
+            _this.hasAnyEvents = _this.hasAnyEvents || _this._hasEvents[key];
+        });
+        return this;
+    };
+    /**
+     * Declare the data model for the current selected table.
+     *
+     * Please reference the DataModel interface for how to impliment this, a quick example:
+     *
+     * ```ts
+     * .model([
+     *  {key:"id",type:"int",props:["ai","pk"]} //auto incriment and primary key
+     *  {key:"name",type:"string"}
+     * ])
+     * ```
+     *
+     * @param {Array<DataModel>} dataModel
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.model = function (dataModel, props, ignoreSanityCheck) {
+        var _this = this;
+        var t = this;
+        var l = t.sTable;
+        if (Array.isArray(l))
+            return this;
+        if (!t._callbacks[l]) {
+            t._callbacks[l] = new really_small_events_1.ReallySmallEvents();
+        }
+        var hasPK = false;
+        if (!ignoreSanityCheck) {
+            // validate table name and data model
+            var types = ["string", "safestr", "timeId", "timeIdms", "uuid", "int", "float", "number", "array", "map", "bool", "blob", "any"];
+            if (types.indexOf(l.replace(/\W/gmi, "")) !== -1 || l.indexOf("_") === 0 || l.match(/[\(\)\]\[\.]/g) !== null) {
+                throw Error("Invalid Table Name! https://docs.nanosql.io/setup/data-models");
+            }
+            (dataModel || []).forEach(function (model) {
+                if (model.key.match(/[\(\)\]\[\.]/g) !== null || model.key.indexOf("_") === 0) {
+                    throw Error("Invalid Data Model! https://docs.nanosql.io/setup/data-models");
+                }
+            });
+        }
+        t.toColRules[l] = {};
+        (dataModel || []).forEach(function (model) {
+            if (model.props) {
+                model.props.forEach(function (prop) {
+                    // old format: from=>fn(arg1, arg2);
+                    if (prop.indexOf("from=>") !== -1 && prop.indexOf("(") !== -1) {
+                        var fnName = prop.replace("from=>", "").split("(").shift();
+                        var fnArgs = prop.replace("from=>", "").split("(").pop().replace(")", "").split(",").map(function (c) { return c.trim(); });
+                        t.toColRules[l][model.key] = [fnName].concat(fnArgs);
+                    }
+                    // new format: toColumn.fn(arg1, arg2);
+                    if (prop.indexOf("toColumn.") === 0) {
+                        var fnName = prop.replace(/toColumn\.(.*)\(.*\)/gmi, "$1");
+                        var fnArgs = prop.replace(/toColumn\..*\((.*)\)/gmi, "$1").split(",").map(function (c) { return c.trim(); });
+                        t.toColRules[l][model.key] = [fnName].concat(fnArgs);
+                    }
+                });
+            }
+            if (model.props && utilities_1.intersect(["pk", "pk()"], model.props)) {
+                _this._tablePKs[l] = model.key;
+                _this._tablePKTypes[l] = model.type;
+                hasPK = true;
+            }
+        });
+        this.hasPK[l] = hasPK;
+        if (!hasPK) {
+            this._tablePKs[l] = "_id_";
+            dataModel.unshift({ key: "_id_", type: "uuid", props: ["pk()"] });
+        }
+        t.dataModels[l] = dataModel;
+        t._views[l] = [];
+        t._actions[l] = [];
+        return t;
+    };
+    /**
+     * Declare the views for the current selected table.  Must be called before connect()
+     *
+     * Views are created like this:
+     *
+     * ```ts
+     * .views([
+     *  {
+     *      name:"view-name",
+     *      args: ["array","of","arguments"],
+     *      call: function(args) {
+     *          // Because of our "args" array the args input of this function will look like this:
+     *          // NanoSQL will not let any other arguments into this function.
+     *          args:{
+     *              array:'',
+     *              of:'',
+     *              arguments:''
+     *          }
+     *          //We can use them in our query
+     *          return this.query('select').where(['name','IN',args.array]).exec();
+     *      }
+     *  }
+     * ])
+     * ```
+     *
+     * Then later in your app..
+     *
+     * ```ts
+     * NanoSQL("users").getView("view-name",{array:'',of:"",arguments:""}).then(function(result) {
+     *  console.log(result) <=== result of your view will be there.
+     * })
+     * ```
+     *
+     * Optionally you can type cast the arguments at run time typescript style, just add the types after the arguments in the array.  Like this:
+     *
+     * ```ts
+     * .views[{
+     *      name:...
+     *      args:["name:string","balance:float","active:bool"]
+     *      call:...
+     * }]
+     * ```
+     *
+     * NanoSQL will force the arguments passed into the function to those types.
+     *
+     * Possible types are string, bool, float, int, map, array and bool.
+     *
+     * @param {Array<ActionOrView>} viewArray
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.views = function (viewArray) {
+        if (Array.isArray(this.sTable))
+            return this;
+        return this._views[this.sTable] = viewArray, this;
+    };
+    /**
+     * Execute a specific view.  Refernece the "views" function for more description.
+     *
+     * Example:
+     * ```ts
+     * NanoSQL("users").getView('view-name',{foo:"bar"}).then(function(result) {
+     *  console.log(result) <== view result.
+     * })
+     * ```
+     *
+     * @param {string} viewName
+     * @param {any} viewArgs
+     * @returns {(Promise<Array<Object>>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.getView = function (viewName, viewArgs) {
+        if (viewArgs === void 0) { viewArgs = {}; }
+        if (Array.isArray(this.sTable))
+            return new Promise(function (res, rej) { return rej(); });
+        return this._doAV("View", this._views[this.sTable], viewName, viewArgs);
+    };
+    /**
+     * Declare the actions for the current selected table.  Must be called before connect()
+     *
+     * Actions are created like this:
+     * ```ts
+     * .actions([
+     *  {
+     *      name:"action-name",
+     *      args: ["array","of","arguments"],
+     *      call: function(args) {
+     *          // Because of our "args" array the args input of this function will look like this:
+     *          // NanoSQL will not let any other arguments into this function.
+     *          args:{
+     *              array:'',
+     *              of:'',
+     *              arguments:''
+     *          }
+     *          //We can use them in our query
+     *          return this.query("upsert",{balance:0}).where(['name','IN',args.array]).exec();
+     *      }
+     *  }
+     * ])
+     * ```
+     *
+     * Then later in your app..
+     *
+     * ```ts
+     * NanoSQL("users").doAction("action-name",{array:'',of:"",arguments:""}).then(function(result) {
+     *  console.log(result) <=== result of your view will be there.
+     * })
+     * ```
+     *
+     * Optionally you can type cast the arguments at run time typescript style, just add the types after the arguments in the array.  Like this:
+     * ```ts
+     * .actions[{
+     *      name:...
+     *      args:["name:string","balance:float","active:bool"]
+     *      call:...
+     * }]
+     * ```
+     *
+     * NanoSQL will force the arguments passed into the function to those types.
+     *
+     * Possible types are string, bool, float, int, map, array and bool.
+     *
+     * @param {Array<ActionOrView>} actionArray
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.actions = function (actionArray) {
+        if (Array.isArray(this.sTable))
+            return this;
+        return this._actions[this.sTable] = actionArray, this;
+    };
+    /**
+     * Init an action for the current selected table. Reference the "actions" method for more info.
+     *
+     * Example:
+     * ```ts
+     * NanoSQL("users").doAction('action-name',{foo:"bar"}).then(function(result) {
+     *      console.log(result) <== result of your action
+     * });
+     * ```
+     *
+     * @param {string} actionName
+     * @param {any} actionArgs
+     * @returns {(Promise<Array<Object>>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.doAction = function (actionName, actionArgs) {
+        if (Array.isArray(this.sTable))
+            return new Promise(function (res, rej) { return rej(); });
+        return this._doAV("Action", this._actions[this.sTable], actionName, actionArgs);
+    };
+    /**
+     * Adds a query filter to every request.
+     *
+     * @param {(args: DBExec) => Promise<IdbQuery>}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.queryFilter = function (queryMod) {
+        this.queryMod = queryMod;
+        return this;
+    };
+    /**
+     * Internal function to fire action/views.
+     *
+     * @private
+     * @param {("Action"|"View")} AVType
+     * @param {ActionOrView[]} AVList
+     * @param {string} AVName
+     * @param {*} AVargs
+     * @returns {(Promise<Array<DBRow>|NanoSQLInstance>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype._doAV = function (AVType, AVList, AVName, AVargs) {
+        var _this = this;
+        var t = this;
+        var selAV = AVList.reduce(function (prev, cur) {
+            if (cur.name === AVName)
+                return cur;
+            return prev;
+        }, null);
+        if (!selAV) {
+            return new Promise(function (res, rej) { return rej("Action/View Not Found!"); });
+        }
+        t._activeAV = AVName;
+        if (t._AVMod) {
+            return new Promise(function (res, rej) {
+                t._AVMod(_this.sTable, AVType, t._activeAV || "", AVargs, function (args) {
+                    selAV.call(selAV.args ? utilities_1.cleanArgs(selAV.args, args) : {}, t).then(res).catch(rej);
+                }, function (err) {
+                    rej(err);
+                });
+            });
+        }
+        else {
+            return selAV.call(selAV.args ? utilities_1.cleanArgs(selAV.args, AVargs) : {}, t);
+        }
+    };
+    /**
+     * Start a query into the current selected table.
+     * Possibl querys are "select", "upsert", "delete", and "drop";
+     *
+     * ### Select
+     *
+     * Select is used to pull a set of rows or other data from the table.
+     * When you use select the optional second argument of the query is an array of strings that allow you to show only specific columns.
+     *
+     * Examples:
+     * ```ts
+     * .query("select") // No arguments, select all columns
+     * .query("select",['username']) // only get the username column
+     * .query("select",["username","balance"]) //Get two columns, username and balance.
+     * .query("select",["count(*)"]) //Get the length of records in the database
+     * ```
+     *
+     * ### Upsert
+     *
+     * Upsert is used to add or modify data in the database.
+     * If the primary key rows are null or undefined, the data will always be added in a new row. Otherwise, you might be updating existing rows.
+     * The second argument of the query with upserts is always an Object of the data to upsert.
+     *
+     * Examples:
+     * ```ts
+     * .query("upsert",{id:1, username:"Scott"}) //If row ID 1 exists, set the username to scott, otherwise create a new row with this data.
+     * .query("upsert",{username:"Scott"}) //Add a new row to the db with this username in the row.
+     * .query("upsert",{balance:-35}).where(["balance","<",0]) // If you use a WHERE statement this data will be applied to the rows found with the where statement.
+     * ```
+     *
+     * ### Delete
+     *
+     * Delete is used to remove data from the database.
+     * It works exactly like select, except it removes data instead of selecting it.  The second argument is an array of columns to clear.  If no second argument is passed, the entire row is deleted.
+     * If no where argument is passed, the entire table is dropped
+     *
+     * Examples:
+     * ```ts
+     * .query("delete",['balance']) //Clear the contents of the balance column on ALL rows.
+     * .query("delete",['comments']).where(["accountType","=","spammer"]) // If a where statment is passed you'll only clear the columns of the rows selected by the where statement.
+     * .query("delete").where(["balance","<",0]) // remove all rows with a balance less than zero
+     * .query("delete") // Same as drop statement
+     * ```
+     *
+     * ### Drop
+     *
+     * Drop is used to completely clear the contents of a database.  There are no arguments.
+     *
+     * Drop Examples:
+     * ```ts
+     * .query("drop")
+     * ```
+     *
+     * @param {("select"|"upsert"|"delete"|"drop")} action
+     * @param {any} [args]
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.query = function (action, args) {
+        /*let t = this;
+        t._queryPtr++;
+        if (t._queryPtr > t._queryPool.length - 1) {
+            t._queryPtr = 0;
+        }
+        const av = t._activeAV;
+        t._activeAV = undefined;
+        return t._queryPool[t._queryPtr].set(t.sTable, action.toLowerCase(), args, av);*/
+        var t = this;
+        var av = t._activeAV;
+        t._activeAV = undefined;
+        return new std_query_1._NanoSQLQuery(this, this.sTable, action, args, av);
+    };
+    NanoSQLInstance.prototype.onConnected = function (callback) {
+        if (this.isConnected) {
+            callback();
+        }
+        else {
+            this._onConnectedCallBacks.push(callback);
+        }
+    };
+    /**
+     * Trigger a database event
+     *
+     * @param {DatabaseEvent} eventData
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.triggerEvent = function (eventData) {
+        var t = this;
+        if (t._hasEvents["*"] || t._hasEvents[eventData.table]) {
+            if (eventData.table === "*")
+                return this;
+            lie_ts_1.setFast(function () {
+                var c;
+                eventData.types.forEach(function (type) {
+                    // trigger wildcard
+                    t._callbacks["*"].trigger(type, eventData, t);
+                    t._callbacks["*"].trigger("*", eventData, t);
+                    // trigger specific table
+                    if (eventData.table && t._callbacks[eventData.table]) {
+                        t._callbacks[eventData.table].trigger(type, eventData, t);
+                    }
+                });
+            });
+        }
+        return t;
+    };
+    /**
+     * Returns a default object for the current table's data model, useful for forms.
+     *
+     * The optional argument lets you pass in an object to over write the data model's defaults as desired.
+     *
+     * Examples:
+     *
+     * ```ts
+     * console.log(NanoSQL("users").default()) <= {username:"none", id:undefined, age: 0}
+     * console.log(NanoSQL("users").default({username:"defalt"})) <= {username:"default", id:undefined, age: 0}
+     * ```
+     *
+     * DO NOT use this inside upsert commands like `.query("upsert",NanoSQL("users").defalt({userObj}))..`.
+     * The database defaults are already applied through the upsert path, you'll be doing double work.
+     *
+     * Only use this to pull default values into a form in your UI or similar situation.
+     *
+     * @param {*} [replaceObj]
+     * @returns {{[key: string]: any}}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.default = function (replaceObj) {
+        var newObj = {};
+        var t = this;
+        if (Array.isArray(t.sTable))
+            return {};
+        t.dataModels[t.sTable].forEach(function (m) {
+            // set key to object argument or the default value in the data model
+            newObj[m.key] = (replaceObj && replaceObj[m.key]) ? replaceObj[m.key] : m.default;
+            // Generate default value from type, eg int = 0, string = ""
+            if (newObj[m.key] === undefined) {
+                newObj[m.key] = utilities_1.cast(m.type, null);
+            }
+        });
+        return newObj;
+    };
+    /**
+     * Get the raw contents of the database, provides all tables.
+     *
+     * Optionally pass in the tables to export.  If no tables are provided then all tables will be dumped.
+     *
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.rawDump = function (tables) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            var result = {};
+            utilities_1.fastCHAIN(_this.plugins, function (plugin, i, next) {
+                if (plugin.dumpTables) {
+                    plugin.dumpTables(tables).then(function (tables) {
+                        result = __assign({}, result, tables);
+                        next(result);
+                    });
+                }
+                else {
+                    next();
+                }
+            }).then(function () {
+                res(result);
+            });
+        });
+    };
+    /**
+     * Import table data directly into the datatabase.
+     * Signifincatly faster than .loadJS but doesn't do type checking, indexing or anything else fancy.
+     *
+     * @param {{[table: string]: DBRow[]}} tables
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.rawImport = function (tables, onProgress) {
+        var _this = this;
+        return new Promise(function (res, rej) {
+            utilities_1.fastCHAIN(_this.plugins, function (plugin, i, next) {
+                if (plugin.importTables) {
+                    plugin.importTables(tables, onProgress || (function (c) { })).then(next);
+                }
+                else {
+                    next();
+                }
+            }).then(function () {
+                res();
+            });
+        });
+    };
+    /**
+     * Request disconnect from all databases.
+     *
+     * @returns
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.disconnect = function () {
+        return utilities_1.fastCHAIN(this.plugins, function (plugin, i, next) {
+            if (plugin.willDisconnect) {
+                plugin.willDisconnect(next);
+            }
+            else {
+                next();
+            }
+        });
+    };
+    /**
+     * Executes a transaction against the database, batching all the queries together.
+     *
+     * @param {((
+     *         db: (table?: string) => {
+     *             query: (action: "select"|"upsert"|"delete"|"drop"|"show tables"|"describe", args?: any) => _NanoSQLTransactionQuery;
+     *             updateORM: (action: "add"|"delete"|"drop"|"set", column?: string, relationIDs?: any[]) => _NanoSQLTransactionORMQuery|undefined;
+     *         }, complete: () => void) => void)} initTransaction
+     * @returns {Promise<any>}
+     *
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.doTransaction = function (initTransaction) {
+        var _this = this;
+        var t = this;
+        var queries = [];
+        var transactionID = utilities_1.random16Bits().toString(16);
+        return new Promise(function (resolve, reject) {
+            if (!t.plugins.length) {
+                reject("nSQL: Nothing to do, no plugins!");
+                return;
+            }
+            var run = function () {
+                utilities_1.fastCHAIN(t.plugins, function (p, i, nextP) {
+                    if (p.transactionBegin) {
+                        p.transactionBegin(transactionID, nextP);
+                    }
+                    else {
+                        nextP();
+                    }
+                }).then(function () {
+                    if (Array.isArray(t.sTable))
+                        return;
+                    initTransaction(function (table) {
+                        var ta = table || t.sTable;
+                        return {
+                            query: function (action, args) {
+                                return new transaction_1._NanoSQLTransactionQuery(action, args, ta, queries, transactionID);
+                            }
+                        };
+                    }, function () {
+                        var tables = [];
+                        utilities_1.fastCHAIN(queries, function (quer, i, nextQuery) {
+                            tables.push(quer.table);
+                            t.query(quer.action, quer.actionArgs).manualExec(__assign({}, quer, { table: quer.table, transaction: true, queryID: transactionID })).then(nextQuery);
+                        }).then(function (results) {
+                            utilities_1.fastCHAIN(_this.plugins, function (p, i, nextP) {
+                                if (p.transactionEnd) {
+                                    p.transactionEnd(transactionID, nextP);
+                                }
+                                else {
+                                    nextP();
+                                }
+                            }).then(function () {
+                                tables.filter(function (val, idx, self) {
+                                    return self.indexOf(val) === idx;
+                                }).forEach(function (table) {
+                                    if (table.indexOf("_") !== 0) {
+                                        t.triggerEvent({
+                                            query: queries[0],
+                                            table: table,
+                                            time: new Date().getTime(),
+                                            result: results,
+                                            types: ["transaction"],
+                                            actionOrView: "",
+                                            notes: [],
+                                            transactionID: transactionID,
+                                            affectedRowPKS: [],
+                                            affectedRows: []
+                                        });
+                                    }
+                                });
+                                resolve(results);
+                            });
+                        });
+                    });
+                });
+            };
+            if (_this.isConnected) {
+                run();
+            }
+            else {
+                _this.onConnected(run);
+            }
+        });
+    };
+    /**
+     * Configure the database driver, must be called before the connect() method.
+     *
+     * @param {any} args
+     * @returns {NanoSQLInstance}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.config = function (args) {
+        this._config = args;
+        return this;
+    };
+    /**
+     * Init obvserable query.
+     *
+     * Usage:
+     * ```ts
+     * nSQL()
+     * .observable(() => nSQL("message").query("select").emit())
+     * .filter((rows, idx) => rows.length > 0)
+     * .subscribe((rows, event) => {
+     *
+     * });
+     *
+     * ```
+     *
+     * @template T
+     * @param {((ev?: DatabaseEvent) => IdbQueryExec|undefined)} getQuery
+     * @param {string[]} [tablesToListen]
+     * @returns {Observer<T>}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.observable = function (getQuery, tablesToListen) {
+        return new observable_1.Observer(this, getQuery, tablesToListen || []);
+    };
+    /**
+     * Perform a custom action supported by the database driver.
+     *
+     * @param {...Array<any>} args
+     * @returns {*}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.extend = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var t = this;
+        return new Promise(function (res, rej) {
+            var run = function () {
+                if (t.plugins.length) { // Query Mode
+                    var newArgs_1 = args;
+                    var result_1 = [];
+                    utilities_1.fastCHAIN(t.plugins, function (p, i, nextP) {
+                        if (p.extend) {
+                            p.extend(function (nArgs, newResult) {
+                                newArgs_1 = nArgs;
+                                result_1 = newResult;
+                                nextP();
+                            }, newArgs_1, result_1);
+                        }
+                        else {
+                            nextP();
+                        }
+                    }).then(function () {
+                        res(result_1);
+                    });
+                }
+                else {
+                    rej("No plugins!");
+                }
+            };
+            if (args[0] === "beforeConn") {
+                args.shift();
+                run();
+                return;
+            }
+            if (_this.isConnected) {
+                run();
+            }
+            else {
+                _this.onConnected(run);
+            }
+        });
+    };
+    /**
+     * Load JSON directly into the DB.
+     * JSON must be an array of maps, like this:
+     * ```ts
+     * [
+     *  {"name":"billy","age":20},
+     *  {"name":"johnny":"age":30}
+     * ]
+     * ```
+     *
+     * Rows must align with the data model.  Row data that isn't in the data model will be ignored.
+     *
+     * @param {string} table
+     * @param {Array<Object>} rows
+     * @returns {Promise<Array<Object>>}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.loadJS = function (table, rows, useTransaction, onProgress) {
+        var _this = this;
+        var t = this;
+        if (useTransaction) {
+            return t.doTransaction(function (db, complete) {
+                rows.forEach(function (row) {
+                    db(table).query("upsert", row).exec();
+                });
+                complete();
+            });
+        }
+        else {
+            return new Promise(function (res, rej) {
+                utilities_1.fastCHAIN(rows, function (row, i, nextRow) {
+                    if (onProgress)
+                        onProgress(Math.round(((i + 1) / rows.length) * 10000) / 100);
+                    _this.query("upsert", row).manualExec({ table: table }).then(nextRow);
+                }).then(function (rows) {
+                    res(rows.map(function (r) { return r.shift(); }));
+                });
+            });
+        }
+    };
+    /**
+     * Convert a JSON array of objects to a CSV.
+     *
+     * @param {any[]} json
+     * @param {boolean} [printHeaders]
+     * @param {string[]} [useHeaders]
+     * @returns {string}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.JSONtoCSV = function (json, printHeaders, useHeaders) {
+        var csv = [];
+        if (!json.length) {
+            return "";
+        }
+        var columnHeaders = [];
+        if (useHeaders) {
+            // use provided headers (much faster)
+            columnHeaders = useHeaders;
+        }
+        else {
+            // auto detect headers
+            json.forEach(function (json) {
+                columnHeaders = Object.keys(json).concat(columnHeaders);
+            });
+            columnHeaders = columnHeaders.filter(function (v, i, s) { return s.indexOf(v) === i; });
+        }
+        if (printHeaders) {
+            csv.push(columnHeaders.join(","));
+        }
+        json.forEach(function (row) {
+            csv.push(columnHeaders.map(function (k) {
+                if (row[k] === null || row[k] === undefined) {
+                    return "";
+                }
+                if (typeof row[k] === "string") {
+                    // tslint:disable-next-line
+                    return "\"" + (row[k]).replace(/\"/g, '\"\"') + "\"";
+                }
+                if (typeof row[k] === "boolean") {
+                    return row[k] === true ? "true" : "false";
+                }
+                // tslint:disable-next-line
+                return typeof row[k] === "object" ? "\"" + JSON.stringify(row[k]).replace(/\"/g, '\"\"') + "\"" : row[k];
+            }).join(","));
+        });
+        return csv.join("\r\n");
+    };
+    NanoSQLInstance.prototype.csvToArray = function (text) {
+        // tslint:disable-next-line
+        var p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
+        for (var _i = 0, text_1 = text; _i < text_1.length; _i++) {
+            l = text_1[_i];
+            // tslint:disable-next-line
+            if ('"' === l) {
+                if (s && l === p)
+                    row[i] += l;
+                s = !s;
+                // tslint:disable-next-line
+            }
+            else if (',' === l && s)
+                l = row[++i] = '';
+            // tslint:disable-next-line
+            else if ('\n' === l && s) {
+                // tslint:disable-next-line
+                if ('\r' === p)
+                    row[i] = row[i].slice(0, -1);
+                // tslint:disable-next-line
+                row = ret[++r] = [l = ''];
+                i = 0;
+            }
+            else
+                row[i] += l;
+            p = l;
+        }
+        return ret[0];
+    };
+    /**
+     * Convert a CSV to array of JSON objects
+     *
+     * @param {string} csv
+     * @param {(row: any) => any} [rowMap]
+     * @returns {*}
+     * @memberof NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.CSVtoJSON = function (csv, rowMap) {
+        var _this = this;
+        var t = this;
+        var fields = [];
+        return csv.split(/\r?\n|\r|\t/gm).map(function (v, k) {
+            if (k === 0) {
+                fields = v.split(",");
+                return undefined;
+            }
+            else {
+                var row = _this.csvToArray(v);
+                if (!row)
+                    return undefined;
+                row = row.map(function (r) { return r.trim(); });
+                var i = fields.length;
+                var record = {};
+                while (i--) {
+                    if (row[i]) {
+                        if (row[i] === "true" || row[i] === "false") {
+                            record[fields[i]] = row[i] === "true";
+                        }
+                        else if (row[i].indexOf("{") === 0 || row[i].indexOf("[") === 0) {
+                            // tslint:disable-next-line
+                            try {
+                                record[fields[i]] = JSON.parse(row[i]);
+                            }
+                            catch (e) {
+                                record[fields[i]] = row[i];
+                            }
+                            // tslint:disable-next-line
+                        }
+                        else if (row[i].indexOf('"') === 0) {
+                            record[fields[i]] = row[i].slice(1, row[i].length - 1).replace(/\"\"/gmi, "\"");
+                        }
+                        else {
+                            record[fields[i]] = row[i];
+                        }
+                    }
+                }
+                if (rowMap) {
+                    return rowMap(record);
+                }
+                return record;
+            }
+        }).filter(function (r) { return r; });
+    };
+    /**
+     * Load a CSV file into the DB.  Headers must exist and will be used to identify what columns to attach the data to.
+     *
+     * This function performs a bunch of upserts, so expect appropriate behavior based on the primary key.
+     *
+     * Rows must align with the data model.  Row data that isn't in the data model will be ignored.
+     *
+     * @param {string} csv
+     * @returns {(Promise<Array<Object>>)}
+     *
+     * @memberOf NanoSQLInstance
+     */
+    NanoSQLInstance.prototype.loadCSV = function (table, csv, useTransaction, rowMap, onProgress) {
+        var _this = this;
+        var t = this;
+        var rowData = this.CSVtoJSON(csv, rowMap);
+        if (useTransaction) {
+            return t.doTransaction(function (db, complete) {
+                rowData.forEach(function (row) {
+                    db(table).query("upsert", row).exec();
+                });
+                complete();
+            });
+        }
+        else {
+            return new Promise(function (res, rej) {
+                utilities_1.fastCHAIN(rowData, function (row, i, nextRow) {
+                    if (onProgress)
+                        onProgress(Math.round(((i + 1) / rowData.length) * 10000) / 100);
+                    _this.query("upsert", row).manualExec({ table: table }).then(nextRow);
+                }).then(function (rows) {
+                    res(rows.map(function (r) { return r.shift(); }));
+                });
+            });
+        }
+    };
+    NanoSQLInstance.earthRadius = 6371;
+    return NanoSQLInstance;
+}());
+exports.NanoSQLInstance = NanoSQLInstance;
+var wordLevenshtienCache = {};
+NanoSQLInstance.whereFunctions = {
+    levenshtein: function (row, isJoin, word, column) {
+        var val = utilities_1.objQuery(column, row, isJoin) || "";
+        var key = val + "::" + word;
+        if (!wordLevenshtienCache[key]) {
+            wordLevenshtienCache[key] = levenshtein(val, word);
+        }
+        return wordLevenshtienCache[key];
+    },
+    arrayObjSrch: function (row, isJoin, arrayKey, objCompare, compareKey) {
+        var arr = utilities_1.objQuery(arrayKey, row, isJoin);
+        if (!Array.isArray(arr))
+            return undefined;
+        if (!arr.length)
+            return undefined;
+        var matchingObj;
+        var objData = objCompare.split("=");
+        arr.forEach(function (obj) {
+            var key = utilities_1.objQuery(objData[0], obj);
+            key = isNaN(key) ? key : parseFloat(key);
+            objData[1] = isNaN(objData[1]) ? objData[1] : parseFloat(objData[1]);
+            if (key === objData[1]) {
+                matchingObj = obj;
+            }
+        });
+        if (matchingObj === undefined)
+            return undefined;
+        return utilities_1.objQuery(compareKey, matchingObj);
+    },
+    crow: function (row, isJoin, lat, lon, latColumn, lonColumn) {
+        var latCol = latColumn || "lat";
+        var lonCol = lonColumn || "lon";
+        var latVal = utilities_1.objQuery(latCol, row, isJoin);
+        var lonVal = utilities_1.objQuery(lonCol, row, isJoin);
+        return utilities_1.crowDistance(latVal, lonVal, lat, lon, NanoSQLInstance.earthRadius);
+    },
+    sum: function (row, isJoin) {
+        var columns = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            columns[_i - 2] = arguments[_i];
+        }
+        return columns.reduce(function (prev, cur) {
+            var val = utilities_1.objQuery(cur, row, isJoin) || 0;
+            if (Array.isArray(val)) {
+                return prev + val.reduce(function (p, c) { return p + parseFloat(c || 0); }, 0);
+            }
+            return prev + parseFloat(val);
+        }, 0);
+    },
+    avg: function (row, isJoin) {
+        var columns = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            columns[_i - 2] = arguments[_i];
+        }
+        var numRecords = 0;
+        var total = columns.reduce(function (prev, cur) {
+            var val = utilities_1.objQuery(cur, row, isJoin) || 0;
+            if (Array.isArray(val)) {
+                numRecords += val.length;
+                return prev + val.reduce(function (p, c) { return p + parseFloat(c || 0); }, 0);
+            }
+            numRecords++;
+            return prev + parseFloat(val);
+        }, 0);
+        return total / numRecords;
+    }
+};
+NanoSQLInstance.functions = {
+    COUNT: {
+        type: "A",
+        call: function (rows, complete, isJoin, column) {
+            if (column && column !== "*") {
+                complete(rows.filter(function (r) { return utilities_1.objQuery(column, r, isJoin); }).length);
+            }
+            else {
+                complete(rows.length);
+            }
+        }
+    },
+    MAX: {
+        type: "A",
+        call: function (rows, complete, isJoin, column) {
+            if (rows.length) {
+                var max_1 = utilities_1.objQuery(column, rows[0]) || 0;
+                var maxRow_1 = rows[0];
+                rows.forEach(function (r) {
+                    var v = utilities_1.objQuery(column, r, isJoin);
+                    if (utilities_1.objQuery(column, r) > max_1) {
+                        maxRow_1 = r;
+                        max_1 = utilities_1.objQuery(column, r, isJoin);
+                    }
+                });
+                complete(max_1, maxRow_1);
+            }
+            else {
+                complete(0);
+            }
+        }
+    },
+    MIN: {
+        type: "A",
+        call: function (rows, complete, isJoin, column) {
+            if (rows.length) {
+                var min_1 = utilities_1.objQuery(column, rows[0], isJoin) || 0;
+                var minRow_1 = rows[0];
+                rows.forEach(function (r) {
+                    var v = utilities_1.objQuery(column, r, isJoin);
+                    if (v < min_1) {
+                        min_1 = v;
+                        minRow_1 = r;
+                    }
+                });
+                complete(min_1, minRow_1);
+            }
+            else {
+                complete(0);
+            }
+        }
+    },
+    AVG: {
+        type: "A",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.reduce(function (prev, cur) { return prev + (utilities_1.objQuery(column, cur, isJoin) || 0); }, 0) / rows.length);
+        }
+    },
+    SUM: {
+        type: "A",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.reduce(function (prev, cur) { return prev + (utilities_1.objQuery(column, cur, isJoin) || 0); }, 0));
+        }
+    },
+    LOWER: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return String(utilities_1.objQuery(column, r, isJoin)).toLowerCase();
+            }));
+        }
+    },
+    UPPER: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return String(utilities_1.objQuery(column, r, isJoin)).toUpperCase();
+            }));
+        }
+    },
+    CAST: {
+        type: "S",
+        call: function (rows, complete, isJoin, column, type) {
+            complete(rows.map(function (r) {
+                return utilities_1.cast(type, utilities_1.objQuery(column, r, isJoin));
+            }));
+        }
+    },
+    ABS: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return Math.abs(utilities_1.objQuery(column, r, isJoin));
+            }));
+        }
+    },
+    CEIL: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return Math.ceil(utilities_1.objQuery(column, r, isJoin));
+            }));
+        }
+    },
+    POW: {
+        type: "S",
+        call: function (rows, complete, isJoin, column, power) {
+            complete(rows.map(function (r) {
+                return Math.pow(utilities_1.objQuery(column, r, isJoin), parseInt(power));
+            }));
+        }
+    },
+    ROUND: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return Math.round(utilities_1.objQuery(column, r, isJoin));
+            }));
+        }
+    },
+    SQRT: {
+        type: "S",
+        call: function (rows, complete, isJoin, column) {
+            complete(rows.map(function (r) {
+                return Math.sqrt(utilities_1.objQuery(column, r, isJoin));
+            }));
+        }
+    }
+};
+/**
+ * @internal
+ */
+var _NanoSQLStatic = new NanoSQLInstance();
+exports.nSQL = function (setTablePointer) {
+    return _NanoSQLStatic.table(setTablePointer);
+};
+if (typeof window !== "undefined") {
+    window["nano-sql"] = {
+        nSQL: exports.nSQL,
+        NanoSQLInstance: NanoSQLInstance
+    };
+}
+//# sourceMappingURL=index.js.map
+},{"lie-ts":"node_modules/lie-ts/index.js","./query/std-query":"node_modules/nano-sql/lib/query/std-query.js","./query/transaction":"node_modules/nano-sql/lib/query/transaction.js","really-small-events":"node_modules/really-small-events/src/index.js","./utilities":"node_modules/nano-sql/lib/utilities.js","./database/index":"node_modules/nano-sql/lib/database/index.js","./history-plugin":"node_modules/nano-sql/lib/history-plugin.js","levenshtein-edit-distance":"node_modules/levenshtein-edit-distance/index.js","./observable":"node_modules/nano-sql/lib/observable.js"}],"src/assets/scripts/Aggregates.js":[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -578,6 +10498,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _nanoSql = require('nano-sql');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -587,8 +10509,32 @@ var Aggregates = function () {
   }
 
   _createClass(Aggregates, [{
+    key: 'parseDashboard',
+    value: function parseDashboard(data) {
+
+      var dashboard = {};
+
+      // Use NanoSQL
+      (0, _nanoSql.nSQL)(data).query("select").where(["status", "=", "In Progress"], "AND", ["sprint", "=", "1"]).exec().then(function (rows) {
+        dashboard.inprogress = rows.length;
+      }).then(function () {
+        (0, _nanoSql.nSQL)(data).query("select").where(["status", "=", "Done"], "AND", ["sprint", "<=", "1"]).exec().then(function (rows) {
+          dashboard.completed = rows.length;
+        });
+      }).then(function () {
+        (0, _nanoSql.nSQL)(data).query("select").where(["priority", "=", "Blocker", "AND", ["sprint", "=", "1"]]).exec().then(function (rows) {
+          dashboard.blockers = rows.length;
+        });
+      }).finally(function () {
+        console.log(dashboard);
+        return dashboard;
+      });
+    }
+  }, {
     key: 'parseAggregates',
     value: function parseAggregates(data, sprints, config) {
+
+      var foo = this.parseDashboard(data);
 
       var aggregates = {
         phase: 0,
@@ -692,7 +10638,7 @@ var Aggregates = function () {
         }
 
         // Calculate story-based totals
-        if (row.numtasks && row.numtasks > 0) {
+        if (row.numtasks && row.numtasks > 0 && row.sprint <= aggregates.sprint) {
           aggregates.totals.project.tasks++;
           if (row.status === "Done") {
             aggregates.totals.project.completed++;
@@ -716,7 +10662,7 @@ var Aggregates = function () {
             aggregates.totals.sprint.status[status]++;
           }
 
-          // Get Sprint totals
+          // Get Sprint subtotals
           if (row.sprint && row.sprint.current) {
             if (aggregates.subtotals.hasOwnProperty('sprint' + row.sprint.current)) {
               aggregates.subtotals['sprint' + row.sprint.current].tasks++;
@@ -732,7 +10678,7 @@ var Aggregates = function () {
             }
           }
 
-          // Get Sprint-totals
+          // Get Sprint totals
           sprints.forEach(function (sprint) {
             if (row.hasOwnProperty(sprint.field) && row[sprint.field] === '-') {
 
@@ -770,7 +10716,7 @@ var Aggregates = function () {
     value: function getCurrentSprint(data) {
       var sprint = 0;
       data.forEach(function (row) {
-        if (row.class && row.class === "current") {
+        if (row.class && row.class.indexOf("current") > -1) {
           sprint = row.label.replace('Sprint ', '');
         }
       });
@@ -792,13 +10738,6 @@ var Aggregates = function () {
     value: function getCurrentMood(aggregates) {
       var rating = 0;
       var mood = ':|';
-
-      /*
-      aggregages.risk
-      aggregates.debt
-      aggregates.totals.sprint.blockers
-      aggregates.totals.sprint.rate
-      */
 
       // Risk Ranking
       if (aggregates.risk > 10) {
@@ -859,7 +10798,7 @@ var Aggregates = function () {
 }();
 
 exports.default = Aggregates;
-},{}],"node_modules/markobj/markobj.js":[function(require,module,exports) {
+},{"nano-sql":"node_modules/nano-sql/lib/index.js"}],"node_modules/markobj/markobj.js":[function(require,module,exports) {
 module.exports = exports = markobj;
 
 // Returns an object built from an HTML string
@@ -1019,7 +10958,7 @@ var Plan = function () {
       var headers = headRow.querySelectorAll('th');
 
       var phases = [];
-      var sprintsPerPhase = parseInt(config.sprintsPerPhase, 10);
+      var sprintsPerPhase = config.sprintsPerPhase;
 
       // Set button action
       document.querySelector('button').addEventListener('click', function (event) {
@@ -1044,7 +10983,7 @@ var Plan = function () {
               }
 
               th1 = document.createElement('th');
-              th1.setAttribute('colspan', sprintsPerPhase);
+              th1.setAttribute('colspan', sprintsPerPhase[sprint.phase - 1]);
               th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
               th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
             }
@@ -1133,7 +11072,7 @@ var Plan = function () {
         // Find the value
         if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== "object") {
 
-          // Inject a title if 
+          // Inject a title if
           if (item.title) {
             td.setAttribute('title', item.title);
           }
@@ -7328,27 +17267,23 @@ var Sprint = function () {
       var numberOfSprints = config.numberOfSprints;
       var sprints = [];
 
-      var startDate = config.startDate;
-      var endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
-      var today = moment().toDate();
+      var startDate = moment(config.startDate, 'yyyy-mm-dd').toDate();
+      var endDate = moment(startDate, 'yyyy-mm-dd').add(config.daysInSprint, 'd').toDate();
+      var today = moment(new Date(), 'yyyy-mm-dd').toDate();
       var state = "";
-      var idx = 0;
-      var phase = config.firstPhase - 1;
+      var idx = 1;
+      var phase = config.firstPhase;
+      var phaseConfig = 0;
 
       for (var i = firstSprint; i < firstSprint + numberOfSprints; i++) {
 
         // Determine when in relative time this sprint exists
-        if (moment(today).isBetween(startDate, endDate)) {
+        if (moment(today, 'yyyy-mm-dd').isBetween(startDate, endDate)) {
           state = "current";
-        } else if (moment(endDate).isBefore(today)) {
+        } else if (moment(endDate, 'yyyy-mm-dd').isBefore(today)) {
           state = "previous";
-        } else if (moment(startDate).isAfter(today)) {
+        } else if (moment(startDate, 'yyyy-mm-dd').isAfter(today)) {
           state = "future";
-        }
-
-        // Determine phase for this sprint
-        if (idx % config.sprintsPerPhase === 0) {
-          phase++;
         }
 
         // Add to the array of dynamic sprints
@@ -7361,11 +17296,18 @@ var Sprint = function () {
           "class": state
         });
 
-        // Set the timespan for the next sprint
-        startDate = moment(endDate).add(1, 'd').toDate();
-        endDate = moment(startDate).add(config.daysInSprint, 'd').toDate();
+        // Determine phase for this sprint
+        if (idx % config.sprintsPerPhase[phaseConfig] === 0) {
+          phase++;
+          idx = 1;
+          phaseConfig++;
+        } else {
+          idx++;
+        }
 
-        idx++;
+        // Set the timespan for the next sprint
+        startDate = moment(endDate, 'yyyy-mm-dd').add(1, 'd').toDate();
+        endDate = moment(startDate, 'yyyy-mm-dd').add(config.daysInSprint, 'd').toDate();
       }
 
       return sprints;
@@ -7427,10 +17369,10 @@ var Team = function () {
     key: 'getHolidays',
     value: function getHolidays(sprint, member) {
       var hours = 0;
-      var startDate = moment(sprint.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
-      var endDate = moment(sprint.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
+      var startDate = new Date(sprint.startDate);
+      var endDate = new Date(sprint.endDate);
       holidays.forEach(function (holiday) {
-        if (moment(holiday.date).isBetween(startDate, endDate)) {
+        if (moment(new Date(holiday.date), 'MM/DD/YYYY').isBetween(startDate, endDate)) {
           if (holiday.members.includes(member.name) || holiday.teams.includes(member.team)) {
             hours += holiday.hours;
           }
@@ -22374,7 +32316,7 @@ module.exports = {
   }, {
     "tile": "project-target-completion",
     "label": "Target Completion",
-    "source": "",
+    "source": "totals.sprint.target",
     "format": "0%"
   }, {
     "tile": "project-completion",
@@ -22455,7 +32397,7 @@ module.exports = {
   }, {
     "tile": "sprint-pushed-stories",
     "label": "Sprint: Pushed Stories",
-    "source": "totals.sprint.pushed"
+    "source": "totals.sprint.spilled"
   }, {
     "tile": "sprint-incidents",
     "label": "Sprint: Total Incidents",
@@ -22599,8 +32541,6 @@ var Dashboard = function () {
       var value = '';
 
       aggregates = this.getDaysRemaining(aggregates);
-
-      console.log(aggregates);
 
       tiles.tiles.forEach(function (tile) {
 
@@ -22868,6 +32808,7 @@ var init = function init() {
     // Use content, parse data and render
     Promise.all(resources.map(getContent)).then(function (results) {
 
+      /* Build Data Objects */
       var stories = results[0];
       var sprintData = sprints.createSprints();
 
@@ -22877,7 +32818,13 @@ var init = function init() {
       // Parse Story Data
       var data = parse.parseData(stories);
 
+      // Build Aggregate Data
       var aggregates = aggregate.parseAggregates(data, sprintData, config);
+
+      /* Render the Dashboard */
+      dashboard.setValues(aggregates);
+
+      /* Render the Release Plan */
 
       // Render Header Row
       plan.renderHeader(sprintData, config, aggregates);
@@ -22893,13 +32840,10 @@ var init = function init() {
       // Assign Actions
       actions.navigation(aggregates.sprint);
 
-      // Assign values to dashboard
-      dashboard.setValues(aggregates);
-
-      // Render Charts
+      /* Render Charts */
       reports.renderCharts(aggregates);
 
-      // Render Teams
+      /* Render Teams */
       team.renderTeams();
     });
   }
@@ -22936,7 +32880,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '63565' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '60046' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

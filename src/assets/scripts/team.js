@@ -30,10 +30,10 @@ export default class Team {
    */
   getHolidays(sprint, member) {
     let hours = 0;
-    let startDate = moment(sprint.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
-    let endDate = moment(sprint.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
+    let startDate = new Date(sprint.startDate);
+    let endDate = new Date(sprint.endDate);
     holidays.forEach( (holiday) => {
-      if (moment(holiday.date).isBetween(startDate, endDate)) {
+      if (moment(new Date(holiday.date), 'MM/DD/YYYY').isBetween(startDate, endDate)) {
         if (holiday.members.includes(member.name) || holiday.teams.includes(member.team)) {
           hours += holiday.hours;
         }
