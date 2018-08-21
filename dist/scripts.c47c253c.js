@@ -103,100 +103,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"src/assets/data/config.json":[function(require,module,exports) {
-module.exports = {
-  "name": "Skookum",
-  "cache": "jira.json",
-  "jira": {
-    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20IPCM%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
-    "sprintField": "customfield_10400",
-    "epicField": "customfield_10003"
-  },
-  "sprint": {
-    "firstSprint": 1,
-    "daysInSprint": 21,
-    "sprintsPerPhase": [1, 2, 2, 1],
-    "firstPhase": 1,
-    "numberOfSprints": 6,
-    "hoursPerPoint": 3,
-    "startDate": "2018-08-13",
-    "hideFutureSprints": false,
-    "productiveHoursPerWeekPerPerson": 50,
-    "estimateScale": [1, 2, 3, 5, 8, 13, 21, 34],
-    "spikeStoryWeight": 13
-  },
-  "estimateAllocation": {
-    "dev": 0.67,
-    "qa": 0.33
-  },
-  "riskCalculation": {
-    "blocker": 2,
-    "delay": 1,
-    "early": -1,
-    "debt": 0.25,
-    "resourceDeficitHourBlocks": 25
-  }
-};
-},{}],"src/assets/data/plan.json":[function(require,module,exports) {
-module.exports = [{
-  "label": "Priority",
-  "field": "priority",
-  "class": "priority @value",
-  "hidden": true,
-  "title": true,
-  "editable": false,
-  "action": "hideColumn"
-}, {
-  "label": "Epic",
-  "field": "epic",
-  "class": "nowrap",
-  "editable": false,
-  "action": "hideColumn"
-}, {
-  "label": "Identifier",
-  "field": "key",
-  "class": "nowrap",
-  "link": "https://icg360.atlassian.net/browse/@value",
-  "editable": false,
-  "action": "hideColumn"
-}, {
-  "label": "Description",
-  "field": "description",
-  "class": "left wide",
-  "editable": false,
-  "action": "hideColumn"
-}, {
-  "label": "Assignee",
-  "field": "assignee",
-  "class": "left",
-  "editable": false
-}, {
-  "label": "Risk",
-  "field": "risk",
-  "class": "risk",
-  "editable": true
-}, {
-  "label": "Debt",
-  "field": "debt",
-  "class": "debt",
-  "editable": true
-}, {
-  "label": "Estimate",
-  "field": "estimate",
-  "class": "",
-  "editable": false
-}, {
-  "label": "Sprint",
-  "field": "sprint.current",
-  "class": "",
-  "editable": false
-}, {
-  "label": "Status",
-  "field": "status",
-  "class": "status @value",
-  "editable": false
-}];
-},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+})({"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 function getBundleURLCached() {
   if (!bundleURL) {
@@ -262,7 +169,105 @@ module.exports = reloadCSS;
 var reloadCSS = require('_css_loader');
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/assets/scripts/Authentication.js":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/assets/data/config.json":[function(require,module,exports) {
+module.exports = {
+  "name": "Skookum",
+  "cache": "jira.json",
+  "jira": {
+    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20IPCM%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
+    "sprintField": "customfield_10400",
+    "epicField": "customfield_10003"
+  },
+  "sprint": {
+    "firstSprint": 1,
+    "daysInSprint": 21,
+    "sprintsPerPhase": [1, 2, 2, 1],
+    "firstPhase": 1,
+    "numberOfSprints": 6,
+    "hoursPerPoint": 3,
+    "startDate": "2018-08-13",
+    "hideFutureSprints": false,
+    "productiveHoursPerWeekPerPerson": 50,
+    "estimateScale": [1, 2, 3, 5, 8, 13, 21, 34],
+    "spikeStoryWeight": 13,
+    "planning": {
+      "defaultStoryWeight": 3
+    }
+  },
+  "estimateAllocation": {
+    "dev": 0.67,
+    "qa": 0.33
+  },
+  "riskCalculation": {
+    "blocker": 2,
+    "delay": 1,
+    "early": -1,
+    "debt": 0.25,
+    "resourceDeficitHourBlocks": 25
+  },
+  "severity": [{ "rank": 0, "value": "block" }, { "rank": 1, "value": "highest" }, { "rank": 2, "value": "high" }, { "rank": 3, "value": "medium" }, { "rank": 4, "value": "low" }, { "rank": 5, "value": "lowest" }],
+  "sort": [{ "weight": 0, "value": "validation", "source": "status" }, { "weight": 10, "value": "progress", "source": "status" }, { "weight": 20, "value": "ready", "source": "status" }, { "weight": 30, "value": "open", "source": "status" }, { "weight": 90, "value": "done", "source": "status" }, { "weight": 200, "value": "backlog", "source": "status" }, { "weight": 1, "value": "unassigned", "source": "assignee" }]
+};
+},{}],"src/assets/data/plan.json":[function(require,module,exports) {
+module.exports = [{
+  "label": "Priority",
+  "field": "priority",
+  "class": "priority @value",
+  "hidden": true,
+  "title": true,
+  "editable": false,
+  "action": "hideColumn"
+}, {
+  "label": "Epic",
+  "field": "epic",
+  "class": "nowrap",
+  "editable": false,
+  "action": "hideColumn"
+}, {
+  "label": "Identifier",
+  "field": "key",
+  "class": "nowrap",
+  "link": "https://icg360.atlassian.net/browse/@value",
+  "editable": false,
+  "action": "hideColumn"
+}, {
+  "label": "Description",
+  "field": "description",
+  "class": "left wide",
+  "editable": false,
+  "action": "hideColumn"
+}, {
+  "label": "Assignee",
+  "field": "assignee",
+  "class": "left",
+  "editable": false
+}, {
+  "label": "Risk",
+  "field": "risk",
+  "class": "risk",
+  "editable": true
+}, {
+  "label": "Debt",
+  "field": "debt",
+  "class": "debt",
+  "editable": true
+}, {
+  "label": "Estimate",
+  "field": "estimate",
+  "class": "",
+  "editable": false
+}, {
+  "label": "Sprint",
+  "field": "sprint.current",
+  "class": "",
+  "editable": false
+}, {
+  "label": "Status",
+  "field": "status",
+  "class": "status @value",
+  "editable": false
+}];
+},{}],"src/assets/scripts/Authentication.js":[function(require,module,exports) {
 'use strict';
 
 /**
@@ -287,296 +292,49 @@ var Authentication = function Authentication() {
 };
 
 exports.default = Authentication;
-},{}],"src/assets/scripts/Parser.js":[function(require,module,exports) {
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var config = require('../data/config.json');
-
-var Parser = function () {
-  function Parser() {
-    _classCallCheck(this, Parser);
-  }
-
-  // Find a value in an array
-
-
-  _createClass(Parser, [{
-    key: 'arrayContains',
-    value: function arrayContains(array, value) {
-      for (var i = 0; i < array.length; i++) {
-        if (array[i] === value) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // Parse links in configured columns
-
-  }, {
-    key: 'parseLink',
-    value: function parseLink(value, link) {
-      var result = link.replace('@value', value);
-      var a = document.createElement('a');
-      a.setAttribute('href', result);
-      a.setAttribute('target', '_blank');
-      a.appendChild(document.createTextNode(value));
-      return a;
-    }
-
-    // Parse a multi-part value
-
-  }, {
-    key: 'parseValue',
-    value: function parseValue(value, data) {
-      var parts = value.split('.');
-      var result = data;
-      parts.forEach(function (part) {
-        if (result && result.hasOwnProperty(part)) {
-          result = result[part];
-        }
-      });
-      return result;
-    }
-
-    // Get a priority based on a numeric ranking
-
-  }, {
-    key: 'getPriorityFromRank',
-    value: function getPriorityFromRank(rank) {
-      var priority = '';
-      if (rank === 0) {
-        priority = "block";
-      } else if (rank === 1) {
-        priority = "highest";
-      } else if (rank === 2) {
-        priority = "high";
-      } else if (rank === 3) {
-        priority = "medium";
-      } else if (rank === 4) {
-        priority = "low";
-      } else if (rank >= 5) {
-        priority = "lowest";
-      }
-      return priority;
-    }
-
-    // Parse Jira data into data element
-
-  }, {
-    key: 'parseData',
-    value: function parseData(input) {
-      var _this = this;
-
-      var data = [];
-      var row = {};
-      input.issues.forEach(function (task) {
-
-        row = {};
-        row.key = task.key;
-        row.priority = task.fields.priority.name;
-        row.description = task.fields.summary;
-        row.status = task.fields.status.name;
-        row.assignee = !task.fields.assignee ? 'unassigned' : task.fields.assignee.displayName;
-
-        row.numtasks = 1;
-        row.debt = '';
-
-        // Calculate risk
-        row.risk = 0;
-        if (row.priority.toLowerCase().indexOf('block') > -1) {
-          row.risk = 2;
-        }
-
-        // Calculate rank & priority
-        var rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
-        if (rankNo > 0) {
-          row.rank = rankNo;
-          row.priority = _this.getPriorityFromRank(rankNo);
-        } else {
-          if (row.priority.toLowerCase().indexOf('block') > -1) {
-            row.rank = 0;
-          } else if (row.priority.toLowerCase().indexOf('highest') > -1) {
-            row.rank = 1;
-          } else if (row.priority.toLowerCase().indexOf('high') > -1) {
-            row.rank = 2;
-          } else if (row.priority.toLowerCase().indexOf('medium') > -1) {
-            row.rank = 3;
-          } else if (row.priority.toLowerCase().indexOf('low') > -1) {
-            row.rank = 4;
-          } else if (row.priority.toLowerCase().indexOf('lowest') > -1) {
-            row.rank = 5;
-          }
-        }
-
-        // Rank modified by Status
-        row.sort = row.rank * 10;
-        if (row.status.toLowerCase().indexOf('done') >= 0) {
-          row.sort += 90;
-        } else if (row.status.toLowerCase().indexOf('validation') >= 0) {
-          row.sort += 0;
-        } else if (row.status.toLowerCase().indexOf('progress') >= 0) {
-          row.sort += 10;
-        } else if (row.status.toLowerCase().indexOf('ready') >= 0) {
-          row.sort += 20;
-        } else if (row.status.toLowerCase().indexOf('open') >= 0) {
-          row.sort += 30;
-        } else if (row.status.toLowerCase().indexOf('backlog') >= 0) {
-          row.sort += 200;
-        }
-
-        // Lower the sort ranking if an item is unassigned
-        if (row.assignee.toLowerCase().indexOf('unassign') >= 0) {
-          row.sort += 1;
-        }
-
-        // Create a decimal at the end to sort by identifier
-        var decimal = '0000' + row.key.replace(/([^0-9])*/ig, '');
-        row.sort = row.sort + '.' + decimal.slice(-4);
-
-        // Calculate the estimate field
-        row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
-        row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
-        row.remaining = row.estimate - row.timespent;
-        if (!isNaN(row.estimate)) {
-          row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
-        } else {
-          row.estimate = 0;
-        }
-
-        // Calculate remaining & percentage
-        if (!isNaN(row.remaining)) {
-          row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
-        }
-
-        // Get epic information
-        row.epic = task.fields[config.jira.epicField];
-        row.epic = _this.getEpic(row.epic, input);
-
-        // Get sprint information
-        row.sprint = task.fields[config.jira.sprintField];
-        if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-          row.sprint = _this.parseSprint(row.sprint);
-        }
-
-        // Populate empty sprint values
-        if (!row.sprint) {
-          row.sprint = { current: 999, history: [] };
-        }
-
-        // Capture Sprint data
-        row.pushed = 0;
-
-        if (row.sprint && row.sprint.history) {
-          row.sprint.history.forEach(function (sp, index) {
-            if (row.sprint.current === sp) {
-              row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
-              if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-                row['sprint' + sp] = '0';
-              }
-            } else {
-              row['sprint' + sp] = "-";
-              row.pushed++;
-            }
-          });
-        }
-
-        // Add to collection
-        data.push(row);
-      });
-
-      // Sort based on Sprint then Priority / Rank
-      data.sort(function (a, b) {
-        if (a.sprint) {
-          return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
-        }
-      });
-
-      return data;
-    }
-
-    // Append Sprints to Configuration
-
-  }, {
-    key: 'appendSprints',
-    value: function appendSprints(config, sprints) {
-      var conf = [];
-      config.forEach(function (item) {
-        conf.push(item);
-        // TODO: Change the below to use the last column instead of "Status"
-        if (item.label.indexOf('Status') === 0) {
-          sprints.forEach(function (sprint) {
-            conf.push(sprint);
-          });
-        }
-      });
-      return conf;
-    }
-
-    // Parses Sprint value from string
-
-  }, {
-    key: 'parseSprint',
-    value: function parseSprint(input) {
-      var sprint = '';
-      var result = {};
-
-      result.raw = input;
-      result.current = input[input.length - 1];
-      result.history = [];
-
-      // Capture the current Sprint
-      if (result.current) {
-        sprint = result.current.match(/(name=[^,]*,)/);
-        if (sprint !== null && Array.isArray(sprint)) {
-          result.current = sprint[sprint.length - 1].replace(/([^0-9]*)/ig, '');
-        }
-      }
-
-      // Set a default Sprint
-      if (!result.current) {
-        result.current = 999;
-      }
-
-      // Create a Sprint History log
-      result.raw.forEach(function (item) {
-        var sp = item.match(/(name=[^,]*,)/);
-        sp = sp[sp.length - 1].replace(/([^0-9]*)/ig, '');
-        if (!result.history.includes(sp)) {
-          result.history.push(sp);
-        }
-      });
-
-      return result;
-    }
-
-    // Create an Epic Link
-
-  }, {
-    key: 'getEpic',
-    value: function getEpic(epic, data) {
-      for (var i = 0; i < data.issues.length; i++) {
-        if (data.issues[0].key === epic) {
-          return data.issues[0].fields.summary;
-        }
-      }
-      return epic;
-    }
-  }]);
-
-  return Parser;
-}();
-
-exports.default = Parser;
-},{"../data/config.json":"src/assets/data/config.json"}],"node_modules/lie-ts/index.js":[function(require,module,exports) {
+},{}],"src/assets/data/team.json":[function(require,module,exports) {
+module.exports = [{
+  "team": "Engineering",
+  "jiraName": "gabe.tsu",
+  "name": "Gabe Tsu",
+  "role": "dev",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": true
+}, {
+  "team": "Engineering",
+  "jiraName": "rizchele.",
+  "name": "Rizchele",
+  "role": "dev",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": false
+}, {
+  "team": "Design",
+  "jiraName": "ryan.prudhomme",
+  "name": "Ryan Prudhomme",
+  "role": "design",
+  "allocation": "50%",
+  "hours": 25,
+  "lead": false
+}, {
+  "team": "Management",
+  "jiraName": "pedro.gonzales",
+  "name": "Pedro Gonzales",
+  "role": "manager",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": false
+}, {
+  "team": "Management",
+  "jiraName": "josh.miller",
+  "name": "Josh Miller",
+  "role": "manager",
+  "allocation": "10%",
+  "hours": 5,
+  "lead": false
+}];
+},{}],"node_modules/lie-ts/index.js":[function(require,module,exports) {
 var global = arguments[3];
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -10496,7 +10254,364 @@ if (typeof window !== "undefined") {
     };
 }
 //# sourceMappingURL=index.js.map
-},{"lie-ts":"node_modules/lie-ts/index.js","./query/std-query":"node_modules/nano-sql/lib/query/std-query.js","./query/transaction":"node_modules/nano-sql/lib/query/transaction.js","really-small-events":"node_modules/really-small-events/src/index.js","./utilities":"node_modules/nano-sql/lib/utilities.js","./database/index":"node_modules/nano-sql/lib/database/index.js","./history-plugin":"node_modules/nano-sql/lib/history-plugin.js","levenshtein-edit-distance":"node_modules/levenshtein-edit-distance/index.js","./observable":"node_modules/nano-sql/lib/observable.js"}],"src/assets/scripts/Aggregates.js":[function(require,module,exports) {
+},{"lie-ts":"node_modules/lie-ts/index.js","./query/std-query":"node_modules/nano-sql/lib/query/std-query.js","./query/transaction":"node_modules/nano-sql/lib/query/transaction.js","really-small-events":"node_modules/really-small-events/src/index.js","./utilities":"node_modules/nano-sql/lib/utilities.js","./database/index":"node_modules/nano-sql/lib/database/index.js","./history-plugin":"node_modules/nano-sql/lib/history-plugin.js","levenshtein-edit-distance":"node_modules/levenshtein-edit-distance/index.js","./observable":"node_modules/nano-sql/lib/observable.js"}],"src/assets/scripts/Parser.js":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _nanoSql = require('nano-sql');
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var config = require('../data/config.json');
+var team = require('../data/team.json');
+
+var Parser = function () {
+  function Parser() {
+    _classCallCheck(this, Parser);
+  }
+
+  // Find a value in an array
+
+
+  _createClass(Parser, [{
+    key: 'arrayContains',
+    value: function arrayContains(array, value) {
+      for (var i = 0; i < array.length; i++) {
+        if (array[i] === value) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Parse links in configured columns
+
+  }, {
+    key: 'parseLink',
+    value: function parseLink(value, link) {
+      var result = link.replace('@value', value);
+      var a = document.createElement('a');
+      a.setAttribute('href', result);
+      a.setAttribute('target', '_blank');
+      a.appendChild(document.createTextNode(value));
+      return a;
+    }
+
+    // Parse a multi-part value
+
+  }, {
+    key: 'parseValue',
+    value: function parseValue(value, data) {
+      var parts = value.split('.');
+      var result = data;
+      parts.forEach(function (part) {
+        if (result && result.hasOwnProperty(part)) {
+          result = result[part];
+        }
+      });
+      return result;
+    }
+
+    // Get a priority based on a numeric ranking
+
+  }, {
+    key: 'getPriorityFromRank',
+    value: function getPriorityFromRank(rank) {
+      var priority = '';
+      if (rank === 0) {
+        priority = "block";
+      } else if (rank === 1) {
+        priority = "highest";
+      } else if (rank === 2) {
+        priority = "high";
+      } else if (rank === 3) {
+        priority = "medium";
+      } else if (rank === 4) {
+        priority = "low";
+      } else if (rank >= 5) {
+        priority = "lowest";
+      }
+      return priority;
+    }
+  }, {
+    key: 'getDefaults',
+    value: function getDefaults(params) {
+      return new Promise(function (resolve, reject) {
+        var response = params;
+        response.defaultWeight = config.sprint.planning.defaultStoryWeight;
+
+        // TODO: Needs to be calculated by Sprint, by Person, and by Team
+        // Get number of team members
+        (0, _nanoSql.nSQL)(team).query("select").where(["role", "=", "dev"]).exec().then(function (rows) {
+          rows.forEach(function (row) {
+            response.defaultVelocity += Math.round(row.hours / config.sprint.hoursPerPoint);
+          });
+          document.querySelector('#baseVelocity').value = Math.round(response.defaultVelocity);
+          response.storiesPerSprint += Math.round(response.defaultVelocity / response.defaultWeight);
+          document.querySelector('#storiesPerSprint').value = Math.round(response.storiesPerSprint);
+          resolve(response);
+        });
+      }).then(function (response) {
+        return response;
+      });
+    }
+
+    // Parse Jira data into data element
+
+  }, {
+    key: 'parseData',
+    value: function parseData(input) {
+      var _this = this;
+
+      var data = [];
+      var row = {};
+
+      var isPlanningMode = document.querySelector('#planningMode');
+      var usePlanningMode = isPlanningMode.checked ? true : false;
+
+      var params = {};
+      params.planningSprint = 1;
+      params.defaultWeight = 0;
+      params.defaultVelocity = 0;
+      params.storiesPerSprint = 0;
+
+      // TODO: This needs to be turned into an asynchronous call
+      return this.getDefaults(params).then(function (response) {
+        if (usePlanningMode) {
+          params = response;
+        }
+
+        input.issues.forEach(function (task, idx) {
+
+          row = {};
+          row.key = task.key;
+          row.priority = task.fields.priority.name;
+          row.description = task.fields.summary;
+          row.status = task.fields.status.name;
+          row.assignee = !task.fields.assignee ? 'unassigned' : task.fields.assignee.displayName;
+
+          row.numtasks = 1;
+          row.debt = '';
+
+          // Calculate rank & priority
+          var rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+          if (rankNo > 0) {
+            row.rank = rankNo;
+            row.priority = _this.getPriorityFromRank(rankNo);
+          } else {
+            // Use severity rank values from config.json
+            config.severity.forEach(function (sev) {
+              if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
+                row.rank = parseInt(sev.rank, 10);
+              }
+            });
+          }
+
+          // Rank modified by Status
+          // Use sort weight values from config.json
+          row.sort = row.rank * 10;
+          config.sort.forEach(function (srt) {
+            if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
+              row.sort += parseInt(srt.weight, 10);
+            }
+          });
+
+          // Create a decimal to further sort by identifier
+          var decimal = '0000' + row.key.replace(/([^0-9])*/ig, '');
+          row.sort = row.sort + '.' + decimal.slice(-4);
+
+          // Calculate the estimate field
+          row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
+          row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
+          row.remaining = row.estimate - row.timespent;
+          if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
+            row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
+          } else {
+            row.estimate = parseInt(params.defaultWeight, 10);
+          }
+
+          // Calculate remaining & percentage
+          if (!isNaN(row.remaining)) {
+            row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
+          }
+
+          // Get epic information
+          row.epic = task.fields[config.jira.epicField];
+          row.epic = _this.getEpic(row.epic, input);
+
+          // Get sprint information
+          row.sprint = task.fields[config.jira.sprintField];
+          if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
+            row.sprint = _this.parseSprint(row.sprint);
+          }
+
+          // Populate empty sprint values
+          if (!row.sprint) {
+            row.sprint = { current: 999, history: [] };
+          }
+
+          // If in planning mode, set Sprints based on calculated velocity
+          if (usePlanningMode) {
+            if (row.sprint.current === 999) {
+              row.sprint.current = params.planningSprint;
+              if (idx % params.storiesPerSprint === 0) {
+                params.planningSprint++;
+              }
+            }
+          }
+
+          // Determine if the story was pushed from a previous Sprint
+          row.pushed = 0;
+          if (row.sprint && row.sprint.history) {
+            row.sprint.history.forEach(function (sp, index) {
+              if (row.sprint.current === sp) {
+                row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
+                if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
+                  row['sprint' + sp] = '0';
+                }
+              } else {
+                row['sprint' + sp] = "-";
+                row.pushed++;
+              }
+            });
+          }
+
+          // Calculate Debt
+          row.debt = _this.calculateDebt(row);
+
+          // Calculate Risk
+          row.risk = _this.calculateRisk(row);
+
+          // Add to collection
+          data.push(row);
+        });
+
+        // Sort based on Sprint then Priority / Rank
+        data.sort(function (a, b) {
+          if (a.sprint) {
+            return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
+          }
+        });
+
+        return data;
+      });
+    }
+
+    // Calculate debt
+
+  }, {
+    key: 'calculateDebt',
+    value: function calculateDebt(row) {
+      row.debt = 0;
+      if (row.pushed > 0) {
+        row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
+      }
+      return row.debt;
+    }
+
+    // Calculate risk
+
+  }, {
+    key: 'calculateRisk',
+    value: function calculateRisk(row) {
+      row.risk = 0;
+      if (row.priority.toLowerCase().indexOf('block') > -1) {
+        row.risk = 2;
+      } else if (row.assignee === 'unassigned' && row.sprint.current === 1 && row.status !== 'Done') {
+        row.risk = 1;
+      }
+
+      // Increase risk if this story is in the current Sprint, but in backlog
+      if (row.status.toLowerCase() === 'backlog' && row.sprint.current === 1) {
+        row.risk++;
+      }
+
+      // Increase risk if this story is in the current Sprint, but has been pushed before
+      if (row.pushed > 0) {
+        row.risk = Math.ceiling(row.risk + row.pushed * config.riskCalculation.delay);
+      }
+      return row.risk;
+    }
+
+    // Append Sprints to Configuration
+
+  }, {
+    key: 'appendSprints',
+    value: function appendSprints(config, sprints) {
+      var conf = [];
+      config.forEach(function (item) {
+        conf.push(item);
+        // TODO: Change the below to use the last column instead of "Status"
+        if (item.label.indexOf('Status') === 0) {
+          sprints.forEach(function (sprint) {
+            conf.push(sprint);
+          });
+        }
+      });
+      return conf;
+    }
+
+    // Parses Sprint value from string
+
+  }, {
+    key: 'parseSprint',
+    value: function parseSprint(input) {
+      var sprint = '';
+      var result = {};
+
+      result.raw = input;
+      result.current = input[input.length - 1];
+      result.history = [];
+
+      // Capture the current Sprint
+      if (result.current) {
+        sprint = result.current.match(/(name=[^,]*,)/);
+        if (sprint !== null && Array.isArray(sprint)) {
+          result.current = sprint[sprint.length - 1].replace(/([^0-9]*)/ig, '');
+        }
+      }
+
+      // Set a default Sprint
+      if (!result.current) {
+        result.current = 999;
+      }
+
+      // Create a Sprint History log
+      result.raw.forEach(function (item) {
+        var sp = item.match(/(name=[^,]*,)/);
+        sp = sp[sp.length - 1].replace(/([^0-9]*)/ig, '');
+        if (!result.history.includes(sp)) {
+          result.history.push(sp);
+        }
+      });
+
+      return result;
+    }
+
+    // Create an Epic Link
+
+  }, {
+    key: 'getEpic',
+    value: function getEpic(epic, data) {
+      for (var i = 0; i < data.issues.length; i++) {
+        if (data.issues[0].key === epic) {
+          return data.issues[0].fields.summary;
+        }
+      }
+      return epic;
+    }
+  }]);
+
+  return Parser;
+}();
+
+exports.default = Parser;
+},{"../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","nano-sql":"node_modules/nano-sql/lib/index.js"}],"src/assets/scripts/Aggregates.js":[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10600,8 +10715,16 @@ var Aggregates = function () {
       data.forEach(function (row) {
 
         // Build Assignee Data
-        assignee = row.assignee.replace(/[^\w]/g, '_');
-        status = row.status.replace(/[^\w]/g, '_');
+        assignee = 'unassigned';
+        status = '';
+
+        if (row.assignee) {
+          assignee = row.assignee.replace(/[^\w]/g, '_');
+        }
+
+        if (row.status) {
+          status = row.status.replace(/[^\w]/g, '_');
+        }
 
         if (!aggregates.totals.project.status.hasOwnProperty(status)) {
           aggregates.totals.project.status[status] = 0;
@@ -10965,6 +11088,13 @@ var Plan = function () {
       var d1 = void 0,
           d2 = void 0,
           current = '';
+
+      var table = markobj('<table>\n      <thead>\n        <tr>\n          <th rowspan="3" class="base tiny">Priority</th>\n          <th rowspan="3" class="base small full">Epic</th>\n          <th rowspan="3" class="base small">Identifier</th>\n          <th rowspan="3" class="base left wide full">Description</th>\n          <th rowspan="3" class="base left full">Assignee</th>\n          <th rowspan="3" class="base full">Risk</th>\n          <th rowspan="3" class="base full">Debt</th>\n          <th rowspan="3" class="base small full">Estimate</th>\n          <th rowspan="3" class="base full">Sprint</th>\n          <th rowspan="3" class="base small">Status <button class="toggle"></button></th>\n          <!-- Inject Sprints -->\n        </tr>\n      </thead>\n      <tbody>\n      </tbody>\n    </table>');
+
+      var container = document.querySelector('#release-plan');
+      container.innerHTML = "";
+      container.appendChild(table);
+
       var newRow1 = document.createElement('tr');
       var newRow2 = document.createElement('tr');
       var newRow3 = document.createElement('tr');
@@ -17332,49 +17462,7 @@ var Sprint = function () {
 }();
 
 exports.default = Sprint;
-},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/data/team.json":[function(require,module,exports) {
-module.exports = [{
-  "team": "Engineering",
-  "jiraName": "gabe.tsu",
-  "name": "Gabe Tsu",
-  "role": "Front-End Engineer",
-  "allocation": "100%",
-  "hours": 50,
-  "lead": true
-}, {
-  "team": "Engineering",
-  "jiraName": "rizchele.",
-  "name": "Rizchele",
-  "role": "Front-End Engineer",
-  "allocation": "100%",
-  "hours": 50,
-  "lead": false
-}, {
-  "team": "Design",
-  "jiraName": "ryan.prudhomme",
-  "name": "Ryan Prudhomme",
-  "role": "Designer",
-  "allocation": "50%",
-  "hours": 25,
-  "lead": false
-}, {
-  "team": "Management",
-  "jiraName": "pedro.gonzales",
-  "name": "Pedro Gonzales",
-  "role": "Engagement Manager",
-  "allocation": "100%",
-  "hours": 50,
-  "lead": false
-}, {
-  "team": "Management",
-  "jiraName": "josh.miller",
-  "name": "Josh Miller",
-  "role": "Technical Manager",
-  "allocation": "10%",
-  "hours": 5,
-  "lead": false
-}];
-},{}],"src/assets/scripts/Team.js":[function(require,module,exports) {
+},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/scripts/Team.js":[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17541,11 +17629,11 @@ var Team = function () {
       var totalMemberHours = 0;
       var sprintData = '';
 
-      // Get the table header and body
-      var body = document.querySelector('#team-data table tbody');
-
       // Construct Sprint Header
       this.renderSprintHeaderRow();
+
+      // Get the table header and body
+      var body = document.querySelector('#team-data table tbody');
 
       // Iterate over each team member
       var tr = void 0;
@@ -17606,7 +17694,13 @@ var Team = function () {
   }, {
     key: 'renderSprintHeaderRow',
     value: function renderSprintHeaderRow() {
-      var header = document.querySelector('#team-data table thead tr');
+
+      var template = markobj('<table>\n      <thead>\n        <tr>\n          <th class="left">Member</th>\n          <th>Role</th>\n          <th>Time</th>\n          <th>Hours</th>\n          <!-- Inject Sprints -->\n        </tr>\n      </thead>\n      <tbody>\n      </tbody>\n    </table>');
+      var container = document.querySelector('#team-data');
+      container.innerHTML = "";
+      container.appendChild(template);
+
+      var header = container.querySelector('table thead tr');
       var sprintHeaders = '';
       this.sprintData.forEach(function (sprint) {
         sprintHeaders = markobj('<th>' + sprint.label + '</th>');
@@ -17637,7 +17731,7 @@ var Team = function () {
       var pointSubTotal = '';
 
       for (var key in sprints) {
-        pointCount = numeral(sprints[key] / config.hoursPerPoint).format('0.0');
+        pointCount = numeral(sprints[key] / config.sprint.hoursPerPoint).format('0.0');
         sprintSubTotal += '<td>' + sprints[key] + '</td>';
         pointSubTotal += '<td>' + pointCount + '</td>';
         teamTotal += sprints[key];
@@ -17652,6 +17746,14 @@ var Team = function () {
 
       tr = markobj('<tr class="spacer"><td colspan="' + (5 + sprintCount) + '">&nbsp;</td></tr>');
       body.appendChild(tr);
+
+      return {
+        sprintCount: sprintCount,
+        teamTotal: teamTotal,
+        pointCount: pointCount,
+        sprintSubTotal: sprintSubTotal,
+        pointSubTotal: pointSubTotal
+      };
     }
   }]);
 
@@ -32301,6 +32403,8 @@ var Reports = function () {
     value: function renderCharts(aggregates) {
       var _this2 = this;
 
+      var target = document.querySelector('#charts');
+      target.innerHTML = "";
       charts.forEach(function (chart) {
         _this2.sprintData(chart, aggregates);
       });
@@ -32784,8 +32888,14 @@ var Actions = function () {
 }();
 
 exports.default = Actions;
-},{}],"src/assets/scripts/index.js":[function(require,module,exports) {
+},{}],"src/assets/scripts/Bootstrap.js":[function(require,module,exports) {
 'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _Authentication = require('./Authentication.js');
 
@@ -32825,89 +32935,127 @@ var _Sprint2 = _interopRequireDefault(_Sprint);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var config = require('../data/config.json');
 var table = require('../data/plan.json');
 
+var Boostrap = function () {
+  function Boostrap() {
+    _classCallCheck(this, Boostrap);
+
+    this.init();
+  }
+
+  // Fetches content
+
+
+  _createClass(Boostrap, [{
+    key: 'init',
+    value: function init() {
+      var _this = this;
+
+      var auth = new _Authentication2.default();
+      var parse = new _Parser2.default();
+      var aggregate = new _Aggregates2.default();
+      var plan = new _Plan2.default();
+      var team = new _Team2.default();
+      var reports = new _Reports2.default();
+      var dashboard = new _Dashboard2.default();
+      var actions = new _Actions2.default();
+      var sprints = new _Sprint2.default();
+
+      var resources = [config.cache];
+
+      // Ensure authentication token exists
+      if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
+
+        // TODO: Create authentication routine
+        localStorage.setItem('VIZ_AUTH_TOKEN', { token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
+      } else {
+
+        // Retrieve content from server
+        var getContent = function getContent(url) {
+          return fetch(url).then(function (res) {
+            return res.json();
+          }).then(function (response) {
+            var data = parse.parseData(response);
+            return data;
+          }).then(function (data) {
+            return data;
+          });
+        };
+
+        // Use content, parse data and render
+        Promise.all(resources.map(getContent)).then(function (response) {
+
+          var data = response[0];
+
+          /* Build Data Objects */
+          //const stories = results[0];
+          var sprintData = sprints.createSprints();
+
+          // Append Sprint Data to Configuration
+          var settings = parse.appendSprints(table, sprintData);
+
+          // Parse Story Data
+          //const data = parse.parseData(stories);
+
+          // Build Aggregate Data
+          var aggregates = aggregate.parseAggregates(data, sprintData, config);
+
+          /* Render the Dashboard */
+          dashboard.setValues(aggregates);
+
+          /* Render the Release Plan */
+
+          // Render Header Row
+          plan.renderHeader(sprintData, config, aggregates);
+
+          // Render Table
+          data.forEach(function (task) {
+            plan.renderTable(task, settings, config, aggregates);
+          });
+
+          // Render the Aggregate Values
+          plan.renderAggregates(aggregates);
+
+          // Assign Actions
+          actions.navigation(aggregates.sprint);
+
+          /* Render Charts */
+          reports.renderCharts(aggregates);
+
+          /* Render Teams */
+          team.renderTeams();
+
+          var isPlanningMode = document.querySelector('#planningMode');
+          isPlanningMode.addEventListener('click', function (event) {
+            var el = event.target;
+            var bootstrap = _this.init();
+          });
+        });
+      }
+    }
+  }]);
+
+  return Boostrap;
+}();
+
+exports.default = Boostrap;
+},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js","./Sprint.js":"src/assets/scripts/Sprint.js"}],"src/assets/scripts/index.js":[function(require,module,exports) {
+'use strict';
+
+var _Bootstrap = require('./Bootstrap.js');
+
+var _Bootstrap2 = _interopRequireDefault(_Bootstrap);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var styles = require('../styles/base.scss');
 
-// Fetches content
-var init = function init() {
-
-  var auth = new _Authentication2.default();
-  var parse = new _Parser2.default();
-  var aggregate = new _Aggregates2.default();
-  var plan = new _Plan2.default();
-  var team = new _Team2.default();
-  var reports = new _Reports2.default();
-  var dashboard = new _Dashboard2.default();
-  var actions = new _Actions2.default();
-  var sprints = new _Sprint2.default();
-
-  var resources = [config.cache];
-
-  // Ensure authentication token exists
-  if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
-
-    // TODO: Create authentication routine
-    localStorage.setItem('VIZ_AUTH_TOKEN', { token: 'Basic KOJDRGhqXSca1H3mT52uBV3zv6ihX0hm' });
-  } else {
-
-    // Retrieve content from server
-    var getContent = function getContent(url) {
-      return fetch(url).then(function (res) {
-        return res.json();
-      }).then(function (response) {
-        return response;
-      });
-    };
-
-    // Use content, parse data and render
-    Promise.all(resources.map(getContent)).then(function (results) {
-
-      /* Build Data Objects */
-      var stories = results[0];
-      var sprintData = sprints.createSprints();
-
-      // Append Sprint Data to Configuration
-      var settings = parse.appendSprints(table, sprintData);
-
-      // Parse Story Data
-      var data = parse.parseData(stories);
-
-      // Build Aggregate Data
-      var aggregates = aggregate.parseAggregates(data, sprintData, config);
-
-      /* Render the Dashboard */
-      dashboard.setValues(aggregates);
-
-      /* Render the Release Plan */
-
-      // Render Header Row
-      plan.renderHeader(sprintData, config, aggregates);
-
-      // Render Table
-      data.forEach(function (task) {
-        plan.renderTable(task, settings, config, aggregates);
-      });
-
-      // Render the Aggregate Values
-      plan.renderAggregates(aggregates);
-
-      // Assign Actions
-      actions.navigation(aggregates.sprint);
-
-      /* Render Charts */
-      reports.renderCharts(aggregates);
-
-      /* Render Teams */
-      team.renderTeams();
-    });
-  }
-};
-
-// Initialize the app
-init();
-},{"../data/config.json":"src/assets/data/config.json","../data/plan.json":"src/assets/data/plan.json","../styles/base.scss":"src/assets/styles/base.scss","./Authentication.js":"src/assets/scripts/Authentication.js","./Parser.js":"src/assets/scripts/Parser.js","./Aggregates.js":"src/assets/scripts/Aggregates.js","./Plan.js":"src/assets/scripts/Plan.js","./Team.js":"src/assets/scripts/Team.js","./Reports.js":"src/assets/scripts/Reports.js","./Dashboard.js":"src/assets/scripts/Dashboard.js","./Actions.js":"src/assets/scripts/Actions.js","./Sprint.js":"src/assets/scripts/Sprint.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+var bootstrap = new _Bootstrap2.default();
+},{"../styles/base.scss":"src/assets/styles/base.scss","./Bootstrap.js":"src/assets/scripts/Bootstrap.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 
@@ -32936,7 +33084,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '59122' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '59131' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

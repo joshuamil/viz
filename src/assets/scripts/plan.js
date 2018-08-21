@@ -67,6 +67,33 @@ export default class Plan {
     let th1, th2, th3 = '';
     let dates = '';
     let d1, d2, current = '';
+
+
+    let table = markobj(`<table>
+      <thead>
+        <tr>
+          <th rowspan="3" class="base tiny">Priority</th>
+          <th rowspan="3" class="base small full">Epic</th>
+          <th rowspan="3" class="base small">Identifier</th>
+          <th rowspan="3" class="base left wide full">Description</th>
+          <th rowspan="3" class="base left full">Assignee</th>
+          <th rowspan="3" class="base full">Risk</th>
+          <th rowspan="3" class="base full">Debt</th>
+          <th rowspan="3" class="base small full">Estimate</th>
+          <th rowspan="3" class="base full">Sprint</th>
+          <th rowspan="3" class="base small">Status <button class="toggle"></button></th>
+          <!-- Inject Sprints -->
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>`);
+
+    const container = document.querySelector('#release-plan');
+    container.innerHTML = "";
+    container.appendChild(table);
+
+
     const newRow1 = document.createElement('tr');
     const newRow2 = document.createElement('tr');
     const newRow3 = document.createElement('tr');
@@ -273,7 +300,7 @@ export default class Plan {
       if (aggregates.totals.project.tasks > 0) {
         completion = ((aggregates.subtotals[key].completed / aggregates.totals.project.tasks) * 100).toFixed('1');
       }
-      
+
       let completionClass = (completion < 100) ? 'bad' : 'good';
       let spilledClass = (parseInt(aggregates.subtotals[key].spilled, 10) > 0) ? 'warning' : 'white';
       let phase = `phase${aggregates.subtotals[key].phase}`;

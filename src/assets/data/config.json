@@ -17,7 +17,10 @@
     "hideFutureSprints": false,
     "productiveHoursPerWeekPerPerson": 50,
     "estimateScale": [1,2,3,5,8,13,21,34],
-    "spikeStoryWeight": 13
+    "spikeStoryWeight": 13,
+    "planning": {
+      "defaultStoryWeight": 3
+    }
   },
   "estimateAllocation": {
     "dev": 0.67,
@@ -29,5 +32,22 @@
     "early": -1,
     "debt": 0.25,
     "resourceDeficitHourBlocks": 25
-  }
+  },
+  "severity": [
+    { "rank": 0, "value": "block" },
+    { "rank": 1, "value": "highest" },
+    { "rank": 2, "value": "high" },
+    { "rank": 3, "value": "medium" },
+    { "rank": 4, "value": "low" },
+    { "rank": 5, "value": "lowest" }
+  ],
+  "sort": [
+    { "weight": 0, "value": "validation", "source": "status" },
+    { "weight": 10, "value": "progress", "source": "status" },
+    { "weight": 20, "value": "ready", "source": "status" },
+    { "weight": 30, "value": "open", "source": "status" },
+    { "weight": 90, "value": "done", "source": "status" },
+    { "weight": 200, "value": "backlog", "source": "status" },
+    { "weight": 1, "value": "unassigned", "source": "assignee" }
+  ]
 }

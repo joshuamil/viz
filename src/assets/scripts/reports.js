@@ -167,6 +167,8 @@ export default class Reports {
    *
    */
   renderCharts(aggregates) {
+    const target = document.querySelector('#charts');
+    target.innerHTML = "";
     charts.forEach( (chart) => {
       this.sprintData(chart, aggregates);
     });

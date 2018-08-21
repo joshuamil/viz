@@ -3,7 +3,7 @@
     "team": "Engineering",
     "jiraName": "gabe.tsu",
     "name": "Gabe Tsu",
-    "role": "Front-End Engineer",
+    "role": "dev",
     "allocation": "100%",
     "hours": 50,
     "lead": true
@@ -12,7 +12,7 @@
     "team": "Engineering",
     "jiraName": "rizchele.",
     "name": "Rizchele",
-    "role": "Front-End Engineer",
+    "role": "dev",
     "allocation": "100%",
     "hours": 50,
     "lead": false
@@ -21,7 +21,7 @@
     "team": "Design",
     "jiraName": "ryan.prudhomme",
     "name": "Ryan Prudhomme",
-    "role": "Designer",
+    "role": "design",
     "allocation": "50%",
     "hours": 25,
     "lead": false
@@ -30,7 +30,7 @@
     "team": "Management",
     "jiraName": "pedro.gonzales",
     "name": "Pedro Gonzales",
-    "role": "Engagement Manager",
+    "role": "manager",
     "allocation": "100%",
     "hours": 50,
     "lead": false
@@ -39,7 +39,7 @@
     "team": "Management",
     "jiraName": "josh.miller",
     "name": "Josh Miller",
-    "role": "Technical Manager",
+    "role": "manager",
     "allocation": "10%",
     "hours": 5,
     "lead": false

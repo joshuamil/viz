@@ -104,8 +104,16 @@ export default class Aggregates {
     data.forEach( (row) => {
 
       // Build Assignee Data
-      assignee = row.assignee.replace(/[^\w]/g,'_');
-      status = row.status.replace(/[^\w]/g,'_');
+      assignee = 'unassigned';
+      status = '';
+
+      if (row.assignee) {
+        assignee = row.assignee.replace(/[^\w]/g,'_');
+      }
+
+      if (row.status) {
+        status = row.status.replace(/[^\w]/g,'_');
+      }
 
       if (!aggregates.totals.project.status.hasOwnProperty(status)) {
         aggregates.totals.project.status[status] = 0;

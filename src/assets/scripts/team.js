@@ -140,11 +140,11 @@ export default class Team {
     let totalMemberHours = 0;
     let sprintData = '';
 
-    // Get the table header and body
-    const body = document.querySelector('#team-data table tbody');
-
     // Construct Sprint Header
     this.renderSprintHeaderRow();
+
+    // Get the table header and body
+    const body = document.querySelector('#team-data table tbody');
 
     // Iterate over each team member
     let tr;
@@ -210,7 +210,25 @@ export default class Team {
    * Renders Sprint Header Row
    */
   renderSprintHeaderRow() {
-    const header = document.querySelector('#team-data table thead tr');
+
+    const template = markobj(`<table>
+      <thead>
+        <tr>
+          <th class="left">Member</th>
+          <th>Role</th>
+          <th>Time</th>
+          <th>Hours</th>
+          <!-- Inject Sprints -->
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>`);
+    const container = document.querySelector('#team-data');
+    container.innerHTML = "";
+    container.appendChild(template);
+
+    const header = container.querySelector('table thead tr');
     let sprintHeaders = '';
     this.sprintData.forEach( (sprint) => {
       sprintHeaders = markobj(`<th>${sprint.label}</th>`);
@@ -238,10 +256,8 @@ export default class Team {
     let sprintSubTotal = '';
     let pointSubTotal = '';
 
-
-
     for (let key in sprints) {
-      pointCount = numeral((sprints[key] / config.hoursPerPoint)).format('0.0');
+      pointCount = numeral((sprints[key] / config.sprint.hoursPerPoint)).format('0.0');
       sprintSubTotal += `<td>${sprints[key]}</td>`;
       pointSubTotal += `<td>${pointCount}</td>`;
       teamTotal += sprints[key];
@@ -264,6 +280,16 @@ export default class Team {
 
     tr = markobj(`<tr class="spacer"><td colspan="${(5+sprintCount)}">&nbsp;</td></tr>`);
     body.appendChild(tr);
+
+
+    return {
+      sprintCount: sprintCount,
+      teamTotal: teamTotal,
+      pointCount: pointCount,
+      sprintSubTotal: sprintSubTotal,
+      pointSubTotal: pointSubTotal
+    };
+
   }
 
 }

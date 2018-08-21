@@ -13,6 +13,20 @@
       <li><a href="#release-plan">Release Plan</a></li>
       <li><a href="#charts">Charts</a></li>
       <li><a href="#team-data">Team</a></li>
+      <li>
+        <label for="planningMode">
+          Enable planning mode
+          <input type="checkbox" id="planningMode" value="true" />
+        </label>
+        <label for="baseVelocity">
+          Estimated Development Velocity
+          <input type="text" id="baseVelocity" placeholder="00" size="5" />
+        </label>
+        <label for="storiesPerSprint">
+          Estimated Stories Per Sprint
+          <input type="text" id="storiesPerSprint" placeholder="00" size="5" />
+        </label>
+      </li>
     </ul>
   </nav>
 
@@ -22,44 +36,12 @@
   </section>
 
   <section id="release-plan">
-    <table>
-      <thead>
-        <tr>
-          <th rowspan="3" class="base tiny">Priority</th>
-          <th rowspan="3" class="base small full">Epic</th>
-          <th rowspan="3" class="base small">Identifier</th>
-          <th rowspan="3" class="base left wide full">Description</th>
-          <th rowspan="3" class="base left full">Assignee</th>
-          <th rowspan="3" class="base full">Risk</th>
-          <th rowspan="3" class="base full">Debt</th>
-          <th rowspan="3" class="base small full">Estimate</th>
-          <th rowspan="3" class="base full">Sprint</th>
-          <th rowspan="3" class="base small">Status <button class="toggle"></button></th>
-          <!-- Inject Sprints -->
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
   </section>
 
   <section id="charts">
   </section>
 
   <section id="team-data">
-    <table>
-      <thead>
-        <tr>
-          <th class="left">Member</th>
-          <th>Role</th>
-          <th>Time</th>
-          <th>Hours</th>
-          <!-- Inject Sprints -->
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
   </section>
 
 </body>
