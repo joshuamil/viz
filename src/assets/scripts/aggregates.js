@@ -176,12 +176,27 @@ export default class Aggregates {
         // Get Sprint subtotals
         if (row.sprint && row.sprint.current) {
           if (aggregates.subtotals.hasOwnProperty('sprint' + row.sprint.current)) {
+
+
             aggregates.subtotals['sprint' + row.sprint.current].tasks++;
             aggregates.subtotals['sprint' + row.sprint.current].estimate += (!isNaN(row.estimate)) ? parseInt(row.estimate, 10) : 0;
             aggregates.subtotals['sprint' + row.sprint.current].remaining += row.remaining;
-            aggregates.subtotals['sprint' + row.sprint.current].hours.dev = Math.ceil((aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint) * config.estimate.dev);
-            aggregates.subtotals['sprint' + row.sprint.current].hours.qa = Math.ceil((aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint) * config.estimate.qa);
 
+            // Estimate allocations determine how much of the estimate is applied
+            // to development as opposed to quality assurance time.
+            aggregates.subtotals[
+              'sprint' + row.sprint.current].hours.dev =
+                Math.ceil(
+                  (aggregates.subtotals['sprint' + row.sprint.current].estimate
+                    * config.hoursPerPoint) * config.estimateAllocation.dev
+                );
+            aggregates.subtotals[
+              'sprint' + row.sprint.current].hours.qa =
+                Math.ceil(
+                  (aggregates.subtotals['sprint' + row.sprint.current].estimate
+                    * config.hoursPerPoint) * config.estimateAllocation.qa);
+
+            //
             if (!aggregates.subtotals['sprint' + row.sprint.current].status.hasOwnProperty(status)) {
               aggregates.subtotals['sprint' + row.sprint.current].status[status] = 0;
             }
@@ -202,8 +217,18 @@ export default class Aggregates {
             aggregates.subtotals[sprint.field].spilled++;
             aggregates.subtotals[sprint.field].estimate += (!isNaN(row.estimate)) ? row.estimate : 0;
             aggregates.subtotals[sprint.field].remaining += row.remaining;
-            aggregates.subtotals[sprint.field].hours.dev = Math.ceil((aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint) * config.estimate.dev);
-            aggregates.subtotals[sprint.field].hours.qa = Math.ceil((aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint) * config.estimate.qa);
+
+            // Estimate allocations determine how much of the estimate is applied
+            // to development as opposed to quality assurance time.
+            aggregates.subtotals[sprint.field].hours.dev =
+              Math.ceil(
+                (aggregates.subtotals[sprint.field].estimate
+                  * config.hoursPerPoint) * config.estimateAllocation.dev);
+
+            aggregates.subtotals[sprint.field].hours.qa =
+              Math.ceil(
+                (aggregates.subtotals[sprint.field].estimate
+                  * config.hoursPerPoint) * config.estimateAllocation.qa);
 
           } else if (row.hasOwnProperty(sprint.field) && row.status === 'Done') {
 

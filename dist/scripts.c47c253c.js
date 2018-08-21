@@ -105,30 +105,36 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   return newRequire;
 })({"src/assets/data/config.json":[function(require,module,exports) {
 module.exports = {
-  "firstSprint": 1,
-  "daysInSprint": 21,
-  "sprintsPerPhase": [1, 2, 2, 1],
-  "firstPhase": 1,
-  "numberOfSprints": 6,
-  "hoursPerPoint": 3,
-  "startDate": "2018-08-13",
-  "hideFutureSprints": false,
-  "estimate": {
+  "name": "Skookum",
+  "cache": "jira.json",
+  "jira": {
+    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20IPCM%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
+    "sprintField": "customfield_10400",
+    "epicField": "customfield_10003"
+  },
+  "sprint": {
+    "firstSprint": 1,
+    "daysInSprint": 21,
+    "sprintsPerPhase": [1, 2, 2, 1],
+    "firstPhase": 1,
+    "numberOfSprints": 6,
+    "hoursPerPoint": 3,
+    "startDate": "2018-08-13",
+    "hideFutureSprints": false,
+    "productiveHoursPerWeekPerPerson": 50,
+    "estimateScale": [1, 2, 3, 5, 8, 13, 21, 34],
+    "spikeStoryWeight": 13
+  },
+  "estimateAllocation": {
     "dev": 0.67,
     "qa": 0.33
   },
-  "risk": {
+  "riskCalculation": {
     "blocker": 2,
     "delay": 1,
     "early": -1,
     "debt": 0.25,
     "resourceDeficitHourBlocks": 25
-  },
-  "baseUrl": "jira.json",
-  "jiraUrl": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20IPCM%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
-  "jiraConfig": {
-    "sprintField": "customfield_10400",
-    "epicField": "customfield_10003"
   }
 };
 },{}],"src/assets/data/plan.json":[function(require,module,exports) {
@@ -452,11 +458,11 @@ var Parser = function () {
         }
 
         // Get epic information
-        row.epic = task.fields[config.jiraConfig.epicField];
+        row.epic = task.fields[config.jira.epicField];
         row.epic = _this.getEpic(row.epic, input);
 
         // Get sprint information
-        row.sprint = task.fields[config.jiraConfig.sprintField];
+        row.sprint = task.fields[config.jira.sprintField];
         if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
           row.sprint = _this.parseSprint(row.sprint);
         }
@@ -10665,12 +10671,17 @@ var Aggregates = function () {
           // Get Sprint subtotals
           if (row.sprint && row.sprint.current) {
             if (aggregates.subtotals.hasOwnProperty('sprint' + row.sprint.current)) {
+
               aggregates.subtotals['sprint' + row.sprint.current].tasks++;
               aggregates.subtotals['sprint' + row.sprint.current].estimate += !isNaN(row.estimate) ? parseInt(row.estimate, 10) : 0;
               aggregates.subtotals['sprint' + row.sprint.current].remaining += row.remaining;
-              aggregates.subtotals['sprint' + row.sprint.current].hours.dev = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimate.dev);
-              aggregates.subtotals['sprint' + row.sprint.current].hours.qa = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimate.qa);
 
+              // Estimate allocations determine how much of the estimate is applied
+              // to development as opposed to quality assurance time.
+              aggregates.subtotals['sprint' + row.sprint.current].hours.dev = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimateAllocation.dev);
+              aggregates.subtotals['sprint' + row.sprint.current].hours.qa = Math.ceil(aggregates.subtotals['sprint' + row.sprint.current].estimate * config.hoursPerPoint * config.estimateAllocation.qa);
+
+              //
               if (!aggregates.subtotals['sprint' + row.sprint.current].status.hasOwnProperty(status)) {
                 aggregates.subtotals['sprint' + row.sprint.current].status[status] = 0;
               }
@@ -10690,8 +10701,12 @@ var Aggregates = function () {
               aggregates.subtotals[sprint.field].spilled++;
               aggregates.subtotals[sprint.field].estimate += !isNaN(row.estimate) ? row.estimate : 0;
               aggregates.subtotals[sprint.field].remaining += row.remaining;
-              aggregates.subtotals[sprint.field].hours.dev = Math.ceil(aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint * config.estimate.dev);
-              aggregates.subtotals[sprint.field].hours.qa = Math.ceil(aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint * config.estimate.qa);
+
+              // Estimate allocations determine how much of the estimate is applied
+              // to development as opposed to quality assurance time.
+              aggregates.subtotals[sprint.field].hours.dev = Math.ceil(aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint * config.estimateAllocation.dev);
+
+              aggregates.subtotals[sprint.field].hours.qa = Math.ceil(aggregates.subtotals[sprint.field].estimate * config.hoursPerPoint * config.estimateAllocation.qa);
             } else if (row.hasOwnProperty(sprint.field) && row.status === 'Done') {
 
               aggregates.subtotals[sprint.field].completed++;
@@ -10958,7 +10973,7 @@ var Plan = function () {
       var headers = headRow.querySelectorAll('th');
 
       var phases = [];
-      var sprintsPerPhase = config.sprintsPerPhase;
+      var sprintsPerPhase = config.sprint.sprintsPerPhase;
 
       // Set button action
       document.querySelector('button').addEventListener('click', function (event) {
@@ -10971,6 +10986,7 @@ var Plan = function () {
 
           newRow1.appendChild(el);
         } else if (ix === headers.length - 1) {
+
           newRow1.appendChild(el);
           sprints.forEach(function (sprint) {
 
@@ -10982,25 +10998,18 @@ var Plan = function () {
                 current = 'current';
               }
 
-              th1 = document.createElement('th');
-              th1.setAttribute('colspan', sprintsPerPhase[sprint.phase - 1]);
-              th1.setAttribute('class', current + ' phase phase' + sprint.phase + ' ' + sprint.class);
-              th1.appendChild(document.createTextNode('Phase ' + sprint.phase));
+              th1 = markobj('<th colspan="' + sprintsPerPhase[sprint.phase - 1] + '"\n              class="' + current + ' phase phase' + sprint.phase + ' ' + sprint.class + '"\n              >Phase ' + sprint.phase + '</th>');
             }
 
             // Populate Sprint labels
-            th2 = document.createElement('th');
-            th2.setAttribute('class', 'sprint nowrap ' + sprint.class);
-            th2.appendChild(document.createTextNode(sprint.label));
+            th2 = markobj('<th class="sprint nowrap ' + sprint.class + '">\n            ' + sprint.label + '</th>');
 
             // Populate dates
-            th3 = document.createElement('th');
-            th3.setAttribute('class', 'dates nowrap ' + sprint.class);
             d1 = new Date(sprint.startDate);
             d2 = new Date(sprint.endDate);
             dates = d1.getMonth() + 1 + '/' + d1.getDate();
             dates += '-' + (d2.getMonth() + 1) + '/' + d2.getDate();
-            th3.appendChild(document.createTextNode(dates));
+            th3 = markobj('<th class="dates nowrap ' + sprint.class + '">\n            ' + dates + '</th>');
 
             // Append rows to the header
             if (!_this.parse.arrayContains(phases, sprint.phase)) {
@@ -11142,8 +11151,16 @@ var Plan = function () {
       // Loop through the aggregate values
       for (var key in aggregates.subtotals) {
 
-        var percentage = (aggregates.subtotals[key].tasks / aggregates.totals.project.tasks * 100).toFixed('1');
-        var completion = (aggregates.subtotals[key].completed / aggregates.totals.project.tasks * 100).toFixed('1');
+        var percentage = 0.00;
+        if (aggregates.totals.project.tasks > 0) {
+          percentage = (aggregates.subtotals[key].tasks / aggregates.totals.project.tasks * 100).toFixed('1');
+        }
+
+        var completion = 0.00;
+        if (aggregates.totals.project.tasks > 0) {
+          completion = (aggregates.subtotals[key].completed / aggregates.totals.project.tasks * 100).toFixed('1');
+        }
+
         var completionClass = completion < 100 ? 'bad' : 'good';
         var spilledClass = parseInt(aggregates.subtotals[key].spilled, 10) > 0 ? 'warning' : 'white';
         var phase = 'phase' + aggregates.subtotals[key].phase;
@@ -17183,8 +17200,6 @@ var global = arguments[3];
 return numeral;
 }));
 
-},{}],"src/assets/data/team.json":[function(require,module,exports) {
-module.exports = [{ "team": "Eagle", "jiraName": "sgeorge", "name": "Shaheen", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Eagle", "jiraName": "jnix", "name": "Jacob", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Eagle", "jiraName": "Josh.Miller", "name": "Josh", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Ashoka_K", "name": "Ashoka", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "aselvaraj", "name": "Arun", "role": "dev", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Offshore", "jiraName": "pranali.dedge", "name": "Pranali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "pallavi.bhadange", "name": "Pallavi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "amit.mistry01", "name": "Amit", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Chintan_Desai01", "name": "Chintan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "ApurvaMukund_A01", "name": "Apurva", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "vaishali.tekale", "name": "Vaishali", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Raman_Mittal", "name": "Raman", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Tanvi.Chopda", "name": "Tanvi", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Akshay_Agrawal04", "name": "Akshay", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "Megha_R03", "name": "Megha", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "sohan.255312", "name": "Sohan", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Offshore", "jiraName": "kunal.karmarkar", "name": "Kunal", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "dfreireich", "name": "Dave", "role": "qa", "allocation": "100%", "hours": 50, "lead": true }, { "team": "QA", "jiraName": "Souvik_Ghosh06", "name": "Souvik", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "pranjal.sharma", "name": "Pranjal", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "QA", "jiraName": "?", "name": "?", "role": "qa", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Design", "jiraName": "scornell", "name": "Steven", "role": "design", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Design", "jiraName": "asingh", "name": "Alekh", "role": "design", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "atran", "name": "Anh", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": true }, { "team": "Misc", "jiraName": "nsavant", "name": "Nikhil", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "wbaeck", "name": "Wolfgang", "role": "dev", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "SShliakhtsitsau", "name": "Stas", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }, { "team": "Misc", "jiraName": "MBorden", "name": "Mitch", "role": "mgmt", "allocation": "100%", "hours": 50, "lead": false }];
 },{}],"src/assets/data/holidays.json":[function(require,module,exports) {
 module.exports = [{
   "name": "PTO",
@@ -17240,7 +17255,6 @@ var moment = require('moment');
 var numeral = require('numeral');
 
 var config = require('../data/config.json');
-var team = require('../data/team.json');
 var holidays = require('../data/holidays.json');
 
 /**
@@ -17263,26 +17277,26 @@ var Sprint = function () {
   _createClass(Sprint, [{
     key: 'createSprints',
     value: function createSprints() {
-      var firstSprint = config.firstSprint;
-      var numberOfSprints = config.numberOfSprints;
+      var firstSprint = config.sprint.firstSprint;
+      var numberOfSprints = config.sprint.numberOfSprints;
       var sprints = [];
 
-      var startDate = moment(config.startDate, 'yyyy-mm-dd').toDate();
-      var endDate = moment(startDate, 'yyyy-mm-dd').add(config.daysInSprint, 'd').toDate();
-      var today = moment(new Date(), 'yyyy-mm-dd').toDate();
+      var startDate = moment(config.sprint.startDate, 'YYYY-MM-DD').toDate();
+      var endDate = moment(startDate, 'YYYY-MM-DD').add(config.sprint.daysInSprint, 'd').toDate();
+      var today = moment(new Date(), 'YYYY-MM-DD').toDate();
       var state = "";
       var idx = 1;
-      var phase = config.firstPhase;
+      var phase = config.sprint.firstPhase;
       var phaseConfig = 0;
 
       for (var i = firstSprint; i < firstSprint + numberOfSprints; i++) {
 
         // Determine when in relative time this sprint exists
-        if (moment(today, 'yyyy-mm-dd').isBetween(startDate, endDate)) {
+        if (moment(today, 'YYYY-MM-DD').isBetween(startDate, endDate)) {
           state = "current";
-        } else if (moment(endDate, 'yyyy-mm-dd').isBefore(today)) {
+        } else if (moment(endDate, 'YYYY-MM-DD').isBefore(today)) {
           state = "previous";
-        } else if (moment(startDate, 'yyyy-mm-dd').isAfter(today)) {
+        } else if (moment(startDate, 'YYYY-MM-DD').isAfter(today)) {
           state = "future";
         }
 
@@ -17297,7 +17311,7 @@ var Sprint = function () {
         });
 
         // Determine phase for this sprint
-        if (idx % config.sprintsPerPhase[phaseConfig] === 0) {
+        if (idx % config.sprint.sprintsPerPhase[phaseConfig] === 0) {
           phase++;
           idx = 1;
           phaseConfig++;
@@ -17306,8 +17320,8 @@ var Sprint = function () {
         }
 
         // Set the timespan for the next sprint
-        startDate = moment(endDate, 'yyyy-mm-dd').add(1, 'd').toDate();
-        endDate = moment(startDate, 'yyyy-mm-dd').add(config.daysInSprint, 'd').toDate();
+        startDate = moment(endDate, 'YYYY-MM-DD').add(1, 'd').toDate();
+        endDate = moment(startDate, 'YYYY-MM-DD').add(config.sprint.daysInSprint, 'd').toDate();
       }
 
       return sprints;
@@ -17318,7 +17332,49 @@ var Sprint = function () {
 }();
 
 exports.default = Sprint;
-},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/team.json":"src/assets/data/team.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/scripts/Team.js":[function(require,module,exports) {
+},{"markobj":"node_modules/markobj/markobj.js","array-sort":"node_modules/array-sort/index.js","moment":"node_modules/moment/moment.js","numeral":"node_modules/numeral/numeral.js","../data/config.json":"src/assets/data/config.json","../data/holidays.json":"src/assets/data/holidays.json"}],"src/assets/data/team.json":[function(require,module,exports) {
+module.exports = [{
+  "team": "Engineering",
+  "jiraName": "gabe.tsu",
+  "name": "Gabe Tsu",
+  "role": "Front-End Engineer",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": true
+}, {
+  "team": "Engineering",
+  "jiraName": "rizchele.",
+  "name": "Rizchele",
+  "role": "Front-End Engineer",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": false
+}, {
+  "team": "Design",
+  "jiraName": "ryan.prudhomme",
+  "name": "Ryan Prudhomme",
+  "role": "Designer",
+  "allocation": "50%",
+  "hours": 25,
+  "lead": false
+}, {
+  "team": "Management",
+  "jiraName": "pedro.gonzales",
+  "name": "Pedro Gonzales",
+  "role": "Engagement Manager",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": false
+}, {
+  "team": "Management",
+  "jiraName": "josh.miller",
+  "name": "Josh Miller",
+  "role": "Technical Manager",
+  "allocation": "10%",
+  "hours": 5,
+  "lead": false
+}];
+},{}],"src/assets/scripts/Team.js":[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -32787,7 +32843,7 @@ var init = function init() {
   var actions = new _Actions2.default();
   var sprints = new _Sprint2.default();
 
-  var resources = [config.baseUrl];
+  var resources = [config.cache];
 
   // Ensure authentication token exists
   if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
@@ -32880,7 +32936,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '60046' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '59122' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

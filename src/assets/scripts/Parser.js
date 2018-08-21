@@ -147,11 +147,11 @@ export default class Parser {
       }
 
       // Get epic information
-      row.epic = task.fields[config.jiraConfig.epicField];
+      row.epic = task.fields[config.jira.epicField];
       row.epic = this.getEpic(row.epic, input);
 
       // Get sprint information
-      row.sprint = task.fields[config.jiraConfig.sprintField];
+      row.sprint = task.fields[config.jira.sprintField];
       if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
         row.sprint = this.parseSprint(row.sprint);
       }
@@ -163,9 +163,9 @@ export default class Parser {
 
       // Capture Sprint data
       row.pushed = 0;
-      
+
       if (row.sprint && row.sprint.history) {
-        row.sprint.history.forEach( (sp, index) => {          
+        row.sprint.history.forEach( (sp, index) => {
           if (row.sprint.current === sp) {
             row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
             if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
@@ -214,7 +214,7 @@ export default class Parser {
   parseSprint(input) {
     let sprint = '';
     let result = {};
-    
+
     result.raw = input;
     result.current = input[input.length-1];
     result.history = [];
@@ -226,7 +226,7 @@ export default class Parser {
         result.current = sprint[sprint.length-1].replace(/([^0-9]*)/ig, '');
       }
     }
-    
+
     // Set a default Sprint
     if (!result.current) {
       result.current = 999;

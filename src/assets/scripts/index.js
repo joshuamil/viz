@@ -27,7 +27,7 @@ const init = () => {
   const sprints = new Sprints();
 
   const resources = [
-    config.baseUrl
+    config.cache
   ];
 
   // Ensure authentication token exists

@@ -76,7 +76,7 @@ export default class Plan {
 
 
     const phases = [];
-    const sprintsPerPhase = config.sprintsPerPhase;
+    const sprintsPerPhase = config.sprint.sprintsPerPhase;
 
     // Set button action
     document.querySelector('button').addEventListener('click', (event) => {
@@ -90,6 +90,7 @@ export default class Plan {
         newRow1.appendChild(el);
 
       } else if (ix === (headers.length-1)) {
+
         newRow1.appendChild(el);
         sprints.forEach( (sprint) => {
 
@@ -101,25 +102,23 @@ export default class Plan {
               current = 'current';
             }
 
-            th1 = document.createElement('th');
-            th1.setAttribute('colspan', sprintsPerPhase[sprint.phase-1]);
-            th1.setAttribute('class', `${current} phase phase${sprint.phase} ${sprint.class}`);
-            th1.appendChild(document.createTextNode(`Phase ${sprint.phase}`));
+            th1 = markobj(`<th colspan="${sprintsPerPhase[sprint.phase-1]}"
+              class="${current} phase phase${sprint.phase} ${sprint.class}"
+              >Phase ${sprint.phase}</th>`);
+
           }
 
           // Populate Sprint labels
-          th2 = document.createElement('th');
-          th2.setAttribute('class',`sprint nowrap ${sprint.class}`);
-          th2.appendChild(document.createTextNode(sprint.label));
+          th2 = markobj(`<th class="sprint nowrap ${sprint.class}">
+            ${sprint.label}</th>`);
 
           // Populate dates
-          th3 = document.createElement('th');
-          th3.setAttribute('class',`dates nowrap ${sprint.class}`);
           d1 = new Date(sprint.startDate);
           d2 = new Date(sprint.endDate);
           dates = d1.getMonth()+1 + '/' + d1.getDate();
           dates += '-' + (d2.getMonth()+1) + '/' + d2.getDate();
-          th3.appendChild(document.createTextNode(dates));
+          th3 = markobj(`<th class="dates nowrap ${sprint.class}">
+            ${dates}</th>`);
 
           // Append rows to the header
           if (!this.parse.arrayContains(phases, sprint.phase)) {
@@ -265,8 +264,16 @@ export default class Plan {
     // Loop through the aggregate values
     for (let key in aggregates.subtotals) {
 
-      let percentage = ((aggregates.subtotals[key].tasks / aggregates.totals.project.tasks) * 100).toFixed('1');
-      let completion = ((aggregates.subtotals[key].completed / aggregates.totals.project.tasks) * 100).toFixed('1');
+      let percentage = 0.00;
+      if (aggregates.totals.project.tasks > 0) {
+        percentage = ((aggregates.subtotals[key].tasks / aggregates.totals.project.tasks) * 100).toFixed('1');
+      }
+
+      let completion = 0.00
+      if (aggregates.totals.project.tasks > 0) {
+        completion = ((aggregates.subtotals[key].completed / aggregates.totals.project.tasks) * 100).toFixed('1');
+      }
+      
       let completionClass = (completion < 100) ? 'bad' : 'good';
       let spilledClass = (parseInt(aggregates.subtotals[key].spilled, 10) > 0) ? 'warning' : 'white';
       let phase = `phase${aggregates.subtotals[key].phase}`;
