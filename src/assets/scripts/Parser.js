@@ -11,54 +11,154 @@ export default class Parser {
   }
 
 
-  // Find a value in an array
-  arrayContains(array, value) {
-    for (let i=0;i<array.length;i++) {
-      if (array[i] === value) {
-        return true;
+  // Append Sprints to Configuration
+  appendSprints(config, sprints) {
+    let conf = [];
+    config.forEach( (item) => {
+      conf.push(item);
+      // TODO: Change the below to use the last column instead of "Status"
+      if (item.label.indexOf('Status') === 0) {
+        sprints.forEach( (sprint) => {
+          conf.push(sprint);
+        });
       }
+    });
+    return conf;
+  }
+
+
+  // Calculate debt
+  calculateDebt(row) {
+    row.debt = 0;
+    if (row.pushed > 0) {
+      row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
     }
-    return false;
+    return row.debt;
   }
 
 
-  // Parse links in configured columns
-  parseLink(value, link) {
-    let result = link.replace('@value', value);
-    let a = document.createElement('a');
-    a.setAttribute('href', result);
-    a.setAttribute('target', '_blank');
-    a.appendChild(document.createTextNode(value));
-    return a;
+  // Calculate the estimate fields
+  calculateEstimate(row, task, params) {
+    row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
+    row.timespent = (task.fields.aggregatetimespent) ? task.fields.aggregatetimespent : 0;
+    row.remaining = row.estimate-row.timespent;
+    if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
+      row.estimate = parseInt((parseInt(row.estimate, 10)/3600), 10);
+    } else {
+      row.estimate = parseInt(params.defaultWeight, 10);
+    }
+
+    // Calculate remaining & percentage
+    if (!isNaN(row.remaining)) {
+      row.remaining = parseInt((parseInt(row.remaining, 10)/3600),10);
+    }
+
+    return {
+      estimate: row.estimate,
+      timespent: row.timespent,
+      remaining: row.remaining
+    };
   }
 
 
-  // Parse a multi-part value
-  parseValue(value, data) {
-    const parts = value.split('.');
-    let result = data;
-    parts.forEach( (part) => {
-      if (result && result.hasOwnProperty(part)) {
-        result = result[part];
+  // Was the story pushed?
+  calculatePushed(row) {
+    row.pushed = 0;
+    if (row.sprint && row.sprint.history) {
+      row.sprint.history.forEach( (sp, index) => {
+        if (row.sprint.current === sp) {
+          row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
+          if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
+            row['sprint' + sp] = '0';
+          }
+        } else {
+          row['sprint' + sp] = "-";
+          row.pushed++;
+        }
+      });
+    }
+    return row.pushed;
+  }
+
+
+  // Calculate Rank
+  calculateRank(row) {
+    const rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+    if (rankNo > 0) {
+      row.rank = rankNo;
+      row.priority = this.getPriorityFromRank(rankNo);
+    } else {
+      // Use severity rank values from config.json
+      config.severity.forEach( (sev) => {
+        if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
+          row.rank = parseInt(sev.rank, 10);
+        }
+      });
+    }
+    return {
+      rank: row.rank,
+      priority: row.priority
+    };
+  }
+
+
+  // Calculate risk
+  calculateRisk(row) {
+    row.risk = 0;
+    if (row.priority.toLowerCase().indexOf('block') > -1) {
+      row.risk = 2;
+    } else if (row.assignee === 'unassigned' && row.sprint.current === 1 && row.status !== 'Done') {
+      row.risk = 1;
+    }
+
+    // Increase risk if this story is in the current Sprint, but in backlog
+    if (row.status.toLowerCase() === 'backlog' && row.sprint.current === 1) {
+      row.risk++;
+    }
+
+    // Increase risk if this story is in the current Sprint, but has been pushed before
+    if (row.pushed > 0) {
+      row.risk = Math.ceiling(
+        row.risk + (row.pushed * config.riskCalculation.delay));
+    }
+    return row.risk;
+  }
+
+
+  // Calculate Sort Order
+  calculateSort(row) {
+    // Use sort weight values from config.json
+    row.sort = (row.rank*10);
+    config.sort.forEach( (srt) => {
+      if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
+        row.sort += parseInt(srt.weight, 10);
       }
     });
-    return result;
+
+    // Create a decimal to further sort by identifier
+    let decimal = `0000${row.key.replace(/([^0-9])*/ig,'')}`;
+    row.sort = `${row.sort}.${decimal.slice(-4)}`;
+    return row.sort;
   }
 
 
-  // Get a priority based on a numeric ranking
-  getPriorityFromRank(rank) {
-    let priority = '';
-    config.severity.forEach( (sev) => {
-      if (sev.rank === rank) {
-        priority = sev.value;
-      }
-    });
-    return priority;
+  // Calculate the correct Sprint
+  calculateSprint(row, task) {
+    // Get sprint information
+    row.sprint = task.fields[config.jira.sprintField];
+    if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
+      row.sprint = this.parseSprint(row.sprint);
+    }
+    // Populate empty sprint values
+    if (!row.sprint) {
+      row.sprint = { current: 999, history: [] };
+    }
+    return row.sprint;
   }
 
 
-  getDefaults(params) {
+  // Get default velocity + stories per Sprint
+  calculateVelocity(params) {
     return new Promise( (resolve, reject) => {
       let response = params;
       response.defaultWeight = config.sprint.planning.defaultStoryWeight;
@@ -85,6 +185,29 @@ export default class Parser {
   }
 
 
+  // Create an Epic Link
+  getEpic(epic, data) {
+    for (let i=0;i<data.issues.length;i++) {
+      if (data.issues[0].key === epic) {
+        return data.issues[0].fields.summary;
+      }
+    }
+    return epic;
+  }
+
+
+  // Get a priority based on a numeric ranking
+  getPriorityFromRank(rank) {
+    let priority = '';
+    config.severity.forEach( (sev) => {
+      if (sev.rank === rank) {
+        priority = sev.value;
+      }
+    });
+    return priority;
+  }
+
+
   // Parse Jira data into data element
   parseData(input) {
     let data = [];
@@ -101,7 +224,7 @@ export default class Parser {
 
 
     // TODO: This needs to be turned into an asynchronous call
-    return this.getDefaults(params)
+    return this.calculateVelocity(params)
       .then( (response) => {
         if (usePlanningMode) {
           params = response;
@@ -150,7 +273,7 @@ export default class Parser {
           }
 
           // Determine if the story was pushed from a previous Sprint
-          row.pushed = this.storyPushed(row);
+          row.pushed = this.calculatePushed(row);
 
           // Calculate Debt
           row.debt = this.calculateDebt(row);
@@ -176,149 +299,28 @@ export default class Parser {
 
   }
 
-  // Calculate the correct Sprint
-  calculateSprint(row, task) {
-    // Get sprint information
-    row.sprint = task.fields[config.jira.sprintField];
-    if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-      row.sprint = this.parseSprint(row.sprint);
-    }
-    // Populate empty sprint values
-    if (!row.sprint) {
-      row.sprint = { current: 999, history: [] };
-    }
-    return row.sprint;
+
+  // Parse links in configured columns
+  parseLink(value, link) {
+    let result = link.replace('@value', value);
+    let a = document.createElement('a');
+    a.setAttribute('href', result);
+    a.setAttribute('target', '_blank');
+    a.appendChild(document.createTextNode(value));
+    return a;
   }
 
 
-  // Calculate the estimate fields
-  calculateEstimate(row, task, params) {
-    row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
-    row.timespent = (task.fields.aggregatetimespent) ? task.fields.aggregatetimespent : 0;
-    row.remaining = row.estimate-row.timespent;
-    if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
-      row.estimate = parseInt((parseInt(row.estimate, 10)/3600), 10);
-    } else {
-      row.estimate = parseInt(params.defaultWeight, 10);
-    }
-
-    // Calculate remaining & percentage
-    if (!isNaN(row.remaining)) {
-      row.remaining = parseInt((parseInt(row.remaining, 10)/3600),10);
-    }
-
-    return {
-      estimate: row.estimate,
-      timespent: row.timespent,
-      remaining: row.remaining
-    };
-  }
-
-
-  // Calculate Sort Order
-  calculateSort(row) {
-    // Use sort weight values from config.json
-    row.sort = (row.rank*10);
-    config.sort.forEach( (srt) => {
-      if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
-        row.sort += parseInt(srt.weight, 10);
+  // Parse a multi-part value
+  parseMultiPartValue(value, data) {
+    const parts = value.split('.');
+    let result = data;
+    parts.forEach( (part) => {
+      if (result && result.hasOwnProperty(part)) {
+        result = result[part];
       }
     });
-
-    // Create a decimal to further sort by identifier
-    let decimal = `0000${row.key.replace(/([^0-9])*/ig,'')}`;
-    row.sort = `${row.sort}.${decimal.slice(-4)}`;
-    return row.sort;
-  }
-
-
-  // Calculate Rank
-  calculateRank(row) {
-    const rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
-    if (rankNo > 0) {
-      row.rank = rankNo;
-      row.priority = this.getPriorityFromRank(rankNo);
-    } else {
-      // Use severity rank values from config.json
-      config.severity.forEach( (sev) => {
-        if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
-          row.rank = parseInt(sev.rank, 10);
-        }
-      });
-    }
-    return {
-      rank: row.rank,
-      priority: row.priority
-    };
-  }
-
-
-  // Was the story pushed?
-  storyPushed(row) {
-    row.pushed = 0;
-    if (row.sprint && row.sprint.history) {
-      row.sprint.history.forEach( (sp, index) => {
-        if (row.sprint.current === sp) {
-          row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
-          if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-            row['sprint' + sp] = '0';
-          }
-        } else {
-          row['sprint' + sp] = "-";
-          row.pushed++;
-        }
-      });
-    }
-    return row.pushed;
-  }
-
-
-  // Calculate debt
-  calculateDebt(row) {
-    row.debt = 0;
-    if (row.pushed > 0) {
-      row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
-    }
-    return row.debt;
-  }
-
-
-  // Calculate risk
-  calculateRisk(row) {
-    row.risk = 0;
-    if (row.priority.toLowerCase().indexOf('block') > -1) {
-      row.risk = 2;
-    } else if (row.assignee === 'unassigned' && row.sprint.current === 1 && row.status !== 'Done') {
-      row.risk = 1;
-    }
-
-    // Increase risk if this story is in the current Sprint, but in backlog
-    if (row.status.toLowerCase() === 'backlog' && row.sprint.current === 1) {
-      row.risk++;
-    }
-
-    // Increase risk if this story is in the current Sprint, but has been pushed before
-    if (row.pushed > 0) {
-      row.risk = Math.ceiling(
-        row.risk + (row.pushed * config.riskCalculation.delay));
-    }
-    return row.risk;
-  }
-
-
-  // Append Sprints to Configuration
-  appendSprints(config, sprints) {
-    let conf = [];
-    config.forEach( (item) => {
-      conf.push(item);
-      // TODO: Change the below to use the last column instead of "Status"
-      if (item.label.indexOf('Status') === 0) {
-        sprints.forEach( (sprint) => {
-          conf.push(sprint);
-        });
-      }
-    });
-    return conf;
+    return result;
   }
 
 
@@ -354,17 +356,6 @@ export default class Parser {
     });
 
     return result;
-  }
-
-
-  // Create an Epic Link
-  getEpic(epic, data) {
-    for (let i=0;i<data.issues.length;i++) {
-      if (data.issues[0].key === epic) {
-        return data.issues[0].fields.summary;
-      }
-    }
-    return epic;
   }
 
 }

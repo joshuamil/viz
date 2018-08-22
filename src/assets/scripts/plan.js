@@ -68,7 +68,6 @@ export default class Plan {
     let dates = '';
     let d1, d2, current = '';
 
-
     let table = markobj(`<table>
       <thead>
         <tr>
@@ -93,14 +92,12 @@ export default class Plan {
     container.innerHTML = "";
     container.appendChild(table);
 
-
     const newRow1 = document.createElement('tr');
     const newRow2 = document.createElement('tr');
     const newRow3 = document.createElement('tr');
     const header = document.querySelector('#release-plan thead');
     const headRow = header.querySelector('tr');
     const headers = headRow.querySelectorAll('th');
-
 
     const phases = [];
     const sprintsPerPhase = config.sprint.sprintsPerPhase;
@@ -122,17 +119,15 @@ export default class Plan {
         sprints.forEach( (sprint) => {
 
           // Populate Phase labels
-          if (!this.parse.arrayContains(phases, sprint.phase)) {
 
+          if (!phases.includes(sprint.phase)) {
             current = '';
             if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
               current = 'current';
             }
-
             th1 = markobj(`<th colspan="${sprintsPerPhase[sprint.phase-1]}"
               class="${current} phase phase${sprint.phase} ${sprint.class}"
               >Phase ${sprint.phase}</th>`);
-
           }
 
           // Populate Sprint labels
@@ -148,7 +143,8 @@ export default class Plan {
             ${dates}</th>`);
 
           // Append rows to the header
-          if (!this.parse.arrayContains(phases, sprint.phase)) {
+
+          if (!phases.includes(sprint.phase)) {
             newRow1.appendChild(th1);
             phases.push(sprint.phase);
           }
@@ -170,7 +166,7 @@ export default class Plan {
 
 
   // Renders rows into the table
-  renderTable(task, sprints, config, aggregates) {
+  renderTable(task, sprints, aggregates) {
 
     const tbody = document.querySelector('#release-plan tbody');
     let td;
@@ -197,7 +193,7 @@ export default class Plan {
 
       // Parse the value if the field is a multi-node path
       if (item.field.indexOf('.') > -1) {
-        value = this.parse.parseValue(item.field, task);
+        value = this.parse.parseMultiPartValue(item.field, task);
       }
 
       // Clear "999" from Sprints
@@ -269,8 +265,6 @@ export default class Plan {
           }
 
         }
-
-
 
       }
 

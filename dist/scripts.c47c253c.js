@@ -10275,64 +10275,173 @@ var Parser = function () {
     _classCallCheck(this, Parser);
   }
 
-  // Find a value in an array
+  // Append Sprints to Configuration
 
 
   _createClass(Parser, [{
-    key: 'arrayContains',
-    value: function arrayContains(array, value) {
-      for (var i = 0; i < array.length; i++) {
-        if (array[i] === value) {
-          return true;
+    key: 'appendSprints',
+    value: function appendSprints(config, sprints) {
+      var conf = [];
+      config.forEach(function (item) {
+        conf.push(item);
+        // TODO: Change the below to use the last column instead of "Status"
+        if (item.label.indexOf('Status') === 0) {
+          sprints.forEach(function (sprint) {
+            conf.push(sprint);
+          });
         }
+      });
+      return conf;
+    }
+
+    // Calculate debt
+
+  }, {
+    key: 'calculateDebt',
+    value: function calculateDebt(row) {
+      row.debt = 0;
+      if (row.pushed > 0) {
+        row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
       }
-      return false;
+      return row.debt;
     }
 
-    // Parse links in configured columns
+    // Calculate the estimate fields
 
   }, {
-    key: 'parseLink',
-    value: function parseLink(value, link) {
-      var result = link.replace('@value', value);
-      var a = document.createElement('a');
-      a.setAttribute('href', result);
-      a.setAttribute('target', '_blank');
-      a.appendChild(document.createTextNode(value));
-      return a;
+    key: 'calculateEstimate',
+    value: function calculateEstimate(row, task, params) {
+      row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
+      row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
+      row.remaining = row.estimate - row.timespent;
+      if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
+        row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
+      } else {
+        row.estimate = parseInt(params.defaultWeight, 10);
+      }
+
+      // Calculate remaining & percentage
+      if (!isNaN(row.remaining)) {
+        row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
+      }
+
+      return {
+        estimate: row.estimate,
+        timespent: row.timespent,
+        remaining: row.remaining
+      };
     }
 
-    // Parse a multi-part value
+    // Was the story pushed?
 
   }, {
-    key: 'parseValue',
-    value: function parseValue(value, data) {
-      var parts = value.split('.');
-      var result = data;
-      parts.forEach(function (part) {
-        if (result && result.hasOwnProperty(part)) {
-          result = result[part];
+    key: 'calculatePushed',
+    value: function calculatePushed(row) {
+      row.pushed = 0;
+      if (row.sprint && row.sprint.history) {
+        row.sprint.history.forEach(function (sp, index) {
+          if (row.sprint.current === sp) {
+            row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
+            if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
+              row['sprint' + sp] = '0';
+            }
+          } else {
+            row['sprint' + sp] = "-";
+            row.pushed++;
+          }
+        });
+      }
+      return row.pushed;
+    }
+
+    // Calculate Rank
+
+  }, {
+    key: 'calculateRank',
+    value: function calculateRank(row) {
+      var rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+      if (rankNo > 0) {
+        row.rank = rankNo;
+        row.priority = this.getPriorityFromRank(rankNo);
+      } else {
+        // Use severity rank values from config.json
+        config.severity.forEach(function (sev) {
+          if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
+            row.rank = parseInt(sev.rank, 10);
+          }
+        });
+      }
+      return {
+        rank: row.rank,
+        priority: row.priority
+      };
+    }
+
+    // Calculate risk
+
+  }, {
+    key: 'calculateRisk',
+    value: function calculateRisk(row) {
+      row.risk = 0;
+      if (row.priority.toLowerCase().indexOf('block') > -1) {
+        row.risk = 2;
+      } else if (row.assignee === 'unassigned' && row.sprint.current === 1 && row.status !== 'Done') {
+        row.risk = 1;
+      }
+
+      // Increase risk if this story is in the current Sprint, but in backlog
+      if (row.status.toLowerCase() === 'backlog' && row.sprint.current === 1) {
+        row.risk++;
+      }
+
+      // Increase risk if this story is in the current Sprint, but has been pushed before
+      if (row.pushed > 0) {
+        row.risk = Math.ceiling(row.risk + row.pushed * config.riskCalculation.delay);
+      }
+      return row.risk;
+    }
+
+    // Calculate Sort Order
+
+  }, {
+    key: 'calculateSort',
+    value: function calculateSort(row) {
+      // Use sort weight values from config.json
+      row.sort = row.rank * 10;
+      config.sort.forEach(function (srt) {
+        if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
+          row.sort += parseInt(srt.weight, 10);
         }
       });
-      return result;
+
+      // Create a decimal to further sort by identifier
+      var decimal = '0000' + row.key.replace(/([^0-9])*/ig, '');
+      row.sort = row.sort + '.' + decimal.slice(-4);
+      return row.sort;
     }
 
-    // Get a priority based on a numeric ranking
+    // Calculate the correct Sprint
 
   }, {
-    key: 'getPriorityFromRank',
-    value: function getPriorityFromRank(rank) {
-      var priority = '';
-      config.severity.forEach(function (sev) {
-        if (sev.rank === rank) {
-          priority = sev.value;
-        }
-      });
-      return priority;
+    key: 'calculateSprint',
+    value: function calculateSprint(row, task) {
+      // Get sprint information
+      row.sprint = task.fields[config.jira.sprintField];
+      if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
+        row.sprint = this.parseSprint(row.sprint);
+      }
+      // Populate empty sprint values
+      if (!row.sprint) {
+        row.sprint = { current: 999, history: [] };
+      }
+      return row.sprint;
     }
+
+    // Get default velocity + stories per Sprint
+
   }, {
-    key: 'getDefaults',
-    value: function getDefaults(params) {
+    key: 'calculateVelocity',
+    value: function calculateVelocity(params) {
       return new Promise(function (resolve, reject) {
         var response = params;
         response.defaultWeight = config.sprint.planning.defaultStoryWeight;
@@ -10351,6 +10460,33 @@ var Parser = function () {
       }).then(function (response) {
         return response;
       });
+    }
+
+    // Create an Epic Link
+
+  }, {
+    key: 'getEpic',
+    value: function getEpic(epic, data) {
+      for (var i = 0; i < data.issues.length; i++) {
+        if (data.issues[0].key === epic) {
+          return data.issues[0].fields.summary;
+        }
+      }
+      return epic;
+    }
+
+    // Get a priority based on a numeric ranking
+
+  }, {
+    key: 'getPriorityFromRank',
+    value: function getPriorityFromRank(rank) {
+      var priority = '';
+      config.severity.forEach(function (sev) {
+        if (sev.rank === rank) {
+          priority = sev.value;
+        }
+      });
+      return priority;
     }
 
     // Parse Jira data into data element
@@ -10373,7 +10509,7 @@ var Parser = function () {
       params.storiesPerSprint = 0;
 
       // TODO: This needs to be turned into an asynchronous call
-      return this.getDefaults(params).then(function (response) {
+      return this.calculateVelocity(params).then(function (response) {
         if (usePlanningMode) {
           params = response;
         }
@@ -10421,7 +10557,7 @@ var Parser = function () {
           }
 
           // Determine if the story was pushed from a previous Sprint
-          row.pushed = _this.storyPushed(row);
+          row.pushed = _this.calculatePushed(row);
 
           // Calculate Debt
           row.debt = _this.calculateDebt(row);
@@ -10444,165 +10580,32 @@ var Parser = function () {
       });
     }
 
-    // Calculate the correct Sprint
+    // Parse links in configured columns
 
   }, {
-    key: 'calculateSprint',
-    value: function calculateSprint(row, task) {
-      // Get sprint information
-      row.sprint = task.fields[config.jira.sprintField];
-      if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-        row.sprint = this.parseSprint(row.sprint);
-      }
-      // Populate empty sprint values
-      if (!row.sprint) {
-        row.sprint = { current: 999, history: [] };
-      }
-      return row.sprint;
+    key: 'parseLink',
+    value: function parseLink(value, link) {
+      var result = link.replace('@value', value);
+      var a = document.createElement('a');
+      a.setAttribute('href', result);
+      a.setAttribute('target', '_blank');
+      a.appendChild(document.createTextNode(value));
+      return a;
     }
 
-    // Calculate the estimate fields
+    // Parse a multi-part value
 
   }, {
-    key: 'calculateEstimate',
-    value: function calculateEstimate(row, task, params) {
-      row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
-      row.timespent = task.fields.aggregatetimespent ? task.fields.aggregatetimespent : 0;
-      row.remaining = row.estimate - row.timespent;
-      if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
-        row.estimate = parseInt(parseInt(row.estimate, 10) / 3600, 10);
-      } else {
-        row.estimate = parseInt(params.defaultWeight, 10);
-      }
-
-      // Calculate remaining & percentage
-      if (!isNaN(row.remaining)) {
-        row.remaining = parseInt(parseInt(row.remaining, 10) / 3600, 10);
-      }
-
-      return {
-        estimate: row.estimate,
-        timespent: row.timespent,
-        remaining: row.remaining
-      };
-    }
-
-    // Calculate Sort Order
-
-  }, {
-    key: 'calculateSort',
-    value: function calculateSort(row) {
-      // Use sort weight values from config.json
-      row.sort = row.rank * 10;
-      config.sort.forEach(function (srt) {
-        if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
-          row.sort += parseInt(srt.weight, 10);
+    key: 'parseMultiPartValue',
+    value: function parseMultiPartValue(value, data) {
+      var parts = value.split('.');
+      var result = data;
+      parts.forEach(function (part) {
+        if (result && result.hasOwnProperty(part)) {
+          result = result[part];
         }
       });
-
-      // Create a decimal to further sort by identifier
-      var decimal = '0000' + row.key.replace(/([^0-9])*/ig, '');
-      row.sort = row.sort + '.' + decimal.slice(-4);
-      return row.sort;
-    }
-
-    // Calculate Rank
-
-  }, {
-    key: 'calculateRank',
-    value: function calculateRank(row) {
-      var rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
-      if (rankNo > 0) {
-        row.rank = rankNo;
-        row.priority = this.getPriorityFromRank(rankNo);
-      } else {
-        // Use severity rank values from config.json
-        config.severity.forEach(function (sev) {
-          if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
-            row.rank = parseInt(sev.rank, 10);
-          }
-        });
-      }
-      return {
-        rank: row.rank,
-        priority: row.priority
-      };
-    }
-
-    // Was the story pushed?
-
-  }, {
-    key: 'storyPushed',
-    value: function storyPushed(row) {
-      row.pushed = 0;
-      if (row.sprint && row.sprint.history) {
-        row.sprint.history.forEach(function (sp, index) {
-          if (row.sprint.current === sp) {
-            row['sprint' + sp] = row.remaining < 0 ? '0' : row.remaining;
-            if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-              row['sprint' + sp] = '0';
-            }
-          } else {
-            row['sprint' + sp] = "-";
-            row.pushed++;
-          }
-        });
-      }
-      return row.pushed;
-    }
-
-    // Calculate debt
-
-  }, {
-    key: 'calculateDebt',
-    value: function calculateDebt(row) {
-      row.debt = 0;
-      if (row.pushed > 0) {
-        row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
-      }
-      return row.debt;
-    }
-
-    // Calculate risk
-
-  }, {
-    key: 'calculateRisk',
-    value: function calculateRisk(row) {
-      row.risk = 0;
-      if (row.priority.toLowerCase().indexOf('block') > -1) {
-        row.risk = 2;
-      } else if (row.assignee === 'unassigned' && row.sprint.current === 1 && row.status !== 'Done') {
-        row.risk = 1;
-      }
-
-      // Increase risk if this story is in the current Sprint, but in backlog
-      if (row.status.toLowerCase() === 'backlog' && row.sprint.current === 1) {
-        row.risk++;
-      }
-
-      // Increase risk if this story is in the current Sprint, but has been pushed before
-      if (row.pushed > 0) {
-        row.risk = Math.ceiling(row.risk + row.pushed * config.riskCalculation.delay);
-      }
-      return row.risk;
-    }
-
-    // Append Sprints to Configuration
-
-  }, {
-    key: 'appendSprints',
-    value: function appendSprints(config, sprints) {
-      var conf = [];
-      config.forEach(function (item) {
-        conf.push(item);
-        // TODO: Change the below to use the last column instead of "Status"
-        if (item.label.indexOf('Status') === 0) {
-          sprints.forEach(function (sprint) {
-            conf.push(sprint);
-          });
-        }
-      });
-      return conf;
+      return result;
     }
 
     // Parses Sprint value from string
@@ -10640,19 +10643,6 @@ var Parser = function () {
       });
 
       return result;
-    }
-
-    // Create an Epic Link
-
-  }, {
-    key: 'getEpic',
-    value: function getEpic(epic, data) {
-      for (var i = 0; i < data.issues.length; i++) {
-        if (data.issues[0].key === epic) {
-          return data.issues[0].fields.summary;
-        }
-      }
-      return epic;
     }
   }]);
 
@@ -11170,13 +11160,12 @@ var Plan = function () {
           sprints.forEach(function (sprint) {
 
             // Populate Phase labels
-            if (!_this.parse.arrayContains(phases, sprint.phase)) {
 
+            if (!phases.includes(sprint.phase)) {
               current = '';
               if (aggregates && parseInt(aggregates.phase, 10) === parseInt(sprint.phase, 10)) {
                 current = 'current';
               }
-
               th1 = markobj('<th colspan="' + sprintsPerPhase[sprint.phase - 1] + '"\n              class="' + current + ' phase phase' + sprint.phase + ' ' + sprint.class + '"\n              >Phase ' + sprint.phase + '</th>');
             }
 
@@ -11191,7 +11180,8 @@ var Plan = function () {
             th3 = markobj('<th class="dates nowrap ' + sprint.class + '">\n            ' + dates + '</th>');
 
             // Append rows to the header
-            if (!_this.parse.arrayContains(phases, sprint.phase)) {
+
+            if (!phases.includes(sprint.phase)) {
               newRow1.appendChild(th1);
               phases.push(sprint.phase);
             }
@@ -11238,7 +11228,7 @@ var Plan = function () {
 
         // Parse the value if the field is a multi-node path
         if (item.field.indexOf('.') > -1) {
-          value = _this2.parse.parseValue(item.field, task);
+          value = _this2.parse.parseMultiPartValue(item.field, task);
         }
 
         // Clear "999" from Sprints
@@ -32996,7 +32986,7 @@ var Boostrap = function () {
     this.init();
   }
 
-  // Fetches content
+  // Initializes the application and loads data
 
 
   _createClass(Boostrap, [{
@@ -33004,17 +32994,23 @@ var Boostrap = function () {
     value: function init() {
       var _this = this;
 
-      var auth = new _Authentication2.default();
-      var parse = new _Parser2.default();
-      var aggregate = new _Aggregates2.default();
-      var plan = new _Plan2.default();
-      var team = new _Team2.default();
-      var reports = new _Reports2.default();
-      var dashboard = new _Dashboard2.default();
       var actions = new _Actions2.default();
+      var aggregate = new _Aggregates2.default();
+      var auth = new _Authentication2.default();
+      var dashboard = new _Dashboard2.default();
+      var parse = new _Parser2.default();
+      var plan = new _Plan2.default();
+      var reports = new _Reports2.default();
       var sprints = new _Sprint2.default();
+      var team = new _Team2.default();
 
       var resources = [config.cache];
+
+      // Create Sprint Data
+      var sprintData = sprints.createSprints();
+
+      // Append Sprint Data to Configuration
+      var settings = parse.appendSprints(table, sprintData);
 
       // Ensure authentication token exists
       if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
@@ -33040,30 +33036,14 @@ var Boostrap = function () {
 
           var data = response[0];
 
-          /* Build Data Objects */
-          //const stories = results[0];
-          var sprintData = sprints.createSprints();
-
-          // Append Sprint Data to Configuration
-          var settings = parse.appendSprints(table, sprintData);
-
-          // Parse Story Data
-          //const data = parse.parseData(stories);
-
-          // Build Aggregate Data
+          // Build Aggregate Data and apply to Dashboard
           var aggregates = aggregate.parseAggregates(data, sprintData, config);
-
-          /* Render the Dashboard */
           dashboard.setValues(aggregates);
 
-          /* Render the Release Plan */
-
-          // Render Header Row
+          // Render Planning Table
           plan.renderHeader(sprintData, config, aggregates);
-
-          // Render Table
           data.forEach(function (task) {
-            plan.renderTable(task, settings, config, aggregates);
+            plan.renderTable(task, settings, aggregates);
           });
 
           // Render the Aggregate Values
@@ -33078,6 +33058,8 @@ var Boostrap = function () {
           /* Render Teams */
           team.renderTeams();
 
+          // TODO: This needs to be moved into a function
+          /* Enable click actions on form fields */
           var isPlanningMode = document.querySelector('#planningMode');
           isPlanningMode.addEventListener('click', function (event) {
             var el = event.target;
@@ -33133,7 +33115,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '60163' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '51637' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

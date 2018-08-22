@@ -17,22 +17,28 @@ export default class Boostrap {
     this.init();
   }
 
-  // Fetches content
+  // Initializes the application and loads data
   init() {
 
-    const auth = new Authentication();
-    const parse = new Parser();
-    const aggregate = new Aggregates();
-    const plan = new Plan();
-    const team = new Team();
-    const reports = new Reports();
-    const dashboard = new Dashboard();
     const actions = new Actions();
+    const aggregate = new Aggregates();
+    const auth = new Authentication();
+    const dashboard = new Dashboard();
+    const parse = new Parser();
+    const plan = new Plan();
+    const reports = new Reports();
     const sprints = new Sprints();
+    const team = new Team();
 
     const resources = [
       config.cache
     ];
+
+    // Create Sprint Data
+    const sprintData = sprints.createSprints();
+
+    // Append Sprint Data to Configuration
+    const settings = parse.appendSprints(table, sprintData);
 
     // Ensure authentication token exists
     if (!localStorage.hasOwnProperty('VIZ_AUTH_TOKEN')) {
@@ -47,8 +53,8 @@ export default class Boostrap {
       const getContent = url => fetch(url)
         .then(res => res.json())
         .then(response => {
-           const data = parse.parseData(response);
-           return data;
+          const data = parse.parseData(response);
+          return data;
         })
         .then( data => {
           return data;
@@ -61,40 +67,21 @@ export default class Boostrap {
 
           const data = response[0];
 
-          /* Build Data Objects */
-          //const stories = results[0];
-          const sprintData = sprints.createSprints();
-
-          // Append Sprint Data to Configuration
-          const settings = parse.appendSprints(table, sprintData);
-
-          // Parse Story Data
-          //const data = parse.parseData(stories);
-
-          // Build Aggregate Data
+          // Build Aggregate Data and apply to Dashboard
           const aggregates = aggregate.parseAggregates(data, sprintData, config);
-
-
-          /* Render the Dashboard */
           dashboard.setValues(aggregates);
 
+          // Render Planning Table
+          plan.renderHeader(sprintData, config, aggregates);
+          data.forEach( (task) => {
+            plan.renderTable(task, settings, aggregates);
+          });
 
-          /* Render the Release Plan */
+          // Render the Aggregate Values
+          plan.renderAggregates(aggregates);
 
-            // Render Header Row
-            plan.renderHeader(sprintData, config, aggregates);
-
-            // Render Table
-            data.forEach( (task) => {
-              plan.renderTable(task, settings, config, aggregates);
-            });
-
-            // Render the Aggregate Values
-            plan.renderAggregates(aggregates);
-
-            // Assign Actions
-            actions.navigation(aggregates.sprint);
-
+          // Assign Actions
+          actions.navigation(aggregates.sprint);
 
           /* Render Charts */
           reports.renderCharts(aggregates);
@@ -102,6 +89,8 @@ export default class Boostrap {
           /* Render Teams */
           team.renderTeams();
 
+          // TODO: This needs to be moved into a function
+          /* Enable click actions on form fields */
           const isPlanningMode = document.querySelector('#planningMode');
           isPlanningMode.addEventListener('click', (event) => {
             const el = event.target;
