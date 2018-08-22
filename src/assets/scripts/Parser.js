@@ -49,19 +49,11 @@ export default class Parser {
   // Get a priority based on a numeric ranking
   getPriorityFromRank(rank) {
     let priority = '';
-    if (rank === 0) {
-      priority = "block";
-    } else if (rank === 1) {
-      priority = "highest";
-    } else if (rank === 2) {
-      priority = "high";
-    } else if (rank === 3) {
-      priority = "medium";
-    } else if (rank === 4) {
-      priority = "low";
-    } else if (rank >= 5) {
-      priority = "lowest";
-    }
+    config.severity.forEach( (sev) => {
+      if (sev.rank === rank) {
+        priority = sev.value;
+      }
+    });
     return priority;
   }
 
@@ -117,72 +109,35 @@ export default class Parser {
 
         input.issues.forEach( (task, idx) => {
 
-          row = {};
-          row.key = task.key;
-          row.priority = task.fields.priority.name;
-          row.description = task.fields.summary;
-          row.status = task.fields.status.name;
-          row.assignee = (!task.fields.assignee) ? 'unassigned' : task.fields.assignee.displayName;
-
-          row.numtasks = 1;
-          row.debt = '';
+          row = {
+            key: task.key,
+            priority: task.fields.priority.name,
+            description: task.fields.summary,
+            status: task.fields.status.name,
+            assignee: (!task.fields.assignee) ? 'unassigned' : task.fields.assignee.displayName,
+            numtasks: 1
+          };
 
           // Calculate rank & priority
-          const rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
-          if (rankNo > 0) {
-            row.rank = rankNo;
-            row.priority = this.getPriorityFromRank(rankNo);
-          } else {
-            // Use severity rank values from config.json
-            config.severity.forEach( (sev) => {
-              if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
-                row.rank = parseInt(sev.rank, 10);
-              }
-            });
+          const rank = this.calculateRank(row);
+          for ( let key in rank) {
+            row[key] = rank[key];
           }
 
-          // Rank modified by Status
-          // Use sort weight values from config.json
-          row.sort = (row.rank*10);
-          config.sort.forEach( (srt) => {
-            if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
-              row.sort += parseInt(srt.weight, 10);
-            }
-          });
+          // Calculate sort order
+          row.sort = this.calculateSort(row);
 
-          // Create a decimal to further sort by identifier
-          let decimal = `0000${row.key.replace(/([^0-9])*/ig,'')}`;
-          row.sort = `${row.sort}.${decimal.slice(-4)}`;
-
-          // Calculate the estimate field
-          row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
-          row.timespent = (task.fields.aggregatetimespent) ? task.fields.aggregatetimespent : 0;
-          row.remaining = row.estimate-row.timespent;
-          if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
-            row.estimate = parseInt((parseInt(row.estimate, 10)/3600), 10);
-          } else {
-            row.estimate = parseInt(params.defaultWeight, 10);
-          }
-
-          // Calculate remaining & percentage
-          if (!isNaN(row.remaining)) {
-            row.remaining = parseInt((parseInt(row.remaining, 10)/3600),10);
+          // Calculate estimate
+          const estimate = this.calculateEstimate(row, task, params);
+          for ( let key in estimate) {
+            row[key] = estimate[key];
           }
 
           // Get epic information
-          row.epic = task.fields[config.jira.epicField];
-          row.epic = this.getEpic(row.epic, input);
+          row.epic = this.getEpic(task.fields[config.jira.epicField], input);
 
-          // Get sprint information
-          row.sprint = task.fields[config.jira.sprintField];
-          if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
-            row.sprint = this.parseSprint(row.sprint);
-          }
-
-          // Populate empty sprint values
-          if (!row.sprint) {
-            row.sprint = { current: 999, history: [] };
-          }
+          // Calculate Sprint
+          row.sprint = this.calculateSprint(row, task);
 
           // If in planning mode, set Sprints based on calculated velocity
           if (usePlanningMode) {
@@ -195,20 +150,7 @@ export default class Parser {
           }
 
           // Determine if the story was pushed from a previous Sprint
-          row.pushed = 0;
-          if (row.sprint && row.sprint.history) {
-            row.sprint.history.forEach( (sp, index) => {
-              if (row.sprint.current === sp) {
-                row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
-                if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
-                  row['sprint' + sp] = '0';
-                }
-              } else {
-                row['sprint' + sp] = "-";
-                row.pushed++;
-              }
-            });
-          }
+          row.pushed = this.storyPushed(row);
 
           // Calculate Debt
           row.debt = this.calculateDebt(row);
@@ -232,6 +174,102 @@ export default class Parser {
 
       });
 
+  }
+
+  // Calculate the correct Sprint
+  calculateSprint(row, task) {
+    // Get sprint information
+    row.sprint = task.fields[config.jira.sprintField];
+    if (row.sprint && row.sprint !== null && Array.isArray(row.sprint)) {
+      row.sprint = this.parseSprint(row.sprint);
+    }
+    // Populate empty sprint values
+    if (!row.sprint) {
+      row.sprint = { current: 999, history: [] };
+    }
+    return row.sprint;
+  }
+
+
+  // Calculate the estimate fields
+  calculateEstimate(row, task, params) {
+    row.estimate = task.fields.aggregatetimeoriginalestimate || 0;
+    row.timespent = (task.fields.aggregatetimespent) ? task.fields.aggregatetimespent : 0;
+    row.remaining = row.estimate-row.timespent;
+    if (!isNaN(row.estimate) && parseInt(row.estimate, 10) >= params.defaultWeight) {
+      row.estimate = parseInt((parseInt(row.estimate, 10)/3600), 10);
+    } else {
+      row.estimate = parseInt(params.defaultWeight, 10);
+    }
+
+    // Calculate remaining & percentage
+    if (!isNaN(row.remaining)) {
+      row.remaining = parseInt((parseInt(row.remaining, 10)/3600),10);
+    }
+
+    return {
+      estimate: row.estimate,
+      timespent: row.timespent,
+      remaining: row.remaining
+    };
+  }
+
+
+  // Calculate Sort Order
+  calculateSort(row) {
+    // Use sort weight values from config.json
+    row.sort = (row.rank*10);
+    config.sort.forEach( (srt) => {
+      if (row[srt.source].toLowerCase().indexOf(srt.value) > -1) {
+        row.sort += parseInt(srt.weight, 10);
+      }
+    });
+
+    // Create a decimal to further sort by identifier
+    let decimal = `0000${row.key.replace(/([^0-9])*/ig,'')}`;
+    row.sort = `${row.sort}.${decimal.slice(-4)}`;
+    return row.sort;
+  }
+
+
+  // Calculate Rank
+  calculateRank(row) {
+    const rankNo = parseInt(row.priority.replace(/[^0-9]/gi, ''), 10);
+    if (rankNo > 0) {
+      row.rank = rankNo;
+      row.priority = this.getPriorityFromRank(rankNo);
+    } else {
+      // Use severity rank values from config.json
+      config.severity.forEach( (sev) => {
+        if (row.priority.toLowerCase().indexOf(sev.value) > -1) {
+          row.rank = parseInt(sev.rank, 10);
+        }
+      });
+    }
+    return {
+      rank: row.rank,
+      priority: row.priority
+    };
+  }
+
+
+  // Was the story pushed?
+  storyPushed(row) {
+    row.pushed = 0;
+    if (row.sprint && row.sprint.history) {
+      row.sprint.history.forEach( (sp, index) => {
+        if (row.sprint.current === sp) {
+          row['sprint' + sp] = (row.remaining < 0)? '0' : row.remaining;
+          if (row['sprint' + sp] === '' || row['sprint' + sp] === 0) {
+            row['sprint' + sp] = '0';
+          }
+        } else {
+          row['sprint' + sp] = "-";
+          row.pushed++;
+        }
+      });
+    }
+    return row.pushed;
   }
 
 
