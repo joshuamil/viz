@@ -303,8 +303,8 @@ module.exports = [{
   "lead": true
 }, {
   "team": "Engineering",
-  "jiraName": "rizchele.",
-  "name": "Rizchele",
+  "jiraName": "rizchele.dayo",
+  "name": "Rizchele Dayo",
   "role": "dev",
   "allocation": "100%",
   "hours": 50,
@@ -10294,14 +10294,50 @@ var Parser = function () {
       return conf;
     }
 
+    // Does this issue link exist?
+
+  }, {
+    key: 'associatedLink',
+    value: function associatedLink(keyword, row, task) {
+      var links = this.calculateLinks(row, task);
+      var result = links.find(function (link) {
+        return link.type.indexOf(keyword) > -1;
+      });
+      return result;
+    }
+
+    // Get the properties of a linked issue of a specific type
+
+  }, {
+    key: 'getLinkProperties',
+    value: function getLinkProperties(keyword, row, task) {
+      var match = {};
+      var links = this.calculateLinks(row, task);
+      links.forEach(function (link) {
+        if (link.type.indexOf(keyword) > -1) {
+          match = link;
+        }
+      });
+      return match;
+    }
+
     // Calculate debt
 
   }, {
     key: 'calculateDebt',
-    value: function calculateDebt(row) {
+    value: function calculateDebt(row, task) {
       row.debt = 0;
       if (row.pushed > 0) {
         row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
+      }
+      var hasLinks = this.associatedLink('relate', row, task);
+      if (hasLinks) {
+        var link = this.getLinkProperties('relate', row, task);
+        if (link.status) {
+          row.debt = 4 - parseInt(link.priority, 10);
+        } else {
+          row.debt++;
+        }
       }
       return row.debt;
     }
@@ -10330,6 +10366,27 @@ var Parser = function () {
         timespent: row.timespent,
         remaining: row.remaining
       };
+    }
+
+    // Captures related links and their context
+
+  }, {
+    key: 'calculateLinks',
+    value: function calculateLinks(row, task) {
+      row.links = [];
+      task.fields.issuelinks.forEach(function (link) {
+        if (link.inwardIssue) {
+          console.log(link.inwardIssue.fields.priority);
+          row.links.push({
+            id: link.inwardIssue.key,
+            type: link.type.name.toLowerCase(),
+            priority: link.inwardIssue.fields.priority.name.replace(/[^0-9]/ig, ''),
+            status: link.inwardIssue.fields.status.statusCategory.name,
+            context: link.type.inward || link.type.outward || link.type.name.toLowerCase()
+          });
+        }
+      });
+      return row.links;
     }
 
     // Was the story pushed?
@@ -10560,7 +10617,7 @@ var Parser = function () {
           row.pushed = _this.calculatePushed(row);
 
           // Calculate Debt
-          row.debt = _this.calculateDebt(row);
+          row.debt = _this.calculateDebt(row, task);
 
           // Calculate Risk
           row.risk = _this.calculateRisk(row);
@@ -10686,7 +10743,6 @@ var Aggregates = function () {
           dashboard.blockers = rows.length;
         });
       }).finally(function () {
-        console.log(dashboard);
         return dashboard;
       });
     }
@@ -10805,8 +10861,13 @@ var Aggregates = function () {
           aggregates.risk++;
         }
 
+        // Get debt
+        if (row.debt && row.debt > 0) {
+          aggregates.debt++;
+        }
+
         // Calculate story-based totals
-        if (row.numtasks && row.numtasks > 0 && row.sprint <= aggregates.sprint) {
+        if (row.numtasks && row.numtasks > 0) {
           aggregates.totals.project.tasks++;
           if (row.status === "Done") {
             aggregates.totals.project.completed++;
@@ -10814,8 +10875,14 @@ var Aggregates = function () {
           if (row.priority === "Blocker") {
             aggregates.totals.project.blockers++;
           }
+        }
+
+        // Calculate story-based totals for this Sprint
+        if (row.numtasks && row.numtasks > 0 && row.sprint.current <= aggregates.sprint) {
+
           if (parseInt(row.sprint.current, 10) === parseInt(aggregates.sprint, 10)) {
             aggregates.totals.sprint.tasks++;
+
             if (row.status === "Done") {
               aggregates.totals.sprint.completed++;
             }
@@ -10880,11 +10947,16 @@ var Aggregates = function () {
       // Final totals
       aggregates.totals.project.rate = (aggregates.totals.project.completed / aggregates.totals.project.tasks * 100).toFixed(2);
       aggregates.totals.sprint.rate = (aggregates.totals.sprint.completed / aggregates.totals.sprint.tasks * 100).toFixed(2);
+      aggregates.totals.sprint.target = (aggregates.totals.sprint.tasks / aggregates.totals.project.tasks * 100).toFixed(2);
+
+      aggregates.totals.debt = (aggregates.debt / aggregates.totals.project.tasks * 100).toFixed('1');
 
       aggregates.mood = this.getCurrentMood(aggregates);
 
+      /*
       console.log('----- Aggregate Data Object -----');
       console.log(aggregates);
+      */
 
       return aggregates;
     }
@@ -11203,7 +11275,7 @@ var Plan = function () {
 
   }, {
     key: 'renderTable',
-    value: function renderTable(task, sprints, config, aggregates) {
+    value: function renderTable(task, sprints, aggregates) {
       var _this2 = this;
 
       var tbody = document.querySelector('#release-plan tbody');
@@ -32545,7 +32617,7 @@ module.exports = {
   }, {
     "tile": "project-debt",
     "label": "Debt Level",
-    "source": "debt",
+    "source": "totals.debt",
     "format": "0%",
     "scale": "terror",
     "ranges": {
@@ -32677,17 +32749,17 @@ var Dashboard = function () {
     value: function getDaysRemaining(aggregates) {
       var currentSprint = aggregates.sprint;
       var currentPhase = aggregates.phase;
-      var lastDate = moment().format();
+      var lastDate = moment();
       this.sprintData.forEach(function (sprint) {
         if (sprint.class.indexOf('current') > -1) {
-          aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
+          aggregates.daysInSprint = moment(new Date(sprint.endDate)).diff(moment(), 'days');
         }
         if (parseInt(sprint.phase, 10) === currentPhase) {
-          lastDate = sprint.endDate;
+          lastDate = moment(new Date(sprint.endDate));
         }
       });
 
-      aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
+      aggregates.daysInPhase = moment(lastDate).diff(moment(), 'days');
 
       return aggregates;
     }
@@ -33115,7 +33187,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '51637' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '61050' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

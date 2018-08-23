@@ -27,11 +27,40 @@ export default class Parser {
   }
 
 
+  // Does this issue link exist?
+  associatedLink(keyword, row, task) {
+    const links = this.calculateLinks(row, task);
+    const result = links.find( link => link.type.indexOf(keyword) > -1);
+    return result;
+  }
+
+  // Get the properties of a linked issue of a specific type
+  getLinkProperties(keyword, row, task) {
+    let match = {};
+    const links = this.calculateLinks(row, task);
+    links.forEach( (link) => {
+      if (link.type.indexOf(keyword) > -1) {
+        match = link;
+      }
+    });
+    return match;
+  }
+
+
   // Calculate debt
-  calculateDebt(row) {
+  calculateDebt(row, task) {
     row.debt = 0;
     if (row.pushed > 0) {
       row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
+    }
+    const hasLinks = this.associatedLink('relate', row, task);
+    if (hasLinks) {
+      const link = this.getLinkProperties('relate', row, task);
+      if (link.status) {
+        row.debt = 4 - parseInt(link.priority, 10);
+      } else {
+        row.debt++;
+      }
     }
     return row.debt;
   }
@@ -58,6 +87,25 @@ export default class Parser {
       timespent: row.timespent,
       remaining: row.remaining
     };
+  }
+
+
+  // Captures related links and their context
+  calculateLinks(row, task) {
+    row.links = [];
+    task.fields.issuelinks.forEach( (link) => {
+      if (link.inwardIssue) {
+        console.log(link.inwardIssue.fields.priority);
+        row.links.push({
+          id: link.inwardIssue.key,
+          type: link.type.name.toLowerCase(),
+          priority: link.inwardIssue.fields.priority.name.replace(/[^0-9]/ig,''),
+          status: link.inwardIssue.fields.status.statusCategory.name,
+          context: link.type.inward || link.type.outward || link.type.name.toLowerCase()
+        });
+      }
+    });
+    return row.links;
   }
 
 
@@ -276,7 +324,7 @@ export default class Parser {
           row.pushed = this.calculatePushed(row);
 
           // Calculate Debt
-          row.debt = this.calculateDebt(row);
+          row.debt = this.calculateDebt(row, task);
 
           // Calculate Risk
           row.risk = this.calculateRisk(row);

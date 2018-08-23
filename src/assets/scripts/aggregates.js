@@ -35,7 +35,6 @@ export default class Aggregates {
         })
       })
       .finally(() => {
-        console.log(dashboard);
         return dashboard;
       });
 
@@ -155,8 +154,13 @@ export default class Aggregates {
         aggregates.risk++;
       }
 
+      // Get debt
+      if (row.debt && row.debt > 0) {
+        aggregates.debt++;
+      }
+
       // Calculate story-based totals
-      if (row.numtasks && row.numtasks > 0 && row.sprint <= aggregates.sprint) {
+      if (row.numtasks && row.numtasks > 0) {
         aggregates.totals.project.tasks++;
         if (row.status === "Done") {
           aggregates.totals.project.completed++;
@@ -164,8 +168,14 @@ export default class Aggregates {
         if (row.priority === "Blocker") {
           aggregates.totals.project.blockers++;
         }
+      }
+
+      // Calculate story-based totals for this Sprint
+      if (row.numtasks && row.numtasks > 0 && row.sprint.current <= aggregates.sprint) {
+
         if (parseInt(row.sprint.current, 10) === parseInt(aggregates.sprint, 10)) {
           aggregates.totals.sprint.tasks++;
+
           if (row.status === "Done") {
             aggregates.totals.sprint.completed++;
           }
@@ -250,14 +260,21 @@ export default class Aggregates {
 
     });
 
+
     // Final totals
     aggregates.totals.project.rate = ((aggregates.totals.project.completed / aggregates.totals.project.tasks) * 100).toFixed(2);
     aggregates.totals.sprint.rate = ((aggregates.totals.sprint.completed / aggregates.totals.sprint.tasks) * 100).toFixed(2);
+    aggregates.totals.sprint.target = ((aggregates.totals.sprint.tasks / aggregates.totals.project.tasks) * 100).toFixed(2);
+
+    aggregates.totals.debt = ((aggregates.debt / aggregates.totals.project.tasks) * 100).toFixed('1');
+
 
     aggregates.mood = this.getCurrentMood(aggregates);
 
+    /*
     console.log('----- Aggregate Data Object -----');
     console.log(aggregates);
+    */
 
     return aggregates;
 

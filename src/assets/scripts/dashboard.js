@@ -52,17 +52,17 @@ export default class Dashboard {
   getDaysRemaining(aggregates) {
     const currentSprint = aggregates.sprint;
     const currentPhase = aggregates.phase;
-    let lastDate = moment().format();
+    let lastDate = moment();
     this.sprintData.forEach( (sprint) => {
       if (sprint.class.indexOf('current') > -1) {
-        aggregates.daysInSprint = moment(sprint.endDate, 'MM/DD/YYYY').diff(moment(), 'days');
+        aggregates.daysInSprint = moment(new Date(sprint.endDate)).diff(moment(), 'days');
       }
       if (parseInt(sprint.phase, 10) === currentPhase) {
-        lastDate = sprint.endDate;
+        lastDate = moment(new Date(sprint.endDate));
       }
     });
 
-    aggregates.daysInPhase = moment(lastDate, 'MM/DD/YYYY').diff(moment(), 'days');
+    aggregates.daysInPhase = moment(lastDate).diff(moment(), 'days');
 
     return aggregates;
   }
