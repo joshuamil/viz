@@ -265,9 +265,7 @@ export default class Aggregates {
     aggregates.totals.project.rate = ((aggregates.totals.project.completed / aggregates.totals.project.tasks) * 100).toFixed(2);
     aggregates.totals.sprint.rate = ((aggregates.totals.sprint.completed / aggregates.totals.sprint.tasks) * 100).toFixed(2);
     aggregates.totals.sprint.target = ((aggregates.totals.sprint.tasks / aggregates.totals.project.tasks) * 100).toFixed(2);
-
     aggregates.totals.debt = ((aggregates.debt / aggregates.totals.project.tasks) * 100).toFixed('1');
-
 
     aggregates.mood = this.getCurrentMood(aggregates);
 

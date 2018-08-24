@@ -40,7 +40,7 @@ table {
     &.small {
       width: 100px;
     }
-    
+
     &.tiny {
       width: 50px;
     }
@@ -48,34 +48,22 @@ table {
     /* Phases */
     &.phase {
       border-bottom: 1px solid $grey-10;
-      color: $grey-70;
-    }
-    &.phase1 {
-      background-color: $blue-lt;
-      border-right-color: $blue-lt;
-    }
-    &.phase2 {
-      background-color: $green-lt;
-      border-right-color: $green-lt;
-    }
-    &.phase3 {
-      background-color: $gold-lt;
-      border-right-color: $gold-lt;
-    }
-    &.phase4 {
-      background-color: $orange-lt;
-      border-right-color: $orange-lt;
-    }
-    &.phase5 {
-      background-color: $red-lt;
-      border-right-color: $red-lt;
+      border-right: 2px dotted $grey-10;
+      color: $grey-10;
+
+      &.current {
+        border-bottom: 0;
+        border-bottom: 1px solid $blue-md;
+      }
+
     }
 
     &.current {
-      border-left: 1px solid $grey-70;
-      border-right: 3px solid $grey-70;
+      background-color: $grey-60;
+      border-left: 5px solid $grey-70;
+      border-right: 5px solid $grey-70;
     }
-    
+
     &.scheduled {
       background-color: $blue-md;
       color: $white;
@@ -147,21 +135,14 @@ table {
             color: $red-dk;
           }
 
-          &.phase1 {
-            background-color: $blue-md;
+          &.current {
+            background-color: $grey-40;
           }
-          &.phase2 {
-            background-color: $green-md;
+
+          &.scheduled {
+            background-color: $blue-dk;
           }
-          &.phase3 {
-            background-color: $gold-md;
-          }
-          &.phase4 {
-            background-color: $orange-md;
-          }
-          &.phase5 {
-            background-color: $red-md;
-          }
+
           &.grey-10 {
             background-color: $grey-10;
           }
@@ -169,7 +150,7 @@ table {
             background-color: $grey-15;
           }
           &.risk {
-            //background-color: $gold-dk;
+            background-color: $gold-dk;
           }
           &.merged {
             background-color: $blue-dk;
@@ -364,6 +345,7 @@ table {
       &.sprint {
         border-bottom: 1px solid $grey-10;
         font-size: .9em;
+
         &.current {
           background-color: $blue-dk;
           border-bottom-color: $blue-md;
@@ -371,17 +353,7 @@ table {
           color: $grey-70;
           font-weight: bold;
 
-          &::after {
-            border-bottom: 12px solid transparent;
-            border-left:12px solid $grey-70;
-            border-top: 12px solid transparent;
-            content: '';
-            height: 0;
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 0;
-          }
+
 
         }
       }

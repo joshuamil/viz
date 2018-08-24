@@ -23,7 +23,7 @@ section {
   overflow: auto;
   padding: .25%;
   position: fixed;
-  top: 5vh;
+  top: 6vh;
   width: 99.5%; }
   section.active {
     display: block; }
@@ -32,7 +32,7 @@ section {
 nav {
   background-color: #333333;
   color: #ffffff;
-  height: 4vh;
+  height: 5vh;
   padding: 1vh 1em 1px;
   position: fixed;
   top: 0;
@@ -59,6 +59,34 @@ nav {
           background-color: #999999;
           color: #333;
           text-decoration: none; }
+
+div.toolbar {
+  display: block;
+  overflow: visible;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 999; }
+  div.toolbar label {
+    background-color: #555555;
+    color: #efefef;
+    cursor: pointer;
+    display: inline-block;
+    line-height: 2.25em;
+    margin: 0 .0125em;
+    padding: .125em .5em .125em .85em; }
+    div.toolbar label input[type="checkbox"] {
+      cursor: pointer;
+      font-size: 1em; }
+    div.toolbar label input[type="text"] {
+      background-color: #333333;
+      border: 0;
+      color: #ffffff;
+      font-size: 1em;
+      margin: 0 0 0 .5em;
+      padding: .45em .125em;
+      text-align: center;
+      width: 30px; }
 
 /* Table Styles */
 table {
@@ -92,25 +120,15 @@ table {
       width: 50px; }
     table th.phase, table td.phase {
       border-bottom: 1px solid #cccccc;
-      color: #333333; }
-    table th.phase1, table td.phase1 {
-      background-color: #cee2f4;
-      border-right-color: #cee2f4; }
-    table th.phase2, table td.phase2 {
-      background-color: #d9ead2;
-      border-right-color: #d9ead2; }
-    table th.phase3, table td.phase3 {
-      background-color: #fff3ca;
-      border-right-color: #fff3ca; }
-    table th.phase4, table td.phase4 {
-      background-color: #fde5cc;
-      border-right-color: #fde5cc; }
-    table th.phase5, table td.phase5 {
-      background-color: #f5cccb;
-      border-right-color: #f5cccb; }
+      border-right: 2px dotted #cccccc;
+      color: #cccccc; }
+      table th.phase.current, table td.phase.current {
+        border-bottom: 0;
+        border-bottom: 1px solid #9ec4ea; }
     table th.current, table td.current {
-      border-left: 1px solid #333333;
-      border-right: 3px solid #333333; }
+      background-color: #444444;
+      border-left: 5px solid #333333;
+      border-right: 5px solid #333333; }
     table th.scheduled, table td.scheduled {
       background-color: #9ec4ea;
       color: #ffffff;
@@ -152,20 +170,16 @@ table {
       color: #ffffff; }
       table tbody tr:hover td a {
         color: #e26563; }
-      table tbody tr:hover td.phase1 {
-        background-color: #9ec4ea; }
-      table tbody tr:hover td.phase2 {
-        background-color: #b5d8a6; }
-      table tbody tr:hover td.phase3 {
-        background-color: #ffe694; }
-      table tbody tr:hover td.phase4 {
-        background-color: #facc99; }
-      table tbody tr:hover td.phase5 {
-        background-color: #ec9998; }
+      table tbody tr:hover td.current {
+        background-color: #666666; }
+      table tbody tr:hover td.scheduled {
+        background-color: #6da7de; }
       table tbody tr:hover td.grey-10 {
         background-color: #cccccc; }
       table tbody tr:hover td.grey-20 {
         background-color: #999999; }
+      table tbody tr:hover td.risk {
+        background-color: #ffda5c; }
       table tbody tr:hover td.merged {
         background-color: #6da7de; }
       table tbody tr:hover td.ready-for-development {
@@ -290,16 +304,6 @@ table {
         border-top-color: #6da7de;
         color: #333333;
         font-weight: bold; }
-        table thead th.sprint.current::after {
-          border-bottom: 12px solid transparent;
-          border-left: 12px solid #333333;
-          border-top: 12px solid transparent;
-          content: '';
-          height: 0;
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 0; }
     table thead th.dates {
       background-color: #dedede;
       color: #333333;

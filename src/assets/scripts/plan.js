@@ -62,6 +62,7 @@ export default class Plan {
     });
   }
 
+
   // Inject Sprints / Phases into Table
   renderHeader(sprints, config, aggregates) {
     let th1, th2, th3 = '';
