@@ -10376,7 +10376,7 @@ var Parser = function () {
       row.links = [];
       task.fields.issuelinks.forEach(function (link) {
         if (link.inwardIssue) {
-          console.log(link.inwardIssue.fields.priority);
+          //console.log(link.inwardIssue.fields.priority);
           row.links.push({
             id: link.inwardIssue.key,
             type: link.type.name.toLowerCase(),
@@ -10632,6 +10632,9 @@ var Parser = function () {
             return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
           }
         });
+
+        console.log('-------- Parsed Data --------');
+        console.log(data);
 
         return data;
       });

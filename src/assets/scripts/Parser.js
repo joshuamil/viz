@@ -95,7 +95,7 @@ export default class Parser {
     row.links = [];
     task.fields.issuelinks.forEach( (link) => {
       if (link.inwardIssue) {
-        console.log(link.inwardIssue.fields.priority);
+        //console.log(link.inwardIssue.fields.priority);
         row.links.push({
           id: link.inwardIssue.key,
           type: link.type.name.toLowerCase(),
@@ -340,6 +340,9 @@ export default class Parser {
             return a.sprint.current - b.sprint.current || a.rank - b.rank || a.sort - b.sort;
           }
         });
+
+        console.log('-------- Parsed Data --------');
+        console.log(data);
 
         return data;
 

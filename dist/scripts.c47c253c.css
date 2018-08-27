@@ -178,8 +178,6 @@ table {
         background-color: #cccccc; }
       table tbody tr:hover td.grey-20 {
         background-color: #999999; }
-      table tbody tr:hover td.risk {
-        background-color: #ffda5c; }
       table tbody tr:hover td.merged {
         background-color: #6da7de; }
       table tbody tr:hover td.ready-for-development {
