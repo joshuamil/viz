@@ -1,6 +1,7 @@
 'use strict';
 
 let markobj = require('markobj');
+let table = require('../data/plan.json');
 
 import Parser from './Parser.js';
 
@@ -14,14 +15,14 @@ export default class Plan {
   toggleColumns(target) {
     const headers = document.querySelectorAll('table thead tr th.base');
     const rows = document.querySelectorAll('table tbody tr');
-    const table = document.querySelector('table');
+    const tableStub = document.querySelector('table');
     let removed = 0;
 
     if (target.classList.contains('collapsed')) {
 
       removed = headers.length;
       target.classList.remove('collapsed');
-      table.classList.remove('collapsed');
+      tableStub.classList.remove('collapsed');
       let targets = document.querySelectorAll('table .collapsed');
       targets.forEach( (el) => {
         el.classList.remove('collapsed');
@@ -31,7 +32,7 @@ export default class Plan {
     } else {
 
       target.classList.add('collapsed');
-      table.classList.add('collapsed');
+      tableStub.classList.add('collapsed');
       headers.forEach( (th, n) => {
         if (th.classList.contains('full')) {
           removed++;
@@ -69,9 +70,21 @@ export default class Plan {
     let dates = '';
     let d1, d2, current = '';
 
-    let table = markobj(`<table>
+    let columns = "";
+    let toggle = "";
+    table.forEach( (column, ix) => {
+      if (ix === table.length-1) {
+        toggle = `<button class="toggle"></button>`;
+      }
+      if (!column.disabled) {
+        columns += `<th rowspan="3" class="base ${column.columnSize}">${column.label}${toggle}</th>`;
+      }
+    });
+
+    let tableStub = markobj(`<table>
       <thead>
         <tr>
+          <!--
           <th rowspan="3" class="base tiny">Priority</th>
           <th rowspan="3" class="base small full">Epic</th>
           <th rowspan="3" class="base small">Identifier</th>
@@ -81,7 +94,9 @@ export default class Plan {
           <th rowspan="3" class="base full">Debt</th>
           <th rowspan="3" class="base small full">Estimate</th>
           <th rowspan="3" class="base full">Sprint</th>
-          <th rowspan="3" class="base small">Status <button class="toggle"></button></th>
+          <th rowspan="3" class="base small">Status </th>
+          -->
+          ${columns}
           <!-- Inject Sprints -->
         </tr>
       </thead>
@@ -91,7 +106,7 @@ export default class Plan {
 
     const container = document.querySelector('#release-plan');
     container.innerHTML = "";
-    container.appendChild(table);
+    container.appendChild(tableStub);
 
     const newRow1 = document.createElement('tr');
     const newRow2 = document.createElement('tr');
@@ -104,9 +119,14 @@ export default class Plan {
     const sprintsPerPhase = config.sprint.sprintsPerPhase;
 
     // Set button action
-    document.querySelector('button').addEventListener('click', (event) => {
-      this.toggleColumns(event.target);
-    });
+    try {
+      document.querySelector('button').addEventListener('click', (event) => {
+        this.toggleColumns(event.target);
+      });
+    }
+    catch(err) {
+      console.log("No toggle button was added.");
+    }
 
     headers.forEach( (el, ix) => {
 
@@ -279,9 +299,11 @@ export default class Plan {
   renderAggregates(aggregates) {
 
     let sprints1,sprints2,sprints3,sprints4,sprints5,sprints6,sprints7,sprints8,blanks;
-    const table = document.querySelector('table');
+    const tableStub = document.querySelector('table');
 
-    blanks = '<tr><td colspan="10" class="empty label"></td>';
+    const columnNo = table.filter( column => column.disabled === false).length;
+
+    blanks = '<tr><td colspan="${columnNo}" class="empty label"></td>';
 
     // Loop through the aggregate values
     for (let key in aggregates.subtotals) {
@@ -318,20 +340,20 @@ export default class Plan {
 
     // Build out the footer
     let footerRows = markobj(`<tfoot>
-      <tr><td colspan="10" class="label">Total story points per Sprint</td>${sprints1}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="10" class="label">Total Dev Hours per Sprint</td>${sprints2}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="10" class="label">Total QA Hours per Sprint</td>${sprints3}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="10" class="label">Stories Spilled across Sprints</td>${sprints4}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total story points per Sprint</td>${sprints1}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total Dev Hours per Sprint</td>${sprints2}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total QA Hours per Sprint</td>${sprints3}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Stories Spilled across Sprints</td>${sprints4}<td colspan="5" class="plain"></td></tr>
       ${blanks}
-      <tr><td colspan="10" class="label">Total Stories by Sprint</td>${sprints5}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="10" class="label">Target Completion Percentage</td>${sprints6}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total Stories by Sprint</td>${sprints5}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Target Completion Percentage</td>${sprints6}<td colspan="5" class="plain"></td></tr>
       ${blanks}
-      <tr><td colspan="10" class="label">Sprint Stories Completed</td>${sprints7}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="10" class="label">Sprint Completion Percentage</td>${sprints8}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Sprint Stories Completed</td>${sprints7}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Sprint Completion Percentage</td>${sprints8}<td colspan="5" class="plain"></td></tr>
     </tfoot>`);
 
     // Append the footer to the table
-    table.appendChild(footerRows);
+    tableStub.appendChild(footerRows);
 
   }
 

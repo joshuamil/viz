@@ -7,7 +7,7 @@
     "epicField": "customfield_10003"
   },
   "sprint": {
-    "firstSprint": 0,
+    "firstSprint": 1,
     "daysInSprint": 21,
     "sprintsPerPhase": [1,2,2,1],
     "firstPhase": 1,

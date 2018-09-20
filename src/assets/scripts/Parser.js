@@ -15,12 +15,14 @@ export default class Parser {
   appendSprints(config, sprints) {
     let conf = [];
     config.forEach( (item) => {
-      conf.push(item);
-      // TODO: Change the below to use the last column instead of "Status"
-      if (item.label.indexOf('Status') === 0) {
-        sprints.forEach( (sprint) => {
-          conf.push(sprint);
-        });
+      if (!item.disabled) {
+        conf.push(item);
+        // TODO: Change the below to use the last column instead of "Status"
+        if (item.label.indexOf('Status') === 0) {
+          sprints.forEach( (sprint) => {
+            conf.push(sprint);
+          });
+        }
       }
     });
     return conf;
@@ -51,7 +53,7 @@ export default class Parser {
   calculateDebt(row, task) {
     row.debt = 0;
     if (row.pushed > 0) {
-      row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
+      row.debt = Math.ceil(row.pushed * config.riskCalculation.debt);
     }
     const hasLinks = this.associatedLink('relate', row, task);
     if (hasLinks) {
@@ -166,7 +168,7 @@ export default class Parser {
 
     // Increase risk if this story is in the current Sprint, but has been pushed before
     if (row.pushed > 0) {
-      row.risk = Math.ceiling(
+      row.risk = Math.ceil(
         row.risk + (row.pushed * config.riskCalculation.delay));
     }
     return row.risk;

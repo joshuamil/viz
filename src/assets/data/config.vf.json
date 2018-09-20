@@ -2,12 +2,12 @@
   "name": "Skookum",
   "cache": "jira.json",
   "jira": {
-    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20MGRMODS%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
-    "sprintField": "customfield_10400",
+    "url": "https://jira.skookum.com/rest/api/2/search?jql=project%20%3D%20VF%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
+    "sprintField": "customfield_10006",
     "epicField": "customfield_10003"
   },
   "sprint": {
-    "firstSprint": 0,
+    "firstSprint": 1,
     "daysInSprint": 21,
     "sprintsPerPhase": [1,2,2,1],
     "firstPhase": 1,

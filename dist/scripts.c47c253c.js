@@ -174,12 +174,12 @@ module.exports = {
   "name": "Skookum",
   "cache": "jira.json",
   "jira": {
-    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20IPCM%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
+    "url": "https://icg360.atlassian.net/rest/api/2/search?jql=project%20%3D%20MGRMODS%20and%20status%20!%3D%20resolved%20and%20type%20in%20(story,epic,bug,task)%20order%20by%20rank%20&maxResults=1000&startAt=0",
     "sprintField": "customfield_10400",
     "epicField": "customfield_10003"
   },
   "sprint": {
-    "firstSprint": 1,
+    "firstSprint": 0,
     "daysInSprint": 21,
     "sprintsPerPhase": [1, 2, 2, 1],
     "firstPhase": 1,
@@ -216,56 +216,76 @@ module.exports = [{
   "hidden": true,
   "title": true,
   "editable": false,
-  "action": "hideColumn"
+  "action": "hideColumn",
+  "disabled": false,
+  "columnSize": "tiny"
 }, {
   "label": "Epic",
   "field": "epic",
   "class": "nowrap",
   "editable": false,
-  "action": "hideColumn"
+  "action": "hideColumn",
+  "disabled": true,
+  "columnSize": "small full"
 }, {
   "label": "Identifier",
   "field": "key",
   "class": "nowrap",
   "link": "https://icg360.atlassian.net/browse/@value",
   "editable": false,
-  "action": "hideColumn"
+  "action": "hideColumn",
+  "disabled": false,
+  "columnSize": "small"
 }, {
   "label": "Description",
   "field": "description",
   "class": "left wide",
   "editable": false,
-  "action": "hideColumn"
+  "action": "hideColumn",
+  "disabled": false,
+  "columnSize": "left wide full"
 }, {
   "label": "Assignee",
   "field": "assignee",
   "class": "left",
-  "editable": false
+  "editable": false,
+  "disabled": false,
+  "columnSize": "left full"
 }, {
   "label": "Risk",
   "field": "risk",
   "class": "risk",
-  "editable": true
+  "editable": true,
+  "disabled": false,
+  "columnSize": "full"
 }, {
   "label": "Debt",
   "field": "debt",
   "class": "debt",
-  "editable": true
+  "editable": true,
+  "disabled": false,
+  "columnSize": "full"
 }, {
   "label": "Estimate",
   "field": "estimate",
   "class": "",
-  "editable": false
+  "editable": false,
+  "disabled": false,
+  "columnSize": "small full"
 }, {
   "label": "Sprint",
   "field": "sprint.current",
   "class": "",
-  "editable": false
+  "editable": false,
+  "disabled": false,
+  "columnSize": "full"
 }, {
   "label": "Status",
   "field": "status",
   "class": "status @value",
-  "editable": false
+  "editable": false,
+  "disabled": false,
+  "columnSize": "small"
 }];
 },{}],"src/assets/scripts/Authentication.js":[function(require,module,exports) {
 'use strict';
@@ -295,43 +315,51 @@ exports.default = Authentication;
 },{}],"src/assets/data/team.json":[function(require,module,exports) {
 module.exports = [{
   "team": "Engineering",
-  "jiraName": "gabe.tsu",
-  "name": "Gabe Tsu",
+  "jiraName": "shannon.hager",
+  "name": "Shannon Hager",
   "role": "dev",
   "allocation": "100%",
   "hours": 50,
   "lead": true
 }, {
   "team": "Engineering",
-  "jiraName": "rizchele.dayo",
-  "name": "Rizchele Dayo",
+  "jiraName": "jwyler",
+  "name": "James Wyler",
   "role": "dev",
   "allocation": "100%",
   "hours": 50,
   "lead": false
 }, {
-  "team": "Design",
-  "jiraName": "ryan.prudhomme",
-  "name": "Ryan Prudhomme",
-  "role": "design",
-  "allocation": "50%",
-  "hours": 25,
-  "lead": false
-}, {
-  "team": "Management",
-  "jiraName": "pedro.gonzales",
-  "name": "Pedro Gonzales",
-  "role": "manager",
+  "team": "Engineering",
+  "jiraName": "andrew.hager",
+  "name": "Andrew Hager",
+  "role": "dev",
   "allocation": "100%",
   "hours": 50,
   "lead": false
 }, {
-  "team": "Management",
-  "jiraName": "josh.miller",
-  "name": "Josh Miller",
-  "role": "manager",
+  "team": "Engineering",
+  "jiraName": "wesley.jones",
+  "name": "Wesley Jones",
+  "role": "dev",
+  "allocation": "100%",
+  "hours": 50,
+  "lead": false
+}, {
+  "team": "Engineering",
+  "jiraName": "glenn.goodrich",
+  "name": "Glenn Goodrich",
+  "role": "dev",
   "allocation": "10%",
   "hours": 5,
+  "lead": false
+}, {
+  "team": "Engineering",
+  "jiraName": "john.ford",
+  "name": "John Ford",
+  "role": "dev",
+  "allocation": "100%",
+  "hours": 50,
   "lead": false
 }];
 },{}],"node_modules/lie-ts/index.js":[function(require,module,exports) {
@@ -10283,12 +10311,14 @@ var Parser = function () {
     value: function appendSprints(config, sprints) {
       var conf = [];
       config.forEach(function (item) {
-        conf.push(item);
-        // TODO: Change the below to use the last column instead of "Status"
-        if (item.label.indexOf('Status') === 0) {
-          sprints.forEach(function (sprint) {
-            conf.push(sprint);
-          });
+        if (!item.disabled) {
+          conf.push(item);
+          // TODO: Change the below to use the last column instead of "Status"
+          if (item.label.indexOf('Status') === 0) {
+            sprints.forEach(function (sprint) {
+              conf.push(sprint);
+            });
+          }
         }
       });
       return conf;
@@ -10328,7 +10358,7 @@ var Parser = function () {
     value: function calculateDebt(row, task) {
       row.debt = 0;
       if (row.pushed > 0) {
-        row.debt = Math.ceiling(row.pushed * config.riskCalculation.debt);
+        row.debt = Math.ceil(row.pushed * config.riskCalculation.debt);
       }
       var hasLinks = this.associatedLink('relate', row, task);
       if (hasLinks) {
@@ -10453,7 +10483,7 @@ var Parser = function () {
 
       // Increase risk if this story is in the current Sprint, but has been pushed before
       if (row.pushed > 0) {
-        row.risk = Math.ceiling(row.risk + row.pushed * config.riskCalculation.delay);
+        row.risk = Math.ceil(row.risk + row.pushed * config.riskCalculation.delay);
       }
       return row.risk;
     }
@@ -11123,6 +11153,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var markobj = require('markobj');
+var table = require('../data/plan.json');
 
 var Plan = function () {
   function Plan() {
@@ -11139,14 +11170,14 @@ var Plan = function () {
     value: function toggleColumns(target) {
       var headers = document.querySelectorAll('table thead tr th.base');
       var rows = document.querySelectorAll('table tbody tr');
-      var table = document.querySelector('table');
+      var tableStub = document.querySelector('table');
       var removed = 0;
 
       if (target.classList.contains('collapsed')) {
 
         removed = headers.length;
         target.classList.remove('collapsed');
-        table.classList.remove('collapsed');
+        tableStub.classList.remove('collapsed');
         var targets = document.querySelectorAll('table .collapsed');
         targets.forEach(function (el) {
           el.classList.remove('collapsed');
@@ -11155,7 +11186,7 @@ var Plan = function () {
       } else {
 
         target.classList.add('collapsed');
-        table.classList.add('collapsed');
+        tableStub.classList.add('collapsed');
         headers.forEach(function (th, n) {
           if (th.classList.contains('full')) {
             removed++;
@@ -11202,11 +11233,22 @@ var Plan = function () {
           d2 = void 0,
           current = '';
 
-      var table = markobj('<table>\n      <thead>\n        <tr>\n          <th rowspan="3" class="base tiny">Priority</th>\n          <th rowspan="3" class="base small full">Epic</th>\n          <th rowspan="3" class="base small">Identifier</th>\n          <th rowspan="3" class="base left wide full">Description</th>\n          <th rowspan="3" class="base left full">Assignee</th>\n          <th rowspan="3" class="base full">Risk</th>\n          <th rowspan="3" class="base full">Debt</th>\n          <th rowspan="3" class="base small full">Estimate</th>\n          <th rowspan="3" class="base full">Sprint</th>\n          <th rowspan="3" class="base small">Status <button class="toggle"></button></th>\n          <!-- Inject Sprints -->\n        </tr>\n      </thead>\n      <tbody>\n      </tbody>\n    </table>');
+      var columns = "";
+      var toggle = "";
+      table.forEach(function (column, ix) {
+        if (ix === table.length - 1) {
+          toggle = '<button class="toggle"></button>';
+        }
+        if (!column.disabled) {
+          columns += '<th rowspan="3" class="base ' + column.columnSize + '">' + column.label + toggle + '</th>';
+        }
+      });
+
+      var tableStub = markobj('<table>\n      <thead>\n        <tr>\n          <!--\n          <th rowspan="3" class="base tiny">Priority</th>\n          <th rowspan="3" class="base small full">Epic</th>\n          <th rowspan="3" class="base small">Identifier</th>\n          <th rowspan="3" class="base left wide full">Description</th>\n          <th rowspan="3" class="base left full">Assignee</th>\n          <th rowspan="3" class="base full">Risk</th>\n          <th rowspan="3" class="base full">Debt</th>\n          <th rowspan="3" class="base small full">Estimate</th>\n          <th rowspan="3" class="base full">Sprint</th>\n          <th rowspan="3" class="base small">Status </th>\n          -->\n          ' + columns + '\n          <!-- Inject Sprints -->\n        </tr>\n      </thead>\n      <tbody>\n      </tbody>\n    </table>');
 
       var container = document.querySelector('#release-plan');
       container.innerHTML = "";
-      container.appendChild(table);
+      container.appendChild(tableStub);
 
       var newRow1 = document.createElement('tr');
       var newRow2 = document.createElement('tr');
@@ -11219,9 +11261,13 @@ var Plan = function () {
       var sprintsPerPhase = config.sprint.sprintsPerPhase;
 
       // Set button action
-      document.querySelector('button').addEventListener('click', function (event) {
-        _this.toggleColumns(event.target);
-      });
+      try {
+        document.querySelector('button').addEventListener('click', function (event) {
+          _this.toggleColumns(event.target);
+        });
+      } catch (err) {
+        console.log("No toggle button was added.");
+      }
 
       headers.forEach(function (el, ix) {
 
@@ -11387,9 +11433,13 @@ var Plan = function () {
           sprints7 = void 0,
           sprints8 = void 0,
           blanks = void 0;
-      var table = document.querySelector('table');
+      var tableStub = document.querySelector('table');
 
-      blanks = '<tr><td colspan="10" class="empty label"></td>';
+      var columnNo = table.filter(function (column) {
+        return column.disabled === false;
+      }).length;
+
+      blanks = '<tr><td colspan="${columnNo}" class="empty label"></td>';
 
       // Loop through the aggregate values
       for (var key in aggregates.subtotals) {
@@ -11424,10 +11474,10 @@ var Plan = function () {
       blanks += '<td colspan="5" class="empty plain"></td></tr>';
 
       // Build out the footer
-      var footerRows = markobj('<tfoot>\n      <tr><td colspan="10" class="label">Total story points per Sprint</td>' + sprints1 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total Dev Hours per Sprint</td>' + sprints2 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Total QA Hours per Sprint</td>' + sprints3 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Stories Spilled across Sprints</td>' + sprints4 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Total Stories by Sprint</td>' + sprints5 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Target Completion Percentage</td>' + sprints6 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="10" class="label">Sprint Stories Completed</td>' + sprints7 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="10" class="label">Sprint Completion Percentage</td>' + sprints8 + '<td colspan="5" class="plain"></td></tr>\n    </tfoot>');
+      var footerRows = markobj('<tfoot>\n      <tr><td colspan="' + columnNo + '" class="label">Total story points per Sprint</td>' + sprints1 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="' + columnNo + '" class="label">Total Dev Hours per Sprint</td>' + sprints2 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="' + columnNo + '" class="label">Total QA Hours per Sprint</td>' + sprints3 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="' + columnNo + '" class="label">Stories Spilled across Sprints</td>' + sprints4 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="' + columnNo + '" class="label">Total Stories by Sprint</td>' + sprints5 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="' + columnNo + '" class="label">Target Completion Percentage</td>' + sprints6 + '<td colspan="5" class="plain"></td></tr>\n      ' + blanks + '\n      <tr><td colspan="' + columnNo + '" class="label">Sprint Stories Completed</td>' + sprints7 + '<td colspan="5" class="plain"></td></tr>\n      <tr><td colspan="' + columnNo + '" class="label">Sprint Completion Percentage</td>' + sprints8 + '<td colspan="5" class="plain"></td></tr>\n    </tfoot>');
 
       // Append the footer to the table
-      table.appendChild(footerRows);
+      tableStub.appendChild(footerRows);
     }
   }]);
 
@@ -11435,7 +11485,7 @@ var Plan = function () {
 }();
 
 exports.default = Plan;
-},{"markobj":"node_modules/markobj/markobj.js","./Parser.js":"src/assets/scripts/Parser.js"}],"node_modules/default-compare/node_modules/kind-of/index.js":[function(require,module,exports) {
+},{"markobj":"node_modules/markobj/markobj.js","../data/plan.json":"src/assets/data/plan.json","./Parser.js":"src/assets/scripts/Parser.js"}],"node_modules/default-compare/node_modules/kind-of/index.js":[function(require,module,exports) {
 var toString = Object.prototype.toString;
 
 /**
@@ -33078,6 +33128,8 @@ var Boostrap = function () {
       var sprints = new _Sprint2.default();
       var team = new _Team2.default();
 
+      // config.cache
+      // config.jira.url
       var resources = [config.cache];
 
       // Create Sprint Data
@@ -33189,7 +33241,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '49213' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '61072' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

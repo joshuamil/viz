@@ -30,6 +30,8 @@ export default class Boostrap {
     const sprints = new Sprints();
     const team = new Team();
 
+    // config.cache
+    // config.jira.url
     const resources = [
       config.cache
     ];

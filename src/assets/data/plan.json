@@ -6,14 +6,18 @@
     "hidden": true,
     "title": true,
     "editable": false,
-    "action": "hideColumn"
+    "action": "hideColumn",
+    "disabled": false,
+    "columnSize": "tiny"
   },
   {
     "label": "Epic",
     "field": "epic",
     "class": "nowrap",
     "editable": false,
-    "action": "hideColumn"
+    "action": "hideColumn",
+    "disabled": true,
+    "columnSize": "small full"
   },
   {
     "label": "Identifier",
@@ -21,49 +25,65 @@
     "class": "nowrap",
     "link": "https://icg360.atlassian.net/browse/@value",
     "editable": false,
-    "action": "hideColumn"
+    "action": "hideColumn",
+    "disabled": false,
+    "columnSize": "small"
   },
   {
     "label": "Description",
     "field": "description",
     "class": "left wide",
     "editable": false,
-    "action": "hideColumn"
+    "action": "hideColumn",
+    "disabled": false,
+    "columnSize": "left wide full"
   },
   {
     "label": "Assignee",
     "field": "assignee",
     "class": "left",
-    "editable": false
+    "editable": false,
+    "disabled": false,
+    "columnSize": "left full"
   },
   {
     "label": "Risk",
     "field": "risk",
     "class": "risk",
-    "editable": true
+    "editable": true,
+    "disabled": false,
+    "columnSize": "full"
   },
   {
     "label": "Debt",
     "field": "debt",
     "class": "debt",
-    "editable": true
+    "editable": true,
+    "disabled": false,
+    "columnSize": "full"
   },
   {
     "label": "Estimate",
     "field": "estimate",
     "class": "",
-    "editable": false
+    "editable": false,
+    "disabled": false,
+    "columnSize": "small full"
   },
   {
     "label": "Sprint",
     "field": "sprint.current",
     "class": "",
-    "editable": false
+    "editable": false,
+    "disabled": false,
+    "columnSize": "full"
   },
   {
     "label": "Status",
     "field": "status",
     "class": "status @value",
-    "editable": false
+    "editable": false,
+    "disabled": false,
+    "columnSize": "small"
   }
 ]
