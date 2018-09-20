@@ -303,7 +303,7 @@ export default class Plan {
 
     const columnNo = table.filter( column => column.disabled === false).length;
 
-    blanks = '<tr><td colspan="${columnNo}" class="empty label"></td>';
+    blanks = `<tr><td colspan="${columnNo}" class="empty label"></td>`;
 
     // Loop through the aggregate values
     for (let key in aggregates.subtotals) {
@@ -336,20 +336,20 @@ export default class Plan {
 
     }
 
-    blanks += '<td colspan="5" class="empty plain"></td></tr>';
+    //blanks += '<td colspan="5" class="empty plain"></td></tr>';
 
     // Build out the footer
     let footerRows = markobj(`<tfoot>
-      <tr><td colspan="${columnNo}" class="label">Total story points per Sprint</td>${sprints1}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="${columnNo}" class="label">Total Dev Hours per Sprint</td>${sprints2}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="${columnNo}" class="label">Total QA Hours per Sprint</td>${sprints3}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="${columnNo}" class="label">Stories Spilled across Sprints</td>${sprints4}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total story points per Sprint</td>${sprints1}</td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total Dev Hours per Sprint</td>${sprints2}</td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total QA Hours per Sprint</td>${sprints3}</td></tr>
+      <tr><td colspan="${columnNo}" class="label">Stories Spilled across Sprints</td>${sprints4}</td></tr>
       ${blanks}
-      <tr><td colspan="${columnNo}" class="label">Total Stories by Sprint</td>${sprints5}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="${columnNo}" class="label">Target Completion Percentage</td>${sprints6}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Total Stories by Sprint</td>${sprints5}</td></tr>
+      <tr><td colspan="${columnNo}" class="label">Target Completion Percentage</td>${sprints6}</td></tr>
       ${blanks}
-      <tr><td colspan="${columnNo}" class="label">Sprint Stories Completed</td>${sprints7}<td colspan="5" class="plain"></td></tr>
-      <tr><td colspan="${columnNo}" class="label">Sprint Completion Percentage</td>${sprints8}<td colspan="5" class="plain"></td></tr>
+      <tr><td colspan="${columnNo}" class="label">Sprint Stories Completed</td>${sprints7}</td></tr>
+      <tr><td colspan="${columnNo}" class="label">Sprint Completion Percentage</td>${sprints8}</td></tr>
     </tfoot>`);
 
     // Append the footer to the table
