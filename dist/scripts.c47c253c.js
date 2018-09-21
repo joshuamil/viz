@@ -33001,6 +33001,64 @@ var Actions = function () {
     }
 
     /**
+     * Toggle Source
+     * Toggles the source bar at the bottom of the page
+     */
+
+  }, {
+    key: 'toggleSource',
+    value: function toggleSource() {
+      var source = document.querySelector('.source');
+      var state = source.classList;
+      if (state.contains('closed')) {
+        source.classList.remove('closed');
+      } else {
+        source.classList.add('closed');
+      }
+      return true;
+    }
+  }, {
+    key: 'enableSourceBar',
+    value: function enableSourceBar() {
+      var _this = this;
+
+      this.enableSourceForm();
+      var button = document.querySelector('.source .handle');
+      button.addEventListener('click', function (event) {
+        _this.toggleSource();
+      });
+    }
+  }, {
+    key: 'enableSourceForm',
+    value: function enableSourceForm() {
+      var form = document.querySelector('.source #frmSource');
+      var button = form.querySelector('.formfield button');
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+
+        var data = new FormData(form);
+
+        console.log(data);
+
+        fetch("http://localhost:3000", {
+          method: "POST",
+          mode: "cors",
+          cache: "no-cache",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        }).then(function (res) {
+          return res.json();
+        }).then(function (response) {
+          console.log(JSON.stringify(response));
+        }).catch(function (error) {
+          return console.error('Error: ', error);
+        });
+      });
+    }
+
+    /**
      * SetMenuStatus
      * Sets one of the navigation menu items to the active state
      * @param element target element to which status is applied
@@ -33025,7 +33083,9 @@ var Actions = function () {
   }, {
     key: 'navigation',
     value: function navigation(sprint) {
-      var _this = this;
+      var _this2 = this;
+
+      this.enableSourceBar();
 
       var nav = document.querySelectorAll('nav ul li a');
       nav.forEach(function (button) {
@@ -33033,15 +33093,15 @@ var Actions = function () {
           var element = event.target;
           var id = element.getAttribute('href').replace('#', '');
           if (id === 'current') {
-            _this.displayCurrent(sprint);
+            _this2.displayCurrent(sprint);
           } else if (id === 'me') {
-            _this.displayMe();
+            _this2.displayMe();
           } else if (id === 'all') {
-            _this.displayAll();
+            _this2.displayAll();
           } else {
-            _this.tabs(id);
+            _this2.tabs(id);
           }
-          _this.setMenuStatus(element, nav);
+          _this2.setMenuStatus(element, nav);
         });
       });
     }
@@ -33241,7 +33301,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '63631' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '55913' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

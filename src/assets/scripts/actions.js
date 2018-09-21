@@ -84,6 +84,60 @@ export default class Actions {
     });
   }
 
+
+  /**
+   * Toggle Source
+   * Toggles the source bar at the bottom of the page
+   */
+  toggleSource() {
+    const source = document.querySelector('.source');
+    const state = source.classList;
+    if (state.contains('closed')) {
+      source.classList.remove('closed');
+    } else {
+      source.classList.add('closed');
+    }
+    return true;
+  }
+
+
+  enableSourceBar() {
+    this.enableSourceForm();
+    const button = document.querySelector('.source .handle');
+    button.addEventListener('click', (event) => {
+      this.toggleSource();
+    });
+  }
+
+  enableSourceForm() {
+    const form = document.querySelector('.source #frmSource');
+    const button = form.querySelector('.formfield button');
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      const data = new FormData(form);
+
+      console.log(data);
+
+      fetch("http://localhost:3000", {
+        method: "POST",
+        mode: "cors",
+        cache: "no-cache",
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then( res => res.json())
+      .then( (response) => {
+        console.log(JSON.stringify(response));
+      })
+      .catch( error => console.error('Error: ', error));
+
+    });
+  }
+
+
   /**
    * SetMenuStatus
    * Sets one of the navigation menu items to the active state
@@ -103,6 +157,8 @@ export default class Actions {
    * @param sprint Numeric sprint value (e.g.: 1, 2, 3)
    */
   navigation(sprint) {
+
+    this.enableSourceBar();
 
     const nav = document.querySelectorAll('nav ul li a');
     nav.forEach( (button) => {

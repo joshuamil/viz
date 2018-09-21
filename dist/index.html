@@ -16,6 +16,41 @@
     </ul>
   </nav>
 
+  <div class="source">
+    <div class="handle"></div>
+    <form id="frmSource">
+      <div class="formfield">
+        <label for="location">Location</label>
+        <input type="text" name="location" id="location" value="icg360.atlassian.net">
+      </div>
+      <div class="formfield">
+        <label for="project">Project</label>
+        <input type="text" name="project" id="project" value="MGRMODS">
+      </div>
+      <div class="formfield">
+        <label for="types">Types</label>
+        <input type="text" name="types" id="types" value="story,epic,bug,task">
+      </div>
+      <div class="formfield">
+        <button type="button">Update</button>
+      </div>
+      <div class="formfield right">
+        <label for="mode-0">
+          Static
+          <input type="radio" name="mode" id="mode-0" value="static" checked="">
+        </label>
+        <label for="mode-1">
+          Auto-Refresh
+          <input type="radio" name="mode" id="mode-1" value="refresh">
+        </label>
+        <label for="mode-2">
+          Cycle Projects
+          <input type="radio" name="mode" id="mode-2" value="cycle">
+        </label>
+      </div>
+    </form>
+  </div>
+
   <div class="toolbar">
     <label for="planningMode">
       Planning mode

@@ -88,6 +88,59 @@ div.toolbar {
       text-align: center;
       width: 30px; }
 
+div.source {
+  background-color: #222222;
+  display: block;
+  position: absolute;
+  bottom: 0;
+  z-index: 999;
+  left: 0;
+  width: 98%;
+  padding: 1%; }
+  div.source .handle {
+    position: absolute;
+    top: -40px;
+    right: 10px;
+    background-color: #222222;
+    color: #ffffff;
+    font-size: 2em;
+    padding: .25em .75em;
+    cursor: pointer; }
+    div.source .handle::after {
+      content: "\00d7"; }
+  div.source.closed {
+    padding: 2px 1%; }
+    div.source.closed .formfield {
+      display: none; }
+    div.source.closed .handle::after {
+      content: " ";
+      border: solid #ffffff;
+      border-width: 0 3px 3px 0;
+      display: inline-block;
+      padding: 3px;
+      transform: rotate(-135deg);
+      -webkit-transform: rotate(-135deg); }
+  div.source .formfield {
+    float: left;
+    margin: 0 .5em; }
+    div.source .formfield.right {
+      float: right; }
+    div.source .formfield label {
+      color: #cccccc; }
+    div.source .formfield button
+input[type="checkbox"],
+    div.source .formfield input[type="radio"],
+    div.source .formfield input[type="upload"],
+    div.source .formfield label {
+      cursor: pointer; }
+    div.source .formfield button {
+      border: 1px solid #888888;
+      background-color: #888888;
+      color: #000000;
+      padding: .25em 1em; }
+      div.source .formfield button:hover {
+        background-color: #cccccc; }
+
 /* Table Styles */
 table {
   border-collapse: collapse;

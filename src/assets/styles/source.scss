@@ -1,0 +1,75 @@
+div.source {
+  background-color: $grey-80;
+  display: block;
+  position: absolute;
+  bottom: 0;
+  z-index: 999;
+  left: 0;
+  width: 98%;
+  padding: 1%;
+
+  .handle {
+    position: absolute;
+    top: -40px;
+    right: 10px;
+    background-color: $grey-80;
+    color: $white;
+    font-size: 2em;
+    padding: .25em .75em;
+    cursor: pointer;
+    &::after {
+      content: "\00d7";
+    }
+  }
+
+  &.closed {
+    padding: 2px 1%;
+    .formfield {
+      display: none;
+    }
+    .handle {
+      &::after {
+        content: " ";
+        border: solid $white;
+        border-width: 0 3px 3px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(-135deg);
+        -webkit-transform: rotate(-135deg);
+      }
+    }
+  }
+
+  .formfield {
+    float: left;
+    margin: 0 .5em;
+
+    &.right {
+      float: right;
+    }
+
+    label {
+      color: $grey-10;
+    }
+
+    button
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="upload"],
+    label {
+      cursor: pointer;
+    }
+
+    button {
+      border: 1px solid $grey-20;
+      background-color: $grey-20;
+      color: $black;
+      padding: .25em 1em;
+      &:hover {
+        background-color: $grey-10;
+      }
+    }
+
+  }
+
+}
