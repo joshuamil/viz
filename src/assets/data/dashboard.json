@@ -24,6 +24,7 @@
       "source": "mood",
       "default": ":)",
       "scale": "mood",
+      "scope": "project",
       "ranges": {
         "happy": ":)",
         "meh": ":|",
@@ -32,21 +33,12 @@
       }
     },
     {
-      "tile": "project-blockers",
-      "label": "Active Blockers",
-      "source": "totals.project.blockers",
-      "scale": "binary",
-      "ranges": {
-        "good": 0,
-        "bad": [1,9999]
-      }
-    },
-    {
       "tile": "project-risk",
       "label": "Risk Level",
       "source": "risk",
       "format": "0%",
       "scale": "terror",
+      "scope": "project",
       "ranges": {
         "lowest": [0,5],
         "low": [6,10],
@@ -57,31 +49,126 @@
       }
     },
     {
-      "tile": "project-phase",
-      "label": "Current Phase",
-      "source": "phase"
-    },
-    {
-      "tile": "project-phase-days-remaining",
-      "label": "Days Remaining in Phase",
-      "source": "daysInPhase"
+      "tile": "project-debt",
+      "label": "Debt Level",
+      "source": "totals.debt",
+      "scope": "project",
+      "format": "0%",
+      "scale": "terror",
+      "ranges": {
+        "lowest": [-10,-1],
+        "low": [0,10],
+        "medium": [11,25],
+        "high": [26,50],
+        "highest": [51,100],
+        "blocker": [101,999]
+      }
     },
     {
       "tile": "project-target-completion",
       "label": "Target Completion",
       "source": "totals.sprint.target",
+      "scope": "project",
       "format": "0%"
     },
     {
       "tile": "project-completion",
       "label": "Project Completion",
       "source": "totals.project.rate",
+      "scope": "project",
       "format": "0%"
     },
     {
+      "tile": "project-phase",
+      "label": "Current Phase",
+      "scope": "project",
+      "source": "phase"
+    },
+    {
+      "tile": "project-phase-days-remaining",
+      "label": "Days Remaining in Phase",
+      "scope": "project",
+      "source": "daysInPhase"
+    },
+    {
+      "tile": "project-blockers",
+      "label": "Active Blockers",
+      "source": "totals.project.blockers",
+      "scope": "project",
+      "scale": "binary",
+      "ranges": {
+        "good": 0,
+        "bad": [1,9999]
+      }
+    },
+    {
+      "tile": "project-tasks-complete",
+      "label": "Total Tasks Completed",
+      "scope": "project",
+      "source": "totals.project.completed"
+    },
+    {
+      "tile": "project-tasks-total",
+      "label": "Total Tasks",
+      "scope": "project",
+      "source": "totals.project.tasks"
+    },
+    {
+      "tile": "sprint-current",
+      "label": "Current Sprint",
+      "scope": "sprint",
+      "source": "sprint"
+    },
+    {
+      "tile": "sprint-days-remaining",
+      "label": "Days Remaining in Sprint",
+      "scope": "sprint",
+      "source": "daysInSprint"
+    },
+    {
+      "tile": "sprint-blockers",
+      "label": "Sprint: Blockers",
+      "scope": "sprint",
+      "source": "totals.sprint.blockers"
+    },
+    {
+      "tile": "sprint-pushed-stories",
+      "label": "Sprint: Spilled Stories",
+      "scope": "sprint",
+      "source": "totals.sprint.spilled"
+    },
+    {
+      "tile": "project-mood",
+      "label": "Spilled Stories",
+      "source": "totals.project.pushed",
+      "scope": "project",
+      "scale": "terror",
+      "ranges": {
+        "lowest": [-10,-1],
+        "low": [0,10],
+        "medium": [11,25],
+        "high": [26,50],
+        "highest": [51,100],
+        "blocker": [101,999]
+      }
+    },
+    {
+      "tile": "sprint-tasks-total",
+      "label": "Sprint: Total Tasks",
+      "scope": "sprint",
+      "source": "totals.sprint.tasks"
+    },
+    {
+      "tile": "sprint-tasks-complete",
+      "label": "Sprint: Tasks Completed",
+      "scope": "sprint",
+      "source": "totals.sprint.completed"
+    },
+    {
       "tile": "sprint-completion",
-      "label": "Sprint Completion",
+      "label": "Sprint: Completion",
       "source": "totals.sprint.rate",
+      "scope": "sprint",
       "format": "0%",
       "scale": "terror",
       "ranges": {
@@ -92,83 +179,16 @@
       }
     },
     {
-      "tile": "sprint-current",
-      "label": "Current Sprint",
-      "source": "sprint"
-    },
-    {
-      "tile": "sprint-days-remaining",
-      "label": "Days Remaining in Sprint",
-      "source": "daysInSprint"
-    },
-    {
-      "tile": "project-debt",
-      "label": "Debt Level",
-      "source": "totals.debt",
-      "format": "0%",
-      "scale": "terror",
-      "ranges": {
-        "lowest": [-10,-1],
-        "low": [0,10],
-        "medium": [11,25],
-        "high": [26,50],
-        "highest": [51,100],
-        "blocker": [101,999]
-      }
-    },
-    {
-      "tile": "project-tasks-complete",
-      "label": "Total Tasks Completed",
-      "source": "totals.project.completed"
-    },
-    {
-      "tile": "sprint-tasks-complete",
-      "label": "Sprint: Tasks Completed",
-      "source": "totals.sprint.completed"
-    },
-    {
-      "tile": "sprint-blockers",
-      "label": "Sprint: Blockers",
-      "source": "totals.sprint.blockers"
+      "tile": "sprint-incidents",
+      "label": "Sprint: Total Incidents",
+      "scope": "sprint",
+      "source": "totals.sprint.incidents"
     },
     {
       "tile": "sprint-lost-hours",
       "label": "Sprint: Lost Hours",
+      "scope": "sprint",
       "source": "totals.sprint.lost"
-    },
-    {
-      "tile": "project-mood",
-      "label": "Spilled Stories",
-      "source": "totals.project.pushed",
-      "scale": "terror",
-      "ranges": {
-        "lowest": [-10,-1],
-        "low": [0,10],
-        "medium": [11,25],
-        "high": [26,50],
-        "highest": [51,100],
-        "blocker": [101,999]
-      }
-    },
-    {
-      "tile": "project-tasks-total",
-      "label": "Total Tasks",
-      "source": "totals.project.tasks"
-    },
-    {
-      "tile": "sprint-tasks-total",
-      "label": "Sprint: Total Tasks",
-      "source": "totals.sprint.tasks"
-    },
-    {
-      "tile": "sprint-pushed-stories",
-      "label": "Sprint: Pushed Stories",
-      "source": "totals.sprint.spilled"
-    },
-    {
-      "tile": "sprint-incidents",
-      "label": "Sprint: Total Incidents",
-      "source": "totals.sprint.incidents"
     }
   ]
 }

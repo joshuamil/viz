@@ -1,5 +1,5 @@
 section {
-  
+
   >div.wrapper {
     align-items: flex-start;
     background-color: $grey-70;
@@ -9,7 +9,7 @@ section {
     padding: .125% 0;
     width: 100%;
     height: 95vh;
-    
+
     .tile {
       background-color: $green-md;
       color: rgba(255, 255, 255, .95);
@@ -19,7 +19,19 @@ section {
       margin: 0 .25%;
       margin-bottom: 0;
       text-align: center;
-      
+
+      &.sprint {
+        background-color: $blue-md;
+        &.low,
+        &.happy,
+        &.good {
+          background-color: $blue-md;
+        }
+        &.lowest {
+          background-color: $blue-lt;
+        }
+      }
+
       /* binary */
       &.good {
         background-color: $green-md;
@@ -27,7 +39,7 @@ section {
       &.bad {
         background-color: $red-dk;
       }
-      
+
       /* Stoplight */
       &.low {
         background-color: $green-md;
@@ -38,7 +50,7 @@ section {
       &.high {
         background-color: $red-dk;
       }
-      
+
       /* Moods */
       &.happy {
         background-color: $green-dk;
@@ -52,34 +64,23 @@ section {
       &.sad {
         background-color: $red-dk;
       }
-      
+
       /* Terror */
       &.highest {
         background-color: $red-dk;
-      }
-      &.high {
-        background-color: $orange-md;
-        color: $grey-70;
-      }
-      &.medium {
-        background-color: $yellow-md;
-        color: $grey-70;
-      }
-      &.low {
-        background-color: $green-md;
+        color: $gold-lt;
       }
       &.lowest {
-        background-color: $green-lt;
-        color: $grey-70;
+        background-color: $green-md;
       }
-      
+
       div {
         font-size: 8em;
         font-weight: bold;
         height: 19vh;
         line-height: 19vh;
       }
-      
+
       h2 {
         background-color: rgba(0, 0, 0, .25);
         color: rgba(255, 255, 255, .75);
@@ -89,8 +90,8 @@ section {
         margin: 0;
         padding: .5vh;
       }
-      
+
     }
-    
+
   }
 }

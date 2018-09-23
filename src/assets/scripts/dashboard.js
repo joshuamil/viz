@@ -125,7 +125,7 @@ export default class Dashboard {
         value = numeral(value).format(tile.format);
       }
 
-      div += `<div class="tile ${tile.tile} ${status}">
+      div += `<div class="tile ${tile.tile} ${status} ${tile.scope}">
         <div>${value}</div>
         <h2>${tile.label}</h2>
       </div>`;

@@ -438,6 +438,12 @@ section > div.wrapper {
     /* Stoplight */
     /* Moods */
     /* Terror */ }
+    section > div.wrapper .tile.sprint {
+      background-color: #9ec4ea; }
+      section > div.wrapper .tile.sprint.low, section > div.wrapper .tile.sprint.happy, section > div.wrapper .tile.sprint.good {
+        background-color: #9ec4ea; }
+      section > div.wrapper .tile.sprint.lowest {
+        background-color: #cee2f4; }
     section > div.wrapper .tile.good {
       background-color: #b5d8a6; }
     section > div.wrapper .tile.bad {
@@ -457,18 +463,10 @@ section > div.wrapper {
     section > div.wrapper .tile.sad {
       background-color: #e26563; }
     section > div.wrapper .tile.highest {
-      background-color: #e26563; }
-    section > div.wrapper .tile.high {
-      background-color: #facc99;
-      color: #333333; }
-    section > div.wrapper .tile.medium {
-      background-color: #fde9af;
-      color: #333333; }
-    section > div.wrapper .tile.low {
-      background-color: #b5d8a6; }
+      background-color: #e26563;
+      color: #fff3ca; }
     section > div.wrapper .tile.lowest {
-      background-color: #d9ead2;
-      color: #333333; }
+      background-color: #b5d8a6; }
     section > div.wrapper .tile div {
       font-size: 8em;
       font-weight: bold;

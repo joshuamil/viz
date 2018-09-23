@@ -49,7 +49,7 @@
       "source": "subs",
       "value": "remaining",
       "text": "Sprint ${sprint.sprint}",
-      "colors": "#ec9998"
+      "colors": "#b5d8a6"
     }]
   },
   {
@@ -70,29 +70,29 @@
       "source": "subs",
       "value": "remaining",
       "text": "Sprint ${sprint.sprint}",
-      "colors": "#ec9998"
+      "colors": "#b5d8a6"
     }]
   },
   {
     "name": "committed-vs-available",
     "title": "Committed Hours vs. Available Hours",
     "type": "horizontalBar",
-    "stacked": true,
+    "stacked": false,
     "class": "doublewide",
     "datasets": [{
-      "label": "Available",
-      "stack": "Stack 0",
-      "source": "team",
-      "value": "available",
-      "text": "Sprint ${sprint.sprint}",
-      "colors": "#ec9998"
-    },{
       "label": "Committed",
       "stack": "Stack 0",
       "source": "team",
       "value": "estimate",
       "text": "Sprint ${sprint.sprint}",
       "colors": "#9ec4ea"
+    },{
+      "label": "Available",
+      "stack": "Stack 1",
+      "source": "team",
+      "value": "available",
+      "text": "Sprint ${sprint.sprint}",
+      "colors": "#b5d8a6"
     }]
   }
 ]

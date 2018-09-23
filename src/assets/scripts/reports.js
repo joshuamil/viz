@@ -106,6 +106,8 @@ export default class Reports {
       });
     });
 
+
+
     if (data && data.length > 0) {
       options = {
         type: config.type,
