@@ -110,27 +110,28 @@ export default class Actions {
   }
 
   enableSourceForm() {
-    const form = document.querySelector('.source #frmSource');
+    //const form = document.querySelector('#frmSource');
+
+    const form = document.querySelector('form');
+
     const button = form.querySelector('.formfield button');
     button.addEventListener('click', (event) => {
       event.preventDefault();
 
-      const data = new FormData(form);
-
-      console.log(data);
+      console.log(form);
+      let formData = new FormData(form);
 
       fetch("http://localhost:3000", {
         method: "POST",
-        mode: "cors",
-        cache: "no-cache",
-        headers:{
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+        mode: 'cors',
+        body: formData,
+        processData: false,
+        contentType: false
       })
       .then( res => res.json())
       .then( (response) => {
-        console.log(JSON.stringify(response));
+        window.location.reload();
+
       })
       .catch( error => console.error('Error: ', error));
 

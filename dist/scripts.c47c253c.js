@@ -33051,27 +33051,27 @@ var Actions = function () {
   }, {
     key: 'enableSourceForm',
     value: function enableSourceForm() {
-      var form = document.querySelector('.source #frmSource');
+      //const form = document.querySelector('#frmSource');
+
+      var form = document.querySelector('form');
+
       var button = form.querySelector('.formfield button');
       button.addEventListener('click', function (event) {
         event.preventDefault();
 
-        var data = new FormData(form);
-
-        console.log(data);
+        console.log(form);
+        var formData = new FormData(form);
 
         fetch("http://localhost:3000", {
           method: "POST",
-          mode: "cors",
-          cache: "no-cache",
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
+          mode: 'cors',
+          body: formData,
+          processData: false,
+          contentType: false
         }).then(function (res) {
           return res.json();
         }).then(function (response) {
-          console.log(JSON.stringify(response));
+          window.location.reload();
         }).catch(function (error) {
           return console.error('Error: ', error);
         });
@@ -33321,7 +33321,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '64342' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '51562' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 

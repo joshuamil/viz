@@ -8,11 +8,26 @@ const app = express();
 const port = 3000;
 
 const bodyParser = require('body-parser');
-const urlencodedParser = bodyParser.urlencoded({ extended: true });
+const formidable = require('express-formidable');
+
+// Enable CORS
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(formidable());
+
 
 // Enable GET Route
-app.post('/', urlencodedParser, (req, res) => {
-  const data = action(req.body)
+app.post('/', (req, res, next) => {
+
+  console.log('FormPost!');
+  console.log(req.fields);
+
+  const data = action(req.fields)
     .then( (data) => {
       res.send(data);
     });
@@ -42,8 +57,6 @@ const action = (params) => {
       })
       .then( (json) => {
 
-        return json;
-
         /* Cache file locally */
         fs.writeFile("../dist/jira.json", JSON.stringify(json), function(err) {
           if(err) {
@@ -54,7 +67,14 @@ const action = (params) => {
           console.log("JIRA content has been updated.");
         });
 
+        // Currently disabling local file write
+        return json;
 
+
+      })
+      .catch( (error) => {
+        console.log(error);
+        return false;
       });
 
 }
